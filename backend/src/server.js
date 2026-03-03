@@ -8,6 +8,7 @@ const morgan = require('morgan');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const { uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
@@ -55,60 +56,76 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // ── File Upload Setup ─────────────────────────────────────────────────────────
-// On Render: use the mounted persistent disk. In dev: local uploads/ folder.
-const UPLOAD_DIR = process.env.UPLOAD_DIR
-    || (process.env.NODE_ENV === 'production' ? '/var/data/uploads' : path.join(__dirname, '..', 'uploads'));
-if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+// PRODUCTION  → Cloudinary memoryStorage (no disk needed on Render free tier)
+// DEVELOPMENT → Local disk uploads/ folder (no credentials required)
+const useCloudinary = isCloudinaryConfigured();
 
-const storage = multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-    filename: (_req, file, cb) => {
-        const ext = path.extname(file.originalname);
-        const name = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`;
-        cb(null, name);
-    },
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || 500) * 1024 * 1024 },
-    fileFilter: (_req, file, cb) => {
-        const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-        if (allowed.includes(file.mimetype)) cb(null, true);
-        else cb(new Error('Only video files are allowed'));
-    },
-});
-
-// ── Static File Serving (Uploaded Videos) ────────────────────────────────────
-// Enable range requests so the browser can seek in video files
-app.use('/uploads', express.static(UPLOAD_DIR, {
-    setHeaders: (res) => {
-        res.setHeader('Accept-Ranges', 'bytes');
-    },
-}));
+let upload;
+if (useCloudinary) {
+    upload = multer({
+        storage: multer.memoryStorage(),
+        limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB — Cloudinary free cap
+        fileFilter: (_req, file, cb) => {
+            const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+            if (allowed.includes(file.mimetype)) cb(null, true);
+            else cb(new Error('Only video files are allowed'));
+        },
+    });
+    console.log('📦 Upload mode: Cloudinary');
+} else {
+    // Fallback: local disk (dev)
+    const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
+    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+    const diskStorage = multer.diskStorage({
+        destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+        filename: (_req, file, cb) => {
+            const ext = path.extname(file.originalname);
+            cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+        },
+    });
+    upload = multer({
+        storage: diskStorage,
+        limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '500') * 1024 * 1024 },
+        fileFilter: (_req, file, cb) => {
+            const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+            if (allowed.includes(file.mimetype)) cb(null, true);
+            else cb(new Error('Only video files are allowed'));
+        },
+    });
+    // Serve local uploads with range-request support (for video seeking)
+    app.use('/uploads', express.static(UPLOAD_DIR, {
+        setHeaders: (res) => res.setHeader('Accept-Ranges', 'bytes'),
+    }));
+    console.log('📦 Upload mode: Local disk (dev)');
+}
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 
 // Video upload endpoint
-app.post('/api/upload', (req, res, next) => {
-    // Verify token before upload
+app.post('/api/upload', (req, res) => {
     const { authenticate } = require('./middleware/auth');
     authenticate(req, res, () => {
-        upload.single('video')(req, res, (err) => {
-            if (err) {
-                return res.status(400).json({ success: false, message: err.message });
+        upload.single('video')(req, res, async (err) => {
+            if (err) return res.status(400).json({ success: false, message: err.message });
+            if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+
+            try {
+                let fileUrl;
+                if (useCloudinary) {
+                    // Stream buffer → Cloudinary → get permanent CDN URL
+                    const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
+                    fileUrl = result.secure_url; // https://res.cloudinary.com/...
+                } else {
+                    // Local dev: relative URL, Vite proxy handles /uploads
+                    fileUrl = `/uploads/${req.file.filename}`;
+                }
+                return res.json({ success: true, url: fileUrl, filename: req.file.originalname, size: req.file.size });
+            } catch (uploadErr) {
+                console.error('[upload] Cloudinary error:', uploadErr.message);
+                return res.status(500).json({ success: false, message: 'Cloud upload failed: ' + uploadErr.message });
             }
-            if (!req.file) {
-                return res.status(400).json({ success: false, message: 'No file uploaded' });
-            }
-            // In production return the full backend URL so all clients can load the file
-            const host = process.env.NODE_ENV === 'production'
-                ? (process.env.BACKEND_URL || `${req.protocol}://${req.get('host')}`)
-                : '';
-            const fileUrl = `${host}/uploads/${req.file.filename}`;
-            res.json({ success: true, url: fileUrl, filename: req.file.originalname, size: req.file.size });
         });
     });
 });

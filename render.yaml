@@ -11,14 +11,16 @@ services:
       - key: PORT
         value: 10000
       - key: MONGO_URI
-        sync: false # set manually in Render dashboard
+        sync: false          # set manually in Render dashboard
       - key: JWT_SECRET
-        sync: false # set manually in Render dashboard
+        sync: false          # set manually in Render dashboard
       - key: FRONTEND_URL
-        sync: false # e.g. https://vibesync.vercel.app
+        sync: false          # e.g. https://vibesync.vercel.app
+      - key: CLOUDINARY_CLOUD_NAME
+        sync: false          # from cloudinary.com dashboard
+      - key: CLOUDINARY_API_KEY
+        sync: false
+      - key: CLOUDINARY_API_SECRET
+        sync: false
       - key: MAX_FILE_SIZE
         value: 524288000 # 500MB
-    disk:
-      name: uploads
-      mountPath: /var/data/uploads
-      sizeGB: 1 # 1GB free persistent disk
