@@ -2,12 +2,15 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 const RoomContext = createContext(null);
 
 export const RoomProvider = ({ children }) => {
   const { socket } = useSocket();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -17,12 +20,11 @@ export const RoomProvider = ({ children }) => {
   const [currentVideo, setCurrentVideo] = useState(null);
   const [isHost, setIsHost] = useState(false);
   const [reactions, setReactions] = useState([]);
+  const [isMutedByHost, setIsMutedByHost] = useState(false);
 
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
     socket.emit('room:join', { roomCode });
-
-    // Load chat history
     try {
       const { messages: history } = await getRoomMessages(roomCode);
       setMessages(history || []);
@@ -39,6 +41,7 @@ export const RoomProvider = ({ children }) => {
     setCurrentVideo(null);
     setIsHost(false);
     setVoiceParticipants([]);
+    setIsMutedByHost(false);
   }, [socket, room]);
 
   // ── Socket event listeners ────────────────────────────────────────────────
@@ -54,22 +57,16 @@ export const RoomProvider = ({ children }) => {
       setIsHost(r.hostId === user?.id);
     };
 
-    const onParticipantUpdate = ({ participants: pts }) => {
-      setParticipants(pts || []);
-    };
+    const onParticipantUpdate = ({ participants: pts }) => setParticipants(pts || []);
+    const onVoiceUpdate = ({ voiceParticipants: vp }) => setVoiceParticipants(vp || []);
 
-    const onVoiceUpdate = ({ voiceParticipants: vp }) => {
-      setVoiceParticipants(vp || []);
-    };
-
-    const onHostChanged = ({ newHostId }) => {
+    const onHostChanged = ({ newHostId, newHostUsername }) => {
       setIsHost(newHostId === user?.id);
       setRoom((prev) => prev ? { ...prev, hostId: newHostId } : prev);
+      if (newHostId === user?.id) toast.success('👑 You are now the host!');
     };
 
-    const onChatMessage = (msg) => {
-      setMessages((prev) => [...prev, msg]);
-    };
+    const onChatMessage = (msg) => setMessages((prev) => [...prev, msg]);
 
     const onSourceChanged = ({ video, videoState: vs }) => {
       setCurrentVideo(video);
@@ -79,10 +76,29 @@ export const RoomProvider = ({ children }) => {
     const onReaction = (reaction) => {
       const id = reaction.id;
       setReactions((prev) => [...prev, { ...reaction, id }]);
-      // Auto-remove after animation
-      setTimeout(() => {
-        setReactions((prev) => prev.filter((r) => r.id !== id));
-      }, 3500);
+      setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3500);
+    };
+
+    // ── New: room deleted ──────────────────────────────────────────────────
+    const onRoomDeleted = ({ message }) => {
+      toast.error(message || 'The room has been deleted.', { duration: 4000 });
+      setRoom(null); setParticipants([]); setMessages([]);
+      setVideoState(null); setCurrentVideo(null); setIsHost(false);
+      navigate('/');
+    };
+
+    // ── New: kicked ───────────────────────────────────────────────────────
+    const onKicked = ({ message }) => {
+      toast.error(message || 'You were removed from the room.', { duration: 4000 });
+      setRoom(null); setParticipants([]); setMessages([]);
+      setVideoState(null); setCurrentVideo(null); setIsHost(false);
+      navigate('/');
+    };
+
+    // ── New: muted by host ────────────────────────────────────────────────
+    const onMuted = ({ mutedBy }) => {
+      setIsMutedByHost(true);
+      toast('🔇 You were muted by the host', { duration: 3000 });
     };
 
     socket.on('room:state', onRoomState);
@@ -92,6 +108,9 @@ export const RoomProvider = ({ children }) => {
     socket.on('chat:message', onChatMessage);
     socket.on('video:source-changed', onSourceChanged);
     socket.on('chat:reaction', onReaction);
+    socket.on('room:deleted', onRoomDeleted);
+    socket.on('room:kicked', onKicked);
+    socket.on('room:muted', onMuted);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -101,8 +120,11 @@ export const RoomProvider = ({ children }) => {
       socket.off('chat:message', onChatMessage);
       socket.off('video:source-changed', onSourceChanged);
       socket.off('chat:reaction', onReaction);
+      socket.off('room:deleted', onRoomDeleted);
+      socket.off('room:kicked', onKicked);
+      socket.off('room:muted', onMuted);
     };
-  }, [socket, user]);
+  }, [socket, user, navigate]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
   const sendMessage = useCallback((content) => {
@@ -123,12 +145,34 @@ export const RoomProvider = ({ children }) => {
     setVideoState({ currentTime: 0, isPlaying: false, lastUpdated: Date.now() });
   }, [socket, room]);
 
+  // ── Host control actions ──────────────────────────────────────────────────
+  const deleteRoom = useCallback(() => {
+    if (!socket || !room) return;
+    socket.emit('room:delete', { roomCode: room.code });
+  }, [socket, room]);
+
+  const transferHost = useCallback((targetUserId) => {
+    if (!socket || !room) return;
+    socket.emit('room:transfer-host', { roomCode: room.code, targetUserId });
+  }, [socket, room]);
+
+  const kickParticipant = useCallback((targetUserId) => {
+    if (!socket || !room) return;
+    socket.emit('room:kick', { roomCode: room.code, targetUserId });
+  }, [socket, room]);
+
+  const muteParticipant = useCallback((targetUserId) => {
+    if (!socket || !room) return;
+    socket.emit('room:mute', { roomCode: room.code, targetUserId });
+  }, [socket, room]);
+
   return (
     <RoomContext.Provider value={{
       room, participants, voiceParticipants, messages,
-      videoState, setVideoState, currentVideo, isHost,
+      videoState, setVideoState, currentVideo, isHost, isMutedByHost,
       reactions, joinRoom, leaveRoom, sendMessage,
       sendReaction, setVideoSource,
+      deleteRoom, transferHost, kickParticipant, muteParticipant,
     }}>
       {children}
     </RoomContext.Provider>

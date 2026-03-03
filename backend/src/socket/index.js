@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const syncHandler = require('./syncHandler');
 const chatHandler = require('./chatHandler');
 const voiceHandler = require('./voiceHandler');
+const roomActionsHandler = require('./roomActionsHandler');
 
 module.exports = (io, roomStore) => {
     // ── Auth Middleware ────────────────────────────────────────────────────────
@@ -29,6 +30,7 @@ module.exports = (io, roomStore) => {
         syncHandler(io, socket, roomStore);
         chatHandler(io, socket, roomStore);
         voiceHandler(io, socket, roomStore);
+        roomActionsHandler(io, socket, roomStore);
 
         // Current room this socket belongs to
         let currentRoomCode = null;

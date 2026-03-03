@@ -7,7 +7,7 @@ import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 
@@ -17,7 +17,7 @@ const RoomPage = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
-  const { room, joinRoom: socketJoin, leaveRoom, isHost, reactions } = useRoom();
+  const { room, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat'); // 'chat' | 'participants'
   const [joining, setJoining] = useState(true);
@@ -52,12 +52,19 @@ const RoomPage = () => {
     };
   }, [socket, isConnected, isAuthenticated]);
 
-  const copyRoomCode = () => {
-    navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
+  const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
+  const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
+
+  const handleLeave = () => {
+    leaveRoom();
+    navigate('/');
   };
 
-  const copyRoomLink = () => {
-    navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
+  const handleDeleteRoom = () => {
+    if (window.confirm('Delete this room? This will remove all participants and cannot be undone.')) {
+      deleteRoom();
+      navigate('/');
+    }
   };
 
   if (joining) {
@@ -126,6 +133,28 @@ const RoomPage = () => {
           <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
             Share
           </button>
+
+          {/* Leave Room */}
+          <button
+            onClick={handleLeave}
+            className="flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-red-400 transition-colors"
+            title="Leave room"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">Leave</span>
+          </button>
+
+          {/* Delete Room (host only) */}
+          {isHost && (
+            <button
+              onClick={handleDeleteRoom}
+              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all"
+              title="Delete room"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Delete</span>
+            </button>
+          )}
         </div>
       </header>
 
