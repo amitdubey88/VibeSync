@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: vibesync-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install --production
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        sync: false # set manually in Render dashboard
+      - key: JWT_SECRET
+        sync: false # set manually in Render dashboard
+      - key: FRONTEND_URL
+        sync: false # e.g. https://vibesync.vercel.app
+      - key: MAX_FILE_SIZE
+        value: 524288000 # 500MB
+    disk:
+      name: uploads
+      mountPath: /var/data/uploads
+      sizeGB: 1 # 1GB free persistent disk

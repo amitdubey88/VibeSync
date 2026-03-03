@@ -1,0 +1,116 @@
+/**
+ * Video Sync Socket Handler
+ *
+ * Architecture:
+ * - HOST-AUTHORITATIVE: Only the user with hostId emits playback events.
+ * - Server caches latest videoState for late-joiner sync.
+ * - Drift correction is handled on the client side (>1.5s = hard seek).
+ */
+
+let Message;
+try { Message = require('../models/Message'); } catch (_) { }
+
+module.exports = (io, socket, roomStore) => {
+    const getRoomAndValidateHost = (roomCode) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return { error: 'Room not found' };
+        if (socket.user?.id !== room.hostId) return { error: 'Only the host can control playback' };
+        return { room };
+    };
+
+    // ── video:set-source ─────────────────────────────────────────────────────
+    // Host sets or changes the video source (upload, YouTube, or direct URL)
+    socket.on('video:set-source', ({ roomCode, video }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        room.currentVideo = video; // { url, type, title }
+        room.videoState = { currentTime: 0, isPlaying: false, lastUpdated: Date.now() };
+
+        io.to(roomCode).emit('video:source-changed', { video, videoState: room.videoState });
+        console.log(`[sync] Source changed in ${roomCode}:`, video?.title);
+    });
+
+    // ── video:play ────────────────────────────────────────────────────────────
+    socket.on('video:play', ({ roomCode, currentTime }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        room.videoState = { currentTime, isPlaying: true, lastUpdated: Date.now() };
+
+        // Broadcast to all OTHER clients (host already played locally)
+        socket.to(roomCode).emit('video:play', { currentTime, timestamp: Date.now() });
+        console.log(`[sync] PLAY @${currentTime.toFixed(2)}s in room ${roomCode}`);
+    });
+
+    // ── video:pause ───────────────────────────────────────────────────────────
+    socket.on('video:pause', ({ roomCode, currentTime }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        room.videoState = { currentTime, isPlaying: false, lastUpdated: Date.now() };
+
+        socket.to(roomCode).emit('video:pause', { currentTime });
+        console.log(`[sync] PAUSE @${currentTime.toFixed(2)}s in room ${roomCode}`);
+    });
+
+    // ── video:seek ────────────────────────────────────────────────────────────
+    socket.on('video:seek', ({ roomCode, currentTime }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        room.videoState.currentTime = currentTime;
+        room.videoState.lastUpdated = Date.now();
+
+        socket.to(roomCode).emit('video:seek', { currentTime });
+        console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${roomCode}`);
+    });
+
+    // ── video:request-sync ────────────────────────────────────────────────────
+    // Called by late joiners or reconnecting clients to get current state.
+    // Server calculates the adjusted currentTime based on elapsed wall-clock time.
+    socket.on('video:request-sync', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+
+        const { videoState, currentVideo } = room;
+        let adjustedTime = videoState.currentTime;
+
+        // If video was playing, account for time elapsed since last update
+        if (videoState.isPlaying) {
+            const elapsedSec = (Date.now() - videoState.lastUpdated) / 1000;
+            adjustedTime = videoState.currentTime + elapsedSec;
+        }
+
+        socket.emit('video:sync-state', {
+            currentVideo,
+            videoState: {
+                ...videoState,
+                currentTime: adjustedTime,
+            },
+        });
+    });
+
+    // ── video:buffer-start ────────────────────────────────────────────────────
+    // Client notifies others that they are buffering. Host can choose to pause.
+    socket.on('video:buffer-start', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const participant = room.participants.find((p) => p.socketId === socket.id);
+        if (participant) {
+            participant.isBuffering = true;
+            io.to(roomCode).emit('room:participant-update', { participants: room.participants });
+        }
+    });
+
+    // ── video:buffer-end ──────────────────────────────────────────────────────
+    socket.on('video:buffer-end', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const participant = room.participants.find((p) => p.socketId === socket.id);
+        if (participant) {
+            participant.isBuffering = false;
+            io.to(roomCode).emit('room:participant-update', { participants: room.participants });
+        }
+    });
+};
