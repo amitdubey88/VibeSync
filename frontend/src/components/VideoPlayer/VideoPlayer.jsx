@@ -1,17 +1,93 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import { useRoom } from '../../context/RoomContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Link, Loader2 } from 'lucide-react';
+import { Play, Upload, Link, Loader2, X, Film } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 
+// ── Full-screen portal modal ─────────────────────────────────────────────────
+const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, isUploading, uploadProgress }) =>
+  createPortal(
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
+      onClick={(e) => e.target === e.currentTarget && onClose()}
+    >
+      {/* Sheet on mobile (slides up from bottom), centered card on desktop */}
+      <div className="glass w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 pb-8 sm:pb-6 animate-slide-up">
+        <div className="flex items-center justify-between mb-5">
+          <div>
+            <h3 className="text-xl font-bold text-text-primary">Change Video</h3>
+            <p className="text-text-muted text-xs mt-0.5">Replace the video for everyone in the room</p>
+          </div>
+          <button onClick={onClose} className="p-2 rounded-xl hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* File upload */}
+        <div className="mb-5">
+          <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
+            Upload File (MP4, WebM)
+          </label>
+          <label className={`flex items-center justify-center gap-3 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all
+            ${isUploading ? 'border-accent-purple bg-accent-purple/5' : 'border-border-light hover:border-accent-purple/60 hover:bg-accent-purple/5'}`}>
+            <input type="file" accept="video/*" className="hidden" onChange={onFileUpload} disabled={isUploading} />
+            {isUploading ? (
+              <div className="text-center">
+                <Loader2 className="w-6 h-6 animate-spin text-accent-purple mx-auto mb-2" />
+                <span className="text-sm text-accent-purple font-semibold">{uploadProgress}% uploading…</span>
+                <div className="mt-2 h-1.5 bg-bg-hover rounded-full overflow-hidden w-40 mx-auto">
+                  <div className="h-full bg-accent-purple transition-all" style={{ width: `${uploadProgress}%` }} />
+                </div>
+              </div>
+            ) : (
+              <div className="text-center">
+                <Film className="w-6 h-6 text-text-muted mx-auto mb-1.5" />
+                <span className="text-sm text-text-secondary font-medium">Click to select video</span>
+                <p className="text-xs text-text-muted mt-0.5">MP4, WebM, MOV up to 100MB</p>
+              </div>
+            )}
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3 mb-5">
+          <hr className="flex-1 border-border-dark" />
+          <span className="text-text-muted text-xs font-medium">OR</span>
+          <hr className="flex-1 border-border-dark" />
+        </div>
+
+        {/* URL input */}
+        <form onSubmit={onUrlSubmit}>
+          <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
+            YouTube / Direct URL
+          </label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              className="input flex-1"
+              placeholder="https://youtube.com/watch?v=..."
+              value={urlInput}
+              onChange={(e) => setUrlInput(e.target.value)}
+              autoFocus
+            />
+            <button type="submit" className="btn-primary px-5">Go</button>
+          </div>
+        </form>
+
+        <button className="btn-ghost w-full mt-4 text-sm" onClick={onClose}>Cancel</button>
+      </div>
+    </div>,
+    document.body
+  );
+
+// ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
   const { currentVideo, isHost, setVideoSource } = useRoom();
   const videoRef = useRef(null);
 
-  // ── Local UI state ───────────────────────────────────────────────────────
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -20,49 +96,40 @@ const VideoPlayer = () => {
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
   const [showControls, setShowControls] = useState(true);
-  const [videoEl, setVideoEl] = useState(null); // actual DOM element
+  const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
 
-  // ── KEY FIX: use a callback ref so we know exactly when <video> mounts ──
-  // We store the actual DOM node in `videoEl` state. This triggers a re-render
-  // and passes the live element to useVideoSync, which re-runs its effects.
   const setVideoRef = useCallback((el) => {
     videoRef.current = el;
     setVideoEl(el);
   }, []);
 
-  // Pass the DOM element directly to the hook (not the ref object)
   useVideoSync(videoEl);
 
-  // ── Attach UI-only listeners to the video element ────────────────────────
   useEffect(() => {
     if (!videoEl) return;
     const onTimeUpdate = () => setCurrentTime(videoEl.currentTime);
     const onLoadedMetadata = () => setDuration(videoEl.duration);
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => setIsLoading(false);
-
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
     videoEl.addEventListener('waiting', onWaiting);
     videoEl.addEventListener('canplay', onCanPlay);
-
     return () => {
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
       videoEl.removeEventListener('waiting', onWaiting);
       videoEl.removeEventListener('canplay', onCanPlay);
     };
-  }, [videoEl]); // re-runs when the video element mounts/changes
+  }, [videoEl]);
 
-  // ── Auto-hide controls ───────────────────────────────────────────────────
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
-  // ── File upload ──────────────────────────────────────────────────────────
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -81,14 +148,11 @@ const VideoPlayer = () => {
     }
   };
 
-  // ── URL / YouTube submit ─────────────────────────────────────────────────
   const handleUrlSubmit = (e) => {
     e.preventDefault();
     const url = urlInput.trim();
     if (!url) return;
-    const ytMatch = url.match(
-      /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/
-    );
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
     if (ytMatch) {
       setVideoSource({ url: ytMatch[1], type: 'youtube', title: 'YouTube Video' });
     } else {
@@ -99,95 +163,57 @@ const VideoPlayer = () => {
     toast.success('Video source set!');
   };
 
-  // ── YouTube: wrap in container so host can still change source ───────────
+  // ── Portal modal (shared for both YouTube and regular video) ─────────────
+  const sourcePicker = showSourcePicker && isHost && (
+    <SourcePickerModal
+      onClose={() => setShowSourcePicker(false)}
+      onUrlSubmit={handleUrlSubmit}
+      onFileUpload={handleFileUpload}
+      urlInput={urlInput}
+      setUrlInput={setUrlInput}
+      isUploading={isUploading}
+      uploadProgress={uploadProgress}
+    />
+  );
+
+  // ── YouTube player ────────────────────────────────────────────────────────
   if (currentVideo?.type === 'youtube') {
     return (
       <div className="relative w-full h-full bg-black">
         <YouTubePlayer videoId={currentVideo.url} />
 
-        {/* Host-only persistent "Change Video" button */}
+        {/* Non-host transparent overlay — blocks ALL direct clicks on the iframe */}
+        {!isHost && (
+          <div
+            className="absolute inset-0 z-10 cursor-not-allowed"
+            title="Only the host can control playback"
+          />
+        )}
+
+        {/* Host-only "Change Video" button */}
         {isHost && (
           <button
             onClick={() => setShowSourcePicker(true)}
             className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-black/60 hover:bg-black/80
                        border border-white/20 hover:border-white/40 text-white text-xs font-semibold
                        px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all duration-200"
-            title="Change video source"
           >
-            <Upload className="w-3.5 h-3.5" />
-            Change Video
+            <Upload className="w-3.5 h-3.5" /> Change Video
           </button>
         )}
 
-        {/* Source picker modal */}
-        {showSourcePicker && isHost && (
-          <div
-            className="absolute inset-0 z-30 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-            onClick={(e) => e.target === e.currentTarget && setShowSourcePicker(false)}
-          >
-            <div className="glass rounded-2xl p-6 w-full max-w-md animate-slide-up">
-              <h3 className="text-xl font-bold mb-1 text-text-primary">Change Video</h3>
-              <p className="text-text-muted text-sm mb-6">Replace the current video for everyone in the room</p>
-
-              <div className="mb-6">
-                <label className="block text-sm font-semibold text-text-secondary mb-3">
-                  <Upload className="inline w-4 h-4 mr-1" /> Upload File (MP4, WebM)
-                </label>
-                <label className={`flex items-center justify-center gap-3 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all
-                  ${isUploading ? 'border-accent-purple' : 'border-border-light hover:border-accent-purple/50'}`}>
-                  <input type="file" accept="video/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
-                  {isUploading ? (
-                    <div className="text-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-accent-purple mx-auto mb-1" />
-                      <span className="text-sm text-accent-purple font-medium">{uploadProgress}% uploaded…</span>
-                    </div>
-                  ) : (
-                    <div className="text-center">
-                      <Upload className="w-6 h-6 text-text-muted mx-auto mb-1" />
-                      <span className="text-sm text-text-secondary">Click to select a video file</span>
-                    </div>
-                  )}
-                </label>
-              </div>
-
-              <div className="flex items-center gap-3 mb-6">
-                <hr className="flex-1 border-border-dark" />
-                <span className="text-text-muted text-xs">OR</span>
-                <hr className="flex-1 border-border-dark" />
-              </div>
-
-              <form onSubmit={handleUrlSubmit}>
-                <label className="block text-sm font-semibold text-text-secondary mb-3">
-                  <Link className="inline w-4 h-4 mr-1" /> New YouTube / Direct URL
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className="input flex-1"
-                    placeholder="https://youtube.com/watch?v=..."
-                    value={urlInput}
-                    onChange={(e) => setUrlInput(e.target.value)}
-                    autoFocus
-                  />
-                  <button type="submit" className="btn-primary px-4">Go</button>
-                </div>
-              </form>
-
-              <button className="btn-ghost w-full mt-4" onClick={() => setShowSourcePicker(false)}>Cancel</button>
-            </div>
-          </div>
-        )}
+        {sourcePicker}
       </div>
     );
   }
 
+  // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
       className="relative w-full h-full bg-black flex items-center justify-center group"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
-      {/* ── Video element ── */}
       {currentVideo ? (
         <video
           ref={setVideoRef}
@@ -198,8 +224,6 @@ const VideoPlayer = () => {
           crossOrigin={currentVideo.type === 'file' ? 'anonymous' : undefined}
         />
       ) : (
-        // When no video, keep the ref null so videoEl state becomes null too
-        // (useEffect cleanup runs automatically)
         <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
           <div className="w-24 h-24 rounded-full bg-bg-hover flex items-center justify-center animate-pulse-glow">
             <Play className="w-10 h-10 text-accent-red ml-1" />
@@ -218,14 +242,14 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* ── Buffering spinner ── */}
+      {/* Buffering spinner */}
       {isLoading && currentVideo && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
           <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
         </div>
       )}
 
-      {/* ── Controls overlay ── */}
+      {/* Controls overlay */}
       {currentVideo && (
         <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <VideoControls
@@ -238,67 +262,7 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* ── Source picker modal ── */}
-      {showSourcePicker && isHost && (
-        <div
-          className="absolute inset-0 z-20 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
-          onClick={(e) => e.target === e.currentTarget && setShowSourcePicker(false)}
-        >
-          <div className="glass rounded-2xl p-6 w-full max-w-md animate-slide-up">
-            <h3 className="text-xl font-bold mb-6 text-text-primary">Load Video</h3>
-
-            {/* File upload */}
-            <div className="mb-6">
-              <label className="block text-sm font-semibold text-text-secondary mb-3">
-                <Upload className="inline w-4 h-4 mr-1" /> Upload File (MP4, WebM)
-              </label>
-              <label className={`flex items-center justify-center gap-3 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all
-                ${isUploading ? 'border-accent-purple' : 'border-border-light hover:border-accent-purple/50'}`}>
-                <input type="file" accept="video/*" className="hidden" onChange={handleFileUpload} disabled={isUploading} />
-                {isUploading ? (
-                  <div className="text-center">
-                    <Loader2 className="w-6 h-6 animate-spin text-accent-purple mx-auto mb-1" />
-                    <span className="text-sm text-accent-purple font-medium">{uploadProgress}% uploaded…</span>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Upload className="w-6 h-6 text-text-muted mx-auto mb-1" />
-                    <span className="text-sm text-text-secondary">Click to select a video file</span>
-                  </div>
-                )}
-              </label>
-            </div>
-
-            <div className="flex items-center gap-3 mb-6">
-              <hr className="flex-1 border-border-dark" />
-              <span className="text-text-muted text-xs">OR</span>
-              <hr className="flex-1 border-border-dark" />
-            </div>
-
-            {/* URL input */}
-            <form onSubmit={handleUrlSubmit}>
-              <label className="block text-sm font-semibold text-text-secondary mb-3">
-                <Link className="inline w-4 h-4 mr-1" /> YouTube / Direct URL
-              </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="input flex-1"
-                  placeholder="https://youtube.com/watch?v=... or video URL"
-                  value={urlInput}
-                  onChange={(e) => setUrlInput(e.target.value)}
-                  autoFocus
-                />
-                <button type="submit" className="btn-primary px-4">Go</button>
-              </div>
-            </form>
-
-            <button className="btn-ghost w-full mt-4" onClick={() => setShowSourcePicker(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+      {sourcePicker}
     </div>
   );
 };

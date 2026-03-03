@@ -7,6 +7,7 @@ import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
+import ConfirmDialog from '../components/UI/ConfirmDialog';
 import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
@@ -19,9 +20,10 @@ const RoomPage = () => {
   const { socket, isConnected } = useSocket();
   const { room, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom } = useRoom();
 
-  const [sidebarTab, setSidebarTab] = useState('chat'); // 'chat' | 'participants'
+  const [sidebarTab, setSidebarTab] = useState('chat');
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const hasJoinedRef = useRef(false);
 
   useEffect(() => {
@@ -60,12 +62,7 @@ const RoomPage = () => {
     navigate('/');
   };
 
-  const handleDeleteRoom = () => {
-    if (window.confirm('Delete this room? This will remove all participants and cannot be undone.')) {
-      deleteRoom();
-      navigate('/');
-    }
-  };
+  const handleDeleteRoom = () => setShowDeleteConfirm(true);
 
   if (joining) {
     return (
@@ -209,6 +206,17 @@ const RoomPage = () => {
           <VoiceControls />
         </aside>
       </div>
+
+      {/* Delete room confirmation */}
+      <ConfirmDialog
+        open={showDeleteConfirm}
+        title="Delete Room?"
+        message="This will end the session for all participants and cannot be undone."
+        confirmLabel="Delete Room"
+        danger
+        onConfirm={() => { deleteRoom(); navigate('/'); }}
+        onCancel={() => setShowDeleteConfirm(false)}
+      />
     </div>
   );
 };
