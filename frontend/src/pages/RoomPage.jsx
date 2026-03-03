@@ -89,22 +89,16 @@ const RoomPage = () => {
   return (
     <div className="h-screen flex flex-col bg-bg-primary overflow-hidden">
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-4 py-2.5 border-b border-border-dark bg-bg-secondary shrink-0 gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          {/* Logo */}
+      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark bg-bg-secondary shrink-0 gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0">
             <div className="w-7 h-7 rounded-md bg-accent-red flex items-center justify-center">
               <Tv2 className="w-4 h-4 text-white" />
             </div>
             <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
           </button>
-
           <div className="w-px h-5 bg-border-dark" />
-
-          {/* Room name */}
           <h1 className="text-sm font-bold text-text-primary truncate">{room?.name || code}</h1>
-
-          {/* Host badge */}
           {isHost && (
             <span className="badge bg-accent-yellow/10 text-accent-yellow hidden md:flex">
               <Crown className="w-3 h-3" /> Host
@@ -113,40 +107,38 @@ const RoomPage = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Connection status */}
-          <div className={`flex items-center gap-1.5 text-xs hidden sm:flex
+          <div className={`items-center gap-1.5 text-xs hidden sm:flex
             ${isConnected ? 'text-accent-green' : 'text-red-400'}`}>
             {isConnected
               ? <><Wifi className="w-3.5 h-3.5" /> Live</>
               : <><WifiOff className="w-3.5 h-3.5" /> Reconnecting…</>}
           </div>
-
-          {/* Room code chip */}
           <button
             onClick={copyRoomCode}
-            className="flex items-center gap-2 bg-bg-hover hover:bg-bg-card border border-border-dark
-                       rounded-lg px-3 py-1.5 text-xs font-mono font-bold text-text-primary transition-all"
+            className="flex items-center gap-1.5 bg-bg-hover hover:bg-bg-card border border-border-dark
+                       rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-text-primary transition-all"
             title="Click to copy room code"
           >
-            <span className="text-text-muted">CODE</span>
+            <span className="text-text-muted hidden xs:inline">CODE</span>
             <span className="text-accent-purple tracking-widest">{code}</span>
             <Copy className="w-3 h-3 text-text-muted" />
           </button>
-
           <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
-            Share Link
+            Share
           </button>
         </div>
       </header>
 
       {/* ── Main content ── */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* ── Video area (left 70%) ── */}
-        <div className="flex-1 min-w-0 bg-black relative overflow-hidden">
-          <VideoPlayer />
+      {/* Mobile: video on top, sidebar below   |   Desktop: side-by-side */}
+      <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
+        {/* ── Video area ── */}
+        {/* Mobile: fixed height so chat is visible | Desktop: fills remaining width */}
+        <div className="h-[42vw] min-h-[200px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
+          <VideoPlayer />
           {/* Floating emoji reactions */}
-          <div className="absolute bottom-24 left-6 pointer-events-none z-30">
+          <div className="absolute bottom-16 left-4 pointer-events-none z-30">
             {reactions.map((r) => (
               <div key={r.id} className="reaction-float absolute text-3xl select-none" style={{ bottom: 0 }}>
                 {r.emoji}
@@ -155,8 +147,9 @@ const RoomPage = () => {
           </div>
         </div>
 
-        {/* ── Sidebar (right 30%, min 300px) ── */}
-        <aside className="w-80 xl:w-96 flex flex-col bg-bg-secondary border-l border-border-dark shrink-0">
+        {/* ── Sidebar ── */}
+        {/* Mobile: full-width flex-1 (fills remaining height) | Desktop: fixed 320px */}
+        <aside className="flex-1 md:flex-none md:w-80 xl:w-96 flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden">
           {/* Sidebar tabs */}
           <div className="flex border-b border-border-dark shrink-0">
             {[
@@ -172,7 +165,7 @@ const RoomPage = () => {
                     : 'border-transparent text-text-muted hover:text-text-secondary'}`}
               >
                 <Icon className="w-4 h-4" />
-                <span className="hidden xs:block">{label}</span>
+                <span>{label}</span>
               </button>
             ))}
           </div>
@@ -183,7 +176,7 @@ const RoomPage = () => {
             {sidebarTab === 'participants' && <ParticipantsList />}
           </div>
 
-          {/* Voice controls always visible at bottom */}
+          {/* Voice controls */}
           <VoiceControls />
         </aside>
       </div>
