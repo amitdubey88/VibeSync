@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
-import { generateGuestName } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Pencil, Check } from 'lucide-react';
 
@@ -11,7 +10,7 @@ const LandingPage = () => {
   const navigate = useNavigate();
 
   const [tab, setTab] = useState('join');
-  const [username, setUsername] = useState(generateGuestName());
+  const [username, setUsername] = useState(''); // empty by default — user must choose their name
   const [editingUsername, setEditingUsername] = useState(false);
   const [editedName, setEditedName] = useState('');
   const [roomCode, setRoomCode] = useState('');
@@ -25,17 +24,16 @@ const LandingPage = () => {
   }, [user]);
 
   // ── Ensure user is logged in with chosen username ────────────────────────
-  const ensureAuth = async (desiredUsername) => {
-    const name = (desiredUsername || username).trim() || generateGuestName();
-    if (!name) { toast.error('Please enter a username'); return false; }
-    if (name.length < 2) { toast.error('Username must be at least 2 characters'); return false; }
+  const ensureAuth = async () => {
+    const name = username.trim();
+    if (!name) { toast.error('Please enter your name first'); return false; }
+    if (name.length < 2) { toast.error('Name must be at least 2 characters'); return false; }
 
     // If already authed with the SAME username, reuse session
     if (isAuthenticated && user?.username === name) return true;
 
-    // If authed with a DIFFERENT username → re-login as new guest identity
+    // Different username OR not logged in → issue a fresh guest token
     if (isAuthenticated) logout();
-
     try {
       await guestLogin(name);
       return true;
@@ -154,7 +152,7 @@ const LandingPage = () => {
             {/* ── Username section ── */}
             <div className="mb-5">
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                Your Name
+                Your Name <span className="text-red-400">*</span>
               </label>
 
               {/* Editing mode OR logged-in chip */}
@@ -162,8 +160,8 @@ const LandingPage = () => {
                 <div className="flex gap-2">
                   <input
                     type="text"
-                    className="input flex-1"
-                    placeholder="Enter your username"
+                    className={`input flex-1 ${!editingUsername && !username ? 'border-red-500/40' : ''}`}
+                    placeholder={editingUsername ? 'Enter new name' : 'Your name (required)'}
                     value={editingUsername ? editedName : username}
                     onChange={(e) => editingUsername
                       ? setEditedName(e.target.value)
