@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
@@ -8,9 +8,10 @@ import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2 } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
+import { createPortal } from 'react-dom';
 
 const RoomPage = () => {
   const { code } = useParams();
@@ -18,7 +19,11 @@ const RoomPage = () => {
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
-  const { room, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom } = useRoom();
+  const {
+    room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
+    joinStatus, joinRequests, requiresApproval,
+    approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
+  } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
   const [joining, setJoining] = useState(true);
@@ -62,15 +67,71 @@ const RoomPage = () => {
     };
   }, [socket, isConnected, isAuthenticated]);
 
+  // Refresh participant list when switching to participants tab
+  const handleTabChange = useCallback((tab) => {
+    setSidebarTab(tab);
+    if (tab === 'participants') refreshParticipants();
+  }, [refreshParticipants]);
+
+  // Show join-request approval toasts for host
+  useEffect(() => {
+    if (!isHost || joinRequests.length === 0) return;
+    const req = joinRequests[joinRequests.length - 1];
+    // Show a persistent toast with approve/deny actions
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm font-semibold">🔔 <strong>{req.username}</strong> wants to join</p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => { approveJoin(req.userId); toast.dismiss(t.id); }}
+              className="flex items-center gap-1 bg-accent-green/20 text-accent-green px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-accent-green/30 transition-colors"
+            >
+              <CheckCircle className="w-3.5 h-3.5" /> Approve
+            </button>
+            <button
+              onClick={() => { denyJoin(req.userId); toast.dismiss(t.id); }}
+              className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-500/30 transition-colors"
+            >
+              <XCircle className="w-3.5 h-3.5" /> Deny
+            </button>
+          </div>
+        </div>
+      ),
+      { duration: 30000, id: `join-req-${req.userId}` }
+    );
+  }, [joinRequests, isHost]);
+
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
   const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
 
-  const handleLeave = () => {
-    leaveRoom();
-    navigate('/');
-  };
+  const handleLeave = () => { leaveRoom(); navigate('/'); };
 
   const handleDeleteRoom = () => setShowDeleteConfirm(true);
+
+  // Pending approval waiting screen
+  if (!joining && joinStatus === 'pending') {
+    return (
+      <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
+        <div className="card text-center max-w-sm">
+          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+            <Clock className="w-9 h-9 text-accent-purple" />
+          </div>
+          <h2 className="text-xl font-bold text-text-primary mb-2">Waiting for Approval</h2>
+          <p className="text-text-secondary text-sm mb-4">
+            The host needs to approve your request to join <strong>{code}</strong>.
+          </p>
+          <div className="flex gap-1.5 justify-center mb-6">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="w-2.5 h-2.5 rounded-full bg-accent-purple/60 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+          <button className="btn-ghost text-sm" onClick={() => { leaveRoom(); navigate('/'); }}>Cancel</button>
+        </div>
+      </div>
+    );
+  }
 
   if (joining) {
     return (
@@ -188,11 +249,11 @@ const RoomPage = () => {
           <div className="flex border-b border-border-dark shrink-0">
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
-              { id: 'participants', icon: Users, label: `People (${room?.participants?.length || 0})` },
+              { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
             ].map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
-                onClick={() => setSidebarTab(id)}
+                onClick={() => handleTabChange(id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all duration-200
                   ${sidebarTab === id
                     ? 'border-accent-red text-text-primary'
@@ -200,9 +261,44 @@ const RoomPage = () => {
               >
                 <Icon className="w-4 h-4" />
                 <span>{label}</span>
+                {id === 'participants' && joinRequests.length > 0 && (
+                  <span className="w-4 h-4 rounded-full bg-accent-red text-white text-xs flex items-center justify-center">
+                    {joinRequests.length}
+                  </span>
+                )}
               </button>
             ))}
           </div>
+
+          {/* Host: approval mode toggle (below tab bar, visible on participants tab) */}
+          {isHost && sidebarTab === 'participants' && (
+            <div className="flex items-center justify-between px-4 py-2 border-b border-border-dark bg-bg-primary/50 shrink-0">
+              <div className="flex items-center gap-2">
+                {requiresApproval
+                  ? <ShieldCheck className="w-4 h-4 text-accent-green" />
+                  : <ShieldOff className="w-4 h-4 text-text-muted" />}
+                <span className="text-xs font-semibold text-text-secondary">
+                  {requiresApproval ? 'Approval ON' : 'Approval OFF'}
+                </span>
+                {requiresApproval && joinRequests.length > 0 && (
+                  <span className="text-xs text-accent-yellow font-semibold">
+                    ({joinRequests.length} waiting)
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => setApprovalRequired(!requiresApproval)}
+                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
+                  requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-light'
+                }`}
+                title={requiresApproval ? 'Disable approval' : 'Enable approval'}
+              >
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
+                  requiresApproval ? 'translate-x-5' : 'translate-x-0.5'
+                }`} />
+              </button>
+            </div>
+          )}
 
           {/* Tab content */}
           <div className="flex-1 overflow-hidden flex flex-col">

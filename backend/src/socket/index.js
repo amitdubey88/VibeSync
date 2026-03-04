@@ -35,6 +35,91 @@ module.exports = (io, roomStore) => {
         // Current room this socket belongs to
         let currentRoomCode = null;
 
+        // ── room:get-participants ──────────────────────────────────────────────
+        // Client can request a fresh participant list at any time
+        socket.on('room:get-participants', ({ roomCode }) => {
+            const code = roomCode?.toUpperCase();
+            const room = roomStore.get(code);
+            if (!room) return;
+            socket.emit('room:participant-update', { participants: room.participants });
+        });
+
+        // ── room:set-approval ──────────────────────────────────────────────────
+        // Host toggles whether new joins need approval
+        socket.on('room:set-approval', ({ roomCode, requiresApproval }) => {
+            const code = roomCode?.toUpperCase();
+            const room = roomStore.get(code);
+            if (!room || room.hostId !== socket.user.id) return;
+            room.requiresApproval = !!requiresApproval;
+            io.to(code).emit('room:approval-changed', { requiresApproval: room.requiresApproval });
+        });
+
+        // ── room:approve-join ──────────────────────────────────────────────────
+        socket.on('room:approve-join', ({ roomCode, userId }) => {
+            const code = roomCode?.toUpperCase();
+            const room = roomStore.get(code);
+            if (!room || room.hostId !== socket.user.id) return;
+
+            const pending = (room.pendingJoins || []).find((p) => p.userId === userId);
+            if (!pending) return;
+
+            // Remove from pending
+            room.pendingJoins = room.pendingJoins.filter((p) => p.userId !== userId);
+
+            // Add to participants
+            room.participants.push({
+                socketId: pending.socketId,
+                userId: pending.userId,
+                username: pending.username,
+                avatar: pending.avatar,
+                isGuest: pending.isGuest,
+                isOnline: true,
+                isBuffering: false,
+                joinedAt: Date.now(),
+            });
+
+            // Send full state to the approved user
+            io.to(pending.socketId).emit('room:state', {
+                room: {
+                    code: room.code, name: room.name, hostId: room.hostId,
+                    type: room.type, participantLimit: room.participantLimit,
+                    currentVideo: room.currentVideo,
+                    videoState: computeAdjustedVideoState(room.videoState),
+                    participants: room.participants,
+                    voiceParticipants: room.voiceParticipants || [],
+                    requiresApproval: room.requiresApproval || false,
+                },
+            });
+
+            // Broadcast updated participant list
+            io.to(code).emit('room:participant-update', { participants: room.participants });
+
+            const msg = {
+                id: `sys_${Date.now()}`, userId: 'system', username: 'System',
+                avatar: null, content: `${pending.username} joined the room`, type: 'system',
+                createdAt: new Date().toISOString()
+            };
+            room.messages = room.messages || [];
+            room.messages.push(msg);
+            io.to(code).emit('chat:message', msg);
+
+            console.log(`✅ ${pending.username} approved into room ${code}`);
+        });
+
+        // ── room:deny-join ─────────────────────────────────────────────────────
+        socket.on('room:deny-join', ({ roomCode, userId }) => {
+            const code = roomCode?.toUpperCase();
+            const room = roomStore.get(code);
+            if (!room || room.hostId !== socket.user.id) return;
+
+            const pending = (room.pendingJoins || []).find((p) => p.userId === userId);
+            if (!pending) return;
+
+            room.pendingJoins = room.pendingJoins.filter((p) => p.userId !== userId);
+            io.to(pending.socketId).emit('room:join-denied', { message: 'The host declined your request to join.' });
+            console.log(`❌ ${pending.username} denied from room ${code}`);
+        });
+
         // ── room:join ──────────────────────────────────────────────────────────
         socket.on('room:join', ({ roomCode }) => {
             const code = roomCode?.toUpperCase();
@@ -66,6 +151,38 @@ module.exports = (io, roomStore) => {
                         message: `Username "${socket.user.username}" is already taken in this room. Please choose a different name.`,
                     });
                 }
+
+                // ── Approval gate (skip for the host themselves) ──────────────────
+                const isRoomHost = socket.user.id === room.hostId;
+                if (room.requiresApproval && !isRoomHost) {
+                    // Keep socket in room channel so they can receive the approval event
+                    room.pendingJoins = room.pendingJoins || [];
+                    room.pendingJoins.push({
+                        socketId: socket.id,
+                        userId: socket.user.id,
+                        username: socket.user.username,
+                        avatar: socket.user.avatar,
+                        isGuest: socket.user.isGuest || false,
+                    });
+
+                    // Notify the joiner they're waiting
+                    socket.emit('room:join-pending', { message: 'Waiting for host to approve your request…' });
+
+                    // Notify the host
+                    const hostParticipant = room.participants.find((p) => p.userId === room.hostId && p.isOnline);
+                    if (hostParticipant) {
+                        io.to(hostParticipant.socketId).emit('room:join-request', {
+                            userId: socket.user.id,
+                            username: socket.user.username,
+                            avatar: socket.user.avatar,
+                            isGuest: socket.user.isGuest || false,
+                        });
+                    }
+
+                    console.log(`⏳ ${socket.user.username} waiting for approval in ${code}`);
+                    return; // Don't proceed — wait for host action
+                }
+
                 room.participants.push({
                     socketId: socket.id,
                     userId: socket.user.id,
@@ -90,6 +207,7 @@ module.exports = (io, roomStore) => {
                     videoState: computeAdjustedVideoState(room.videoState),
                     participants: room.participants,
                     voiceParticipants: room.voiceParticipants || [],
+                    requiresApproval: room.requiresApproval || false,
                 },
             });
 

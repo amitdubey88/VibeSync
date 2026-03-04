@@ -5,7 +5,7 @@ import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Link, Loader2, X, Film, CloudUpload, Clock } from 'lucide-react';
+import { Play, Upload, Loader2, X, Film, CloudUpload, Clock } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -86,7 +86,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, room, isHost, setVideoSource } = useRoom();
+  const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
   const { socket } = useSocket();
   const videoRef = useRef(null);
 
@@ -187,7 +187,8 @@ const VideoPlayer = () => {
     blobUrlRef.current = localUrl;
     setBlobUrl(localUrl);
 
-    // 2. Tell participants upload started (silent — they just see 'No Video Loaded' until done)
+    // 2. Tell participants host started uploading (they see buffering state, not blank)
+    if (room) notifyUploading(file.name);
     toast.success('▶ Playing now! Uploading for guests…', { duration: 4000 });
 
     // 3. Upload to Cloudinary in background

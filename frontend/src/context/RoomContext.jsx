@@ -19,6 +19,11 @@ export const RoomProvider = ({ children }) => {
   const [isHost, setIsHost] = useState(false);
   const [reactions, setReactions] = useState([]);
   const [isMutedByHost, setIsMutedByHost] = useState(false);
+  const [requiresApproval, setRequiresApproval] = useState(false);
+  // joinRequests: pending approval requests shown to host
+  const [joinRequests, setJoinRequests] = useState([]);
+  // joinStatus: 'joined' | 'pending' | 'denied'
+  const [joinStatus, setJoinStatus] = useState('joined');
 
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
@@ -53,6 +58,8 @@ export const RoomProvider = ({ children }) => {
       setVideoState(r.videoState);
       setCurrentVideo(r.currentVideo);
       setIsHost(r.hostId === user?.id);
+      setRequiresApproval(r.requiresApproval || false);
+      setJoinStatus('joined'); // receiving full state means we're in
     };
 
     const onParticipantUpdate = ({ participants: pts }) => setParticipants(pts || []);
@@ -98,11 +105,29 @@ export const RoomProvider = ({ children }) => {
       setTimeout(() => { window.location.href = '/'; }, 800);
     };
 
-    // ── New: muted by host ────────────────────────────────────────────────
-    const onMuted = ({ mutedBy }) => {
+    const onMuted = () => {
       setIsMutedByHost(true);
       toast('🔇 You were muted by the host', { duration: 3000 });
     };
+
+    // ── Join approval events ────────────────────────────────────────────────────────
+    // Host receives a join request from pending user
+    const onJoinRequest = (req) => {
+      setJoinRequests((prev) => {
+        if (prev.find((r) => r.userId === req.userId)) return prev;
+        return [...prev, req];
+      });
+    };
+    // Joiner is placed in pending state
+    const onJoinPending = () => setJoinStatus('pending');
+    // Joiner was denied
+    const onJoinDenied = ({ message }) => {
+      setJoinStatus('denied');
+      toast.error(message || 'Your join request was declined.', { duration: 5000 });
+      setTimeout(() => { window.location.href = '/'; }, 2500);
+    };
+    // Approval requirement toggle
+    const onApprovalChanged = ({ requiresApproval: ra }) => setRequiresApproval(ra);
 
     socket.on('room:state', onRoomState);
     socket.on('room:participant-update', onParticipantUpdate);
@@ -115,6 +140,10 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:deleted', onRoomDeleted);
     socket.on('room:kicked', onKicked);
     socket.on('room:muted', onMuted);
+    socket.on('room:join-request', onJoinRequest);
+    socket.on('room:join-pending', onJoinPending);
+    socket.on('room:join-denied', onJoinDenied);
+    socket.on('room:approval-changed', onApprovalChanged);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -128,6 +157,10 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:deleted', onRoomDeleted);
       socket.off('room:kicked', onKicked);
       socket.off('room:muted', onMuted);
+      socket.off('room:join-request', onJoinRequest);
+      socket.off('room:join-pending', onJoinPending);
+      socket.off('room:join-denied', onJoinDenied);
+      socket.off('room:approval-changed', onApprovalChanged);
     };
   }, [socket, user]);
 
@@ -164,6 +197,32 @@ export const RoomProvider = ({ children }) => {
     socket.emit('video:set-uploading', { roomCode: room.code, title });
   }, [socket, room]);
 
+  // refreshParticipants: ask server for the latest list right now
+  // This fixes the race-condition where host misses room:participant-update
+  const refreshParticipants = useCallback(() => {
+    if (!socket || !room) return;
+    socket.emit('room:get-participants', { roomCode: room.code });
+  }, [socket, room]);
+
+  // ── Host approval actions ────────────────────────────────────────────────────────
+  const approveJoin = useCallback((userId) => {
+    if (!socket || !room) return;
+    socket.emit('room:approve-join', { roomCode: room.code, userId });
+    setJoinRequests((prev) => prev.filter((r) => r.userId !== userId));
+  }, [socket, room]);
+
+  const denyJoin = useCallback((userId) => {
+    if (!socket || !room) return;
+    socket.emit('room:deny-join', { roomCode: room.code, userId });
+    setJoinRequests((prev) => prev.filter((r) => r.userId !== userId));
+  }, [socket, room]);
+
+  const setApprovalRequired = useCallback((value) => {
+    if (!socket || !room) return;
+    socket.emit('room:set-approval', { roomCode: room.code, requiresApproval: value });
+    setRequiresApproval(value);
+  }, [socket, room]);
+
   // ── Host control actions ──────────────────────────────────────────────────
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
@@ -192,6 +251,9 @@ export const RoomProvider = ({ children }) => {
       reactions, joinRoom, leaveRoom, sendMessage,
       sendReaction, setVideoSource, notifyUploading,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
+      // Join approval
+      requiresApproval, joinRequests, joinStatus,
+      approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     }}>
       {children}
     </RoomContext.Provider>
