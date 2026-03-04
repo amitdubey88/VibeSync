@@ -55,6 +55,17 @@ module.exports = (io, roomStore) => {
                 existing.socketId = socket.id; // Update socket ID on reconnect
                 existing.isOnline = true;
             } else {
+                // ── Username conflict check ───────────────────────────────────────
+                const nameTaken = room.participants.find(
+                    (p) => p.username.toLowerCase() === socket.user.username.toLowerCase() && p.isOnline !== false
+                );
+                if (nameTaken) {
+                    socket.leave(code);
+                    currentRoomCode = null;
+                    return socket.emit('room:join-error', {
+                        message: `Username "${socket.user.username}" is already taken in this room. Please choose a different name.`,
+                    });
+                }
                 room.participants.push({
                     socketId: socket.id,
                     userId: socket.user.id,

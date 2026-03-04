@@ -32,8 +32,15 @@ const RoomPage = () => {
       return;
     }
     if (!socket || !isConnected) return;
-    if (hasJoinedRef.current) return; // Prevent double-join
+    if (hasJoinedRef.current) return;
     hasJoinedRef.current = true;
+
+    // Listen for username conflict error from backend
+    const onJoinError = ({ message }) => {
+      setError(message);
+      setJoining(false);
+    };
+    socket.on('room:join-error', onJoinError);
 
     const init = async () => {
       try {
@@ -50,6 +57,7 @@ const RoomPage = () => {
     init();
 
     return () => {
+      socket.off('room:join-error', onJoinError);
       leaveRoom();
     };
   }, [socket, isConnected, isAuthenticated]);

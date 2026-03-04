@@ -4,33 +4,63 @@ import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import { generateGuestName } from '../utils/helpers';
 import toast from 'react-hot-toast';
-import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic } from 'lucide-react';
+import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Pencil, Check } from 'lucide-react';
 
 const LandingPage = () => {
-  const { user, guestLogin, isAuthenticated } = useAuth();
+  const { user, guestLogin, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [tab, setTab] = useState('join'); // 'join' | 'create'
+  const [tab, setTab] = useState('join');
   const [username, setUsername] = useState(generateGuestName());
+  const [editingUsername, setEditingUsername] = useState(false);
+  const [editedName, setEditedName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomType, setRoomType] = useState('public');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // If already authed, prefill username
   useEffect(() => {
     if (user) setUsername(user.username);
   }, [user]);
 
-  const ensureAuth = async () => {
-    if (isAuthenticated) return true;
+  // ── Ensure user is logged in with chosen username ────────────────────────
+  const ensureAuth = async (desiredUsername) => {
+    const name = (desiredUsername || username).trim() || generateGuestName();
+    if (!name) { toast.error('Please enter a username'); return false; }
+    if (name.length < 2) { toast.error('Username must be at least 2 characters'); return false; }
+
+    // If already authed with the SAME username, reuse session
+    if (isAuthenticated && user?.username === name) return true;
+
+    // If authed with a DIFFERENT username → re-login as new guest identity
+    if (isAuthenticated) logout();
+
     try {
-      await guestLogin(username.trim() || generateGuestName());
+      await guestLogin(name);
       return true;
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed');
       return false;
+    }
+  };
+
+  // ── Apply inline username edit ────────────────────────────────────────────
+  const applyUsernameEdit = async () => {
+    const trimmed = editedName.trim();
+    if (!trimmed || trimmed.length < 2) {
+      toast.error('Username must be at least 2 characters');
+      return;
+    }
+    setUsername(trimmed);
+    setEditingUsername(false);
+    // Force re-login with the new name immediately
+    if (isAuthenticated) {
+      try {
+        logout();
+        await guestLogin(trimmed);
+        toast.success(`Username changed to "${trimmed}"`);
+      } catch {}
     }
   };
 
@@ -73,7 +103,7 @@ const LandingPage = () => {
 
   return (
     <div className="min-h-screen gradient-bg flex flex-col">
-      {/* ── Header ── */}
+      {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 rounded-lg bg-accent-red flex items-center justify-center glow-red">
@@ -87,7 +117,7 @@ const LandingPage = () => {
         </div>
       </header>
 
-      {/* ── Hero ── */}
+      {/* Hero */}
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 px-6 py-8 max-w-6xl mx-auto w-full">
         {/* Left: Hero text */}
         <div className="flex-1 text-center lg:text-left animate-slide-up">
@@ -102,8 +132,6 @@ const LandingPage = () => {
             Host a room, invite friends, and watch any video in real-time sync —
             with live chat and voice call, as if you're all in the same room.
           </p>
-
-          {/* Feature pills */}
           <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
             {[
               { icon: Play, label: 'Instant Sync' },
@@ -122,34 +150,63 @@ const LandingPage = () => {
         {/* Right: Auth + Room form */}
         <div className="w-full max-w-md animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="card">
-            {/* Username field */}
-            {!isAuthenticated && (
-              <div className="mb-5">
-                <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
-                  Your Name
-                </label>
-                <input
-                  type="text"
-                  className="input"
-                  placeholder="Enter your username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  maxLength={30}
-                />
-              </div>
-            )}
 
-            {isAuthenticated && (
-              <div className="mb-5 flex items-center gap-3 p-3 rounded-xl bg-bg-hover">
-                <div className="avatar w-9 h-9 text-sm text-white" style={{ backgroundColor: user?.avatar }}>
-                  {user?.username?.slice(0, 2)?.toUpperCase()}
+            {/* ── Username section ── */}
+            <div className="mb-5">
+              <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
+                Your Name
+              </label>
+
+              {/* Editing mode OR logged-in chip */}
+              {(!isAuthenticated || editingUsername) ? (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="input flex-1"
+                    placeholder="Enter your username"
+                    value={editingUsername ? editedName : username}
+                    onChange={(e) => editingUsername
+                      ? setEditedName(e.target.value)
+                      : setUsername(e.target.value)
+                    }
+                    maxLength={30}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && editingUsername) { e.preventDefault(); applyUsernameEdit(); }
+                    }}
+                    autoFocus={editingUsername}
+                  />
+                  {editingUsername && (
+                    <button
+                      type="button"
+                      onClick={applyUsernameEdit}
+                      className="px-3 py-2 rounded-xl bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition-colors"
+                      title="Apply"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm font-semibold text-text-primary">{user?.username}</p>
-                  <p className="text-xs text-text-muted">{user?.isGuest ? 'Guest' : 'Member'}</p>
+              ) : (
+                /* Logged-in chip with edit button */
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-hover group">
+                  <div className="avatar w-9 h-9 text-sm text-white shrink-0" style={{ backgroundColor: user?.avatar }}>
+                    {user?.username?.slice(0, 2)?.toUpperCase()}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-text-primary truncate">{user?.username}</p>
+                    <p className="text-xs text-text-muted">{user?.isGuest ? 'Guest' : 'Member'}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => { setEditedName(user?.username || ''); setEditingUsername(true); }}
+                    className="p-1.5 rounded-lg hover:bg-bg-card text-text-muted hover:text-text-primary transition-colors"
+                    title="Change username"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                  </button>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Tab switcher */}
             <div className="flex rounded-xl bg-bg-hover p-1 mb-5">
