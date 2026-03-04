@@ -3,25 +3,24 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
-import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Pencil, Check } from 'lucide-react';
+import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic } from 'lucide-react';
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   const [tab, setTab] = useState('join');
-  const [username, setUsername] = useState(''); // empty by default — user must choose their name
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [editedName, setEditedName] = useState('');
+  const [username, setUsername] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [roomName, setRoomName] = useState('');
   const [roomType, setRoomType] = useState('public');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Pre-fill username from stored session — only if field is still empty
   useEffect(() => {
-    if (user) setUsername(user.username);
-  }, [user]);
+    if (user?.username && !username) setUsername(user.username);
+  }, [user]); // eslint-disable-line
 
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {
@@ -149,60 +148,22 @@ const LandingPage = () => {
         <div className="w-full max-w-md animate-slide-up" style={{ animationDelay: '0.1s' }}>
           <div className="card">
 
-            {/* ── Username section ── */}
+            {/* ── Username ── always editable, never a static chip */}
             <div className="mb-5">
               <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wider mb-2">
                 Your Name <span className="text-red-400">*</span>
               </label>
-
-              {/* Editing mode OR logged-in chip */}
-              {(!isAuthenticated || editingUsername) ? (
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    className={`input flex-1 ${!editingUsername && !username ? 'border-red-500/40' : ''}`}
-                    placeholder={editingUsername ? 'Enter new name' : 'Your name (required)'}
-                    value={editingUsername ? editedName : username}
-                    onChange={(e) => editingUsername
-                      ? setEditedName(e.target.value)
-                      : setUsername(e.target.value)
-                    }
-                    maxLength={30}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && editingUsername) { e.preventDefault(); applyUsernameEdit(); }
-                    }}
-                    autoFocus={editingUsername}
-                  />
-                  {editingUsername && (
-                    <button
-                      type="button"
-                      onClick={applyUsernameEdit}
-                      className="px-3 py-2 rounded-xl bg-accent-green/20 text-accent-green hover:bg-accent-green/30 transition-colors"
-                      title="Apply"
-                    >
-                      <Check className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                /* Logged-in chip with edit button */
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-bg-hover group">
-                  <div className="avatar w-9 h-9 text-sm text-white shrink-0" style={{ backgroundColor: user?.avatar }}>
-                    {user?.username?.slice(0, 2)?.toUpperCase()}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-text-primary truncate">{user?.username}</p>
-                    <p className="text-xs text-text-muted">{user?.isGuest ? 'Guest' : 'Member'}</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => { setEditedName(user?.username || ''); setEditingUsername(true); }}
-                    className="p-1.5 rounded-lg hover:bg-bg-card text-text-muted hover:text-text-primary transition-colors"
-                    title="Change username"
-                  >
-                    <Pencil className="w-3.5 h-3.5" />
-                  </button>
-                </div>
+              <input
+                type="text"
+                className={`input w-full ${!username ? 'border-red-500/40 focus:border-red-500/60' : ''}`}
+                placeholder="Your name (required)"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                maxLength={30}
+                autoComplete="off"
+              />
+              {!username && (
+                <p className="text-xs text-red-400/80 mt-1.5">Choose a display name to continue</p>
               )}
             </div>
 

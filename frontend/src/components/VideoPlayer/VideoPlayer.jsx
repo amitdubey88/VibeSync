@@ -86,7 +86,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
+  const { currentVideo, room, isHost, setVideoSource } = useRoom();
   const { socket } = useSocket();
   const videoRef = useRef(null);
 
@@ -187,8 +187,7 @@ const VideoPlayer = () => {
     blobUrlRef.current = localUrl;
     setBlobUrl(localUrl);
 
-    // 2. Tell participants upload is starting (they'll see waiting state)
-    if (room) notifyUploading(file.name);
+    // 2. Tell participants upload started (silent — they just see 'No Video Loaded' until done)
     toast.success('▶ Playing now! Uploading for guests…', { duration: 4000 });
 
     // 3. Upload to Cloudinary in background
