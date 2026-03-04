@@ -64,35 +64,37 @@ const YouTubePlayer = ({ videoId }) => {
     };
   }, [videoId]);
 
-  // Listen for sync events (guests)
+  // Listen for sync events (guests receive from host via socket)
   useEffect(() => {
-    if (!socket || !playerRef.current) return;
+    if (!socket) return; // was: if (!socket || !playerRef.current) return
+    // playerRef.current is checked INSIDE each handler (player will be ready by the time events fire)
 
     const onPlay = ({ currentTime }) => {
-      if (isHost) return;
+      if (isHost || !playerRef.current) return;
       isSyncingRef.current = true;
-      playerRef.current?.seekTo(currentTime, true);
-      playerRef.current?.playVideo();
+      playerRef.current.seekTo(currentTime, true);
+      playerRef.current.playVideo();
       setTimeout(() => { isSyncingRef.current = false; }, 500);
     };
 
     const onPause = ({ currentTime }) => {
-      if (isHost) return;
+      if (isHost || !playerRef.current) return;
       isSyncingRef.current = true;
-      playerRef.current?.seekTo(currentTime, true);
-      playerRef.current?.pauseVideo();
+      playerRef.current.seekTo(currentTime, true);
+      playerRef.current.pauseVideo();
       setTimeout(() => { isSyncingRef.current = false; }, 500);
     };
 
     const onSeek = ({ currentTime }) => {
-      if (isHost) return;
-      playerRef.current?.seekTo(currentTime, true);
+      if (isHost || !playerRef.current) return;
+      playerRef.current.seekTo(currentTime, true);
     };
 
     const onSyncState = ({ videoState: vs }) => {
-      playerRef.current?.seekTo(vs.currentTime, true);
-      if (vs.isPlaying) playerRef.current?.playVideo();
-      else playerRef.current?.pauseVideo();
+      if (!playerRef.current) return;
+      playerRef.current.seekTo(vs.currentTime, true);
+      if (vs.isPlaying) playerRef.current.playVideo();
+      else playerRef.current.pauseVideo();
     };
 
     socket.on('video:play', onPlay);

@@ -2,7 +2,6 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
-import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 
 const RoomContext = createContext(null);
@@ -10,7 +9,6 @@ const RoomContext = createContext(null);
 export const RoomProvider = ({ children }) => {
   const { socket } = useSocket();
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const [room, setRoom] = useState(null);
   const [participants, setParticipants] = useState([]);
@@ -79,20 +77,20 @@ export const RoomProvider = ({ children }) => {
       setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3500);
     };
 
-    // ── New: room deleted ──────────────────────────────────────────────────
+    // ── room deleted → hard redirect for all participants ───────────────────
     const onRoomDeleted = ({ message }) => {
       toast.error(message || 'The room has been deleted.', { duration: 4000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
-      navigate('/');
+      setTimeout(() => { window.location.href = '/'; }, 800);
     };
 
-    // ── New: kicked ───────────────────────────────────────────────────────
+    // ── kicked → hard redirect ─────────────────────────────────────────────
     const onKicked = ({ message }) => {
       toast.error(message || 'You were removed from the room.', { duration: 4000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
-      navigate('/');
+      setTimeout(() => { window.location.href = '/'; }, 800);
     };
 
     // ── New: muted by host ────────────────────────────────────────────────
@@ -124,7 +122,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:kicked', onKicked);
       socket.off('room:muted', onMuted);
     };
-  }, [socket, user, navigate]);
+  }, [socket, user]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
   const sendMessage = useCallback((content) => {
