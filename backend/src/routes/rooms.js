@@ -13,7 +13,6 @@ try {
 
 const isDbReady = () => mongoose.connection.readyState === 1;
 
-
 /**
  * Generate a random 6-character room code (alphanumeric, uppercase)
  */
@@ -28,6 +27,42 @@ const generateRoomCode = () => {
 
 // In-memory room store reference (shared with socket handlers via app.locals)
 const getRoomStore = (req) => req.app.locals.roomStore;
+
+/**
+ * Rehydrate a room into the in-memory store from MongoDB.
+ * Called when a room code is valid in DB but the in-memory store was cleared
+ * (e.g. after a server restart on Render/Koyeb free tier).
+ */
+async function hydrateRoom(req, code) {
+    const store = getRoomStore(req);
+    if (store.has(code)) return store.get(code);
+    if (!Room || !isDbReady()) return null;
+    try {
+        const dbRoom = await Room.findOne({ code, isActive: true }).lean();
+        if (!dbRoom) return null;
+        const roomData = {
+            code: dbRoom.code,
+            name: dbRoom.name,
+            hostId: dbRoom.hostId,
+            type: dbRoom.type,
+            participantLimit: dbRoom.participantLimit || 20,
+            password: dbRoom.password || null,
+            currentVideo: dbRoom.currentVideo || null,
+            videoState: dbRoom.videoState || { currentTime: 0, isPlaying: false, lastUpdated: Date.now() },
+            participants: [],
+            messages: [],
+            voiceParticipants: [],
+            pendingJoins: [],
+            requiresApproval: false,
+        };
+        store.set(code, roomData);
+        console.log(`[rooms] Rehydrated room ${code} from MongoDB after server restart`);
+        return roomData;
+    } catch (err) {
+        console.warn('[rooms/hydrate]', err.message);
+        return null;
+    }
+}
 
 // ─── POST /api/rooms ──────────────────────────────────────────────────────────
 // Creates a new room. Host must be authenticated.
@@ -56,6 +91,8 @@ router.post('/', authenticate, async (req, res) => {
             participants: [],
             messages: [],
             voiceParticipants: [],
+            pendingJoins: [],
+            requiresApproval: false,
         };
 
         // Store in-memory (the live source of truth)
@@ -78,9 +115,10 @@ router.post('/', authenticate, async (req, res) => {
 
 // ─── GET /api/rooms/:code ─────────────────────────────────────────────────────
 // Returns room metadata. No auth required (used for previewing room before join).
-router.get('/:code', (req, res) => {
+router.get('/:code', async (req, res) => {
     const { code } = req.params;
-    const room = getRoomStore(req).get(code.toUpperCase());
+    // Try in-memory first; fall back to MongoDB (handles server restarts)
+    const room = await hydrateRoom(req, code.toUpperCase());
 
     if (!room) {
         return res.status(404).json({ success: false, message: 'Room not found' });
@@ -101,13 +139,16 @@ router.get('/:code', (req, res) => {
 // ─── POST /api/rooms/:code/join ───────────────────────────────────────────────
 // Validates credentials before allowing socket join. Returns room's video state
 // for initial sync.
-router.post('/:code/join', authenticate, (req, res) => {
+router.post('/:code/join', authenticate, async (req, res) => {
     const { code } = req.params;
     const { password } = req.body;
-    const room = getRoomStore(req).get(code.toUpperCase());
+    // Try in-memory first; fall back to MongoDB (handles server restarts)
+    const room = await hydrateRoom(req, code.toUpperCase());
 
     if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
-    if (room.participants.length >= room.participantLimit) {
+    // Count only online participants toward the limit
+    const onlineCount = room.participants.filter(p => p.isOnline !== false).length;
+    if (onlineCount >= room.participantLimit) {
         return res.status(403).json({ success: false, message: 'Room is full' });
     }
     if (room.password && room.password !== password) {
@@ -132,7 +173,7 @@ router.post('/:code/join', authenticate, (req, res) => {
 // Fetch last 100 messages for a room (chat history on join).
 router.get('/:code/messages', authenticate, async (req, res) => {
     const { code } = req.params;
-    const room = getRoomStore(req).get(code.toUpperCase());
+    const room = await hydrateRoom(req, code.toUpperCase());
     if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
 
     try {
