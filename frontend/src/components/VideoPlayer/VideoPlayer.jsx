@@ -4,7 +4,7 @@ import { useRoom } from '../../context/RoomContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Link, Loader2, X, Film } from 'lucide-react';
+import { Play, Upload, Link, Loader2, X, Film, CloudUpload, Clock } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -15,7 +15,6 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      {/* Sheet on mobile (slides up from bottom), centered card on desktop */}
       <div className="glass w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 pb-8 sm:pb-6 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
           <div>
@@ -36,18 +35,19 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
             ${isUploading ? 'border-accent-purple bg-accent-purple/5' : 'border-border-light hover:border-accent-purple/60 hover:bg-accent-purple/5'}`}>
             <input type="file" accept="video/*" className="hidden" onChange={onFileUpload} disabled={isUploading} />
             {isUploading ? (
-              <div className="text-center">
-                <Loader2 className="w-6 h-6 animate-spin text-accent-purple mx-auto mb-2" />
-                <span className="text-sm text-accent-purple font-semibold">{uploadProgress}% uploading…</span>
-                <div className="mt-2 h-1.5 bg-bg-hover rounded-full overflow-hidden w-40 mx-auto">
-                  <div className="h-full bg-accent-purple transition-all" style={{ width: `${uploadProgress}%` }} />
+              <div className="text-center w-full">
+                <CloudUpload className="w-6 h-6 animate-pulse text-accent-purple mx-auto mb-2" />
+                <span className="text-sm text-accent-purple font-semibold">Uploading for guests… {uploadProgress}%</span>
+                <div className="mt-2 h-1.5 bg-bg-hover rounded-full overflow-hidden w-full mx-auto">
+                  <div className="h-full bg-accent-purple transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
                 </div>
+                <p className="text-xs text-text-muted mt-1.5">You can watch now — guests will sync when ready</p>
               </div>
             ) : (
               <div className="text-center">
                 <Film className="w-6 h-6 text-text-muted mx-auto mb-1.5" />
                 <span className="text-sm text-text-secondary font-medium">Click to select video</span>
-                <p className="text-xs text-text-muted mt-0.5">MP4, WebM, MOV up to 100MB</p>
+                <p className="text-xs text-text-muted mt-0.5">Plays instantly for you, syncs to guests in background</p>
               </div>
             )}
           </label>
@@ -85,8 +85,12 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, isHost, setVideoSource } = useRoom();
+  const { currentVideo, isHost, setVideoSource, notifyUploading } = useRoom();
   const videoRef = useRef(null);
+
+  // ─ Host-only blob URL for instant local playback ─────────────────────────
+  const [blobUrl, setBlobUrl] = useState(null);
+  const blobUrlRef = useRef(null); // for cleanup in effects
 
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -98,6 +102,7 @@ const VideoPlayer = () => {
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
+  const currentTimeRef = useRef(0); // live ref for upload callback
 
   const setVideoRef = useCallback((el) => {
     videoRef.current = el;
@@ -106,9 +111,12 @@ const VideoPlayer = () => {
 
   useVideoSync(videoEl);
 
+  // Track currentTime in a ref so the upload callback can read it without a stale closure
+  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+
   useEffect(() => {
     if (!videoEl) return;
-    const onTimeUpdate = () => setCurrentTime(videoEl.currentTime);
+    const onTimeUpdate = () => { setCurrentTime(videoEl.currentTime); };
     const onLoadedMetadata = () => setDuration(videoEl.duration);
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => setIsLoading(false);
@@ -124,30 +132,71 @@ const VideoPlayer = () => {
     };
   }, [videoEl]);
 
+  // Cleanup blob URL on unmount
+  useEffect(() => () => {
+    if (blobUrlRef.current) URL.revokeObjectURL(blobUrlRef.current);
+  }, []);
+
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
   }, []);
 
+  // ── File upload: INSTANT local play + background upload ────────────────────
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // 1. Create blob URL → host starts watching IMMEDIATELY
+    const localUrl = URL.createObjectURL(file);
+    blobUrlRef.current = localUrl;
+    setBlobUrl(localUrl);
+    setShowSourcePicker(false); // close modal right away
+
+    // 2. Notify participants that upload is starting (they'll see waiting state)
+    notifyUploading(file.name);
+    toast.success('▶ Playing now! Uploading for guests in background…', { duration: 4000 });
+
+    // 3. Upload to Cloudinary in background
     setIsUploading(true);
     setUploadProgress(0);
     try {
       const data = await uploadVideo(file, setUploadProgress);
-      setVideoSource({ url: data.url, type: 'file', title: file.name });
-      setShowSourcePicker(false);
-      toast.success('Video loaded!');
+
+      // 4. Broadcast final URL with host's CURRENT playback position
+      const ct = currentTimeRef.current;
+      const playing = !videoRef.current?.paused;
+      setVideoSource(
+        { url: data.url, type: 'file', title: file.name },
+        { currentTime: ct, isPlaying: playing, preserveState: true }
+      );
+
+      // 5. Swap host's video from blob → Cloudinary URL, preserving current time
+      const savedTime = videoRef.current?.currentTime ?? ct;
+      const wasPlaying = !videoRef.current?.paused;
+      URL.revokeObjectURL(localUrl);
+      blobUrlRef.current = null;
+      setBlobUrl(null); // currentVideo.url now takes over (Cloudinary)
+      // After React re-renders with Cloudinary src, seek to saved position
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.currentTime = savedTime;
+          if (wasPlaying) videoRef.current.play().catch(() => {});
+        }
+      }, 300);
+
+      toast.success('☁ Uploaded! Guests are now syncing.', { duration: 3000 });
     } catch (err) {
       toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
+      // Keep playing from blob until user changes source
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
     }
   };
 
+  // ── URL / YouTube submit ──────────────────────────────────────────────────
   const handleUrlSubmit = (e) => {
     e.preventDefault();
     const url = urlInput.trim();
@@ -163,7 +212,11 @@ const VideoPlayer = () => {
     toast.success('Video source set!');
   };
 
-  // ── Portal modal (shared for both YouTube and regular video) ─────────────
+  // The src the host's <video> actually plays from:
+  // blob URL while uploading, then currentVideo.url (Cloudinary) after upload
+  const hostSrc = blobUrl || (currentVideo?.type !== 'youtube' && currentVideo?.type !== 'uploading' ? currentVideo?.url : null);
+
+  // Portal modal (shared for all video types)
   const sourcePicker = showSourcePicker && isHost && (
     <SourcePickerModal
       onClose={() => setShowSourcePicker(false)}
@@ -181,16 +234,9 @@ const VideoPlayer = () => {
     return (
       <div className="relative w-full h-full bg-black">
         <YouTubePlayer videoId={currentVideo.url} />
-
-        {/* Non-host transparent overlay — blocks ALL direct clicks on the iframe */}
         {!isHost && (
-          <div
-            className="absolute inset-0 z-10 cursor-not-allowed"
-            title="Only the host can control playback"
-          />
+          <div className="absolute inset-0 z-10 cursor-not-allowed" title="Only the host can control playback" />
         )}
-
-        {/* Host-only "Change Video" button */}
         {isHost && (
           <button
             onClick={() => setShowSourcePicker(true)}
@@ -201,8 +247,36 @@ const VideoPlayer = () => {
             <Upload className="w-3.5 h-3.5" /> Change Video
           </button>
         )}
-
         {sourcePicker}
+      </div>
+    );
+  }
+
+  // ── Participant "waiting for upload" state ────────────────────────────────
+  if (!isHost && currentVideo?.type === 'uploading') {
+    return (
+      <div className="relative w-full h-full bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 p-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
+            <CloudUpload className="w-9 h-9 text-accent-purple" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-text-primary mb-1">Host is uploading a video</h3>
+            <p className="text-text-secondary text-sm">
+              <span className="text-accent-purple font-medium">{currentVideo.title || 'Video'}</span>
+            </p>
+            <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" />
+              You'll be synced automatically when it's ready
+            </p>
+          </div>
+          <div className="flex gap-1.5 mt-2">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="w-2 h-2 rounded-full bg-accent-purple/60 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -214,14 +288,24 @@ const VideoPlayer = () => {
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
-      {currentVideo ? (
+      {/* Background upload progress bar (host only, top of screen) */}
+      {isHost && isUploading && (
+        <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-bg-hover">
+          <div
+            className="h-full bg-gradient-to-r from-accent-purple to-accent-red transition-all duration-300"
+            style={{ width: `${uploadProgress}%` }}
+          />
+        </div>
+      )}
+
+      {hostSrc ? (
         <video
           ref={setVideoRef}
           className="w-full h-full object-contain"
-          src={currentVideo.url}
+          src={hostSrc}
           playsInline
           preload="auto"
-          crossOrigin={currentVideo.type === 'file' ? 'anonymous' : undefined}
+          crossOrigin={currentVideo?.type === 'file' || blobUrl ? undefined : undefined}
         />
       ) : (
         <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
@@ -243,14 +327,14 @@ const VideoPlayer = () => {
       )}
 
       {/* Buffering spinner */}
-      {isLoading && currentVideo && (
+      {isLoading && hostSrc && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
           <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
         </div>
       )}
 
       {/* Controls overlay */}
-      {currentVideo && (
+      {hostSrc && (
         <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <VideoControls
             videoRef={videoRef}

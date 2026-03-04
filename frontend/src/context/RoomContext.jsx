@@ -71,6 +71,11 @@ export const RoomProvider = ({ children }) => {
       setVideoState(vs);
     };
 
+    // ── host started background upload ──────────────────────────────────────
+    const onUploading = ({ title }) => {
+      setCurrentVideo({ type: 'uploading', title, url: null });
+    };
+
     const onReaction = (reaction) => {
       const id = reaction.id;
       setReactions((prev) => [...prev, { ...reaction, id }]);
@@ -105,6 +110,7 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:host-changed', onHostChanged);
     socket.on('chat:message', onChatMessage);
     socket.on('video:source-changed', onSourceChanged);
+    socket.on('video:uploading', onUploading);
     socket.on('chat:reaction', onReaction);
     socket.on('room:deleted', onRoomDeleted);
     socket.on('room:kicked', onKicked);
@@ -117,6 +123,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:host-changed', onHostChanged);
       socket.off('chat:message', onChatMessage);
       socket.off('video:source-changed', onSourceChanged);
+      socket.off('video:uploading', onUploading);
       socket.off('chat:reaction', onReaction);
       socket.off('room:deleted', onRoomDeleted);
       socket.off('room:kicked', onKicked);
@@ -135,12 +142,26 @@ export const RoomProvider = ({ children }) => {
     socket.emit('chat:reaction', { roomCode: room.code, emoji });
   }, [socket, room]);
 
-  // ── Video source actions ──────────────────────────────────────────────────
-  const setVideoSource = useCallback((video) => {
+  // setVideoSource: emit to socket for YouTube/URL changes;
+  // for file uploads pass currentTime+isPlaying so participants sync to host position
+  const setVideoSource = useCallback((video, opts = {}) => {
     if (!socket || !room) return;
-    socket.emit('video:set-source', { roomCode: room.code, video });
+    socket.emit('video:set-source', {
+      roomCode: room.code,
+      video,
+      currentTime: opts.currentTime,
+      isPlaying: opts.isPlaying,
+    });
     setCurrentVideo(video);
-    setVideoState({ currentTime: 0, isPlaying: false, lastUpdated: Date.now() });
+    if (!opts.preserveState) {
+      setVideoState({ currentTime: opts.currentTime ?? 0, isPlaying: opts.isPlaying ?? false, lastUpdated: Date.now() });
+    }
+  }, [socket, room]);
+
+  // notifyUploading: tell participants host is uploading a local file
+  const notifyUploading = useCallback((title) => {
+    if (!socket || !room) return;
+    socket.emit('video:set-uploading', { roomCode: room.code, title });
   }, [socket, room]);
 
   // ── Host control actions ──────────────────────────────────────────────────
@@ -169,7 +190,7 @@ export const RoomProvider = ({ children }) => {
       room, participants, voiceParticipants, messages,
       videoState, setVideoState, currentVideo, isHost, isMutedByHost,
       reactions, joinRoom, leaveRoom, sendMessage,
-      sendReaction, setVideoSource,
+      sendReaction, setVideoSource, notifyUploading,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
     }}>
       {children}

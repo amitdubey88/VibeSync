@@ -18,17 +18,33 @@ module.exports = (io, socket, roomStore) => {
         return { room };
     };
 
-    // ── video:set-source ─────────────────────────────────────────────────────
-    // Host sets or changes the video source (upload, YouTube, or direct URL)
-    socket.on('video:set-source', ({ roomCode, video }) => {
+    // ── video:set-uploading ───────────────────────────────────────────────────
+    // Host started a local upload — participants see a "waiting" state.
+    socket.on('video:set-uploading', ({ roomCode, title }) => {
         const { room, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
-        room.currentVideo = video; // { url, type, title }
-        room.videoState = { currentTime: 0, isPlaying: false, lastUpdated: Date.now() };
+        room.currentVideo = { type: 'uploading', title, url: null };
+        // Keep videoState running (host is playing locally)
+        socket.to(roomCode).emit('video:uploading', { title });
+        console.log(`[sync] Upload started in ${roomCode}: ${title}`);
+    });
+
+    // ── video:set-source ─────────────────────────────────────────────────────
+    // Host sets or changes the video source. When called after a background upload,
+    // currentTime + isPlaying are passed so participants join at the right position.
+    socket.on('video:set-source', ({ roomCode, video, currentTime, isPlaying }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        room.currentVideo = video;
+        // Preserve playback position if provided (background upload scenario)
+        const t = (typeof currentTime === 'number') ? currentTime : 0;
+        const playing = isPlaying ?? false;
+        room.videoState = { currentTime: t, isPlaying: playing, lastUpdated: Date.now() };
 
         io.to(roomCode).emit('video:source-changed', { video, videoState: room.videoState });
-        console.log(`[sync] Source changed in ${roomCode}:`, video?.title);
+        console.log(`[sync] Source changed in ${roomCode}: ${video?.title} @${t.toFixed(2)}s`);
     });
 
     // ── video:play ────────────────────────────────────────────────────────────
