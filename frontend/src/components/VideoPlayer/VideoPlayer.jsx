@@ -264,6 +264,32 @@ const VideoPlayer = () => {
     />
   );
 
+  // ── Participant waiting state during host upload ──────────────────────────
+  if (!isHost && currentVideo?.type === 'uploading') {
+    return (
+      <div className="relative w-full h-full bg-black flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4 p-8 text-center">
+          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
+            <CloudUpload className="w-9 h-9 text-accent-purple" />
+          </div>
+          <div>
+            <h3 className="text-lg font-bold text-text-primary mb-1">Video loading…</h3>
+            <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
+              <Clock className="w-3.5 h-3.5" /> Starting shortly, please wait
+            </p>
+          </div>
+          <div className="flex gap-1.5 mt-1">
+            {[0, 1, 2].map(i => (
+              <span key={i} className="w-2 h-2 rounded-full bg-accent-purple/60 animate-bounce"
+                style={{ animationDelay: `${i * 0.15}s` }} />
+            ))}
+          </div>
+        </div>
+        {sourcePicker}
+      </div>
+    );
+  }
+
   // ── YouTube player ────────────────────────────────────────────────────────
   if (currentVideo?.type === 'youtube') {
     return (
