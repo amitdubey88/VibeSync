@@ -287,14 +287,15 @@ const RoomPage = () => {
                 )}
               </div>
               <button
+                type="button"
                 onClick={() => setApprovalRequired(!requiresApproval)}
-                className={`relative w-10 h-5 rounded-full transition-colors duration-200 ${
-                  requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-light'
+                className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
+                  requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-dark'
                 }`}
                 title={requiresApproval ? 'Disable approval' : 'Enable approval'}
               >
-                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform duration-200 ${
-                  requiresApproval ? 'translate-x-5' : 'translate-x-0.5'
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                  requiresApproval ? 'translate-x-5' : 'translate-x-0'
                 }`} />
               </button>
             </div>
