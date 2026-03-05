@@ -5,7 +5,7 @@ import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Loader2, X, Film, CloudUpload, Clock } from 'lucide-react';
+import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -367,21 +367,56 @@ const VideoPlayer = () => {
           preload="auto"
         />
       ) : (
-        <div className="flex flex-col items-center justify-center gap-6 p-8 text-center">
-          <div className="w-24 h-24 rounded-full bg-bg-hover flex items-center justify-center animate-pulse-glow">
-            <Play className="w-10 h-10 text-accent-red ml-1" />
+        <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
+          <div className="flex flex-col items-center max-w-md w-full gap-6">
+            
+            <div className="w-24 h-24 rounded-full bg-bg-hover flex items-center justify-center animate-pulse-glow shrink-0">
+              <Play className="w-10 h-10 text-accent-red ml-1" />
+            </div>
+            
+            <div>
+              <h3 className="text-2xl font-bold text-text-primary mb-2">No Video Loaded</h3>
+              <p className="text-text-secondary text-sm">
+                {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video, or start a streaming party.'}
+              </p>
+            </div>
+
+            {isHost && (
+              <button className="btn-primary" onClick={() => setShowSourcePicker(true)}>
+                <Upload className="w-4 h-4" /> Load Video File / URL
+              </button>
+            )}
+
+            <div className="w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
+              <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-purple/10 rounded-full blur-2xl group-hover:bg-accent-purple/20 transition-colors" />
+              
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-accent-purple/20 rounded-lg">
+                  <Puzzle className="w-5 h-5 text-accent-purple" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-text-primary text-base">Watch Netflix, Prime & more</h4>
+                  <p className="text-xs text-text-muted mt-0.5">Sync playback across premium streaming platforms</p>
+                </div>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-5">
+                {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max'].map(p => (
+                  <span key={p} className="text-[10px] font-semibold tracking-wide px-2 py-1 rounded-md bg-bg-primary/50 text-text-muted border border-border-dark">{p}</span>
+                ))}
+              </div>
+
+              <a 
+                href="https://github.com/amitdubey88/VibeSync/tree/main/extension" 
+                target="_blank" 
+                rel="noreferrer"
+                className="btn-secondary w-full justify-center text-sm py-2.5"
+              >
+                Install Browser Extension
+              </a>
+            </div>
+
           </div>
-          <div>
-            <h3 className="text-xl font-bold text-text-primary mb-2">No Video Loaded</h3>
-            <p className="text-text-secondary text-sm">
-              {isHost ? 'Choose a video to start watching together' : 'Waiting for host to load a video…'}
-            </p>
-          </div>
-          {isHost && (
-            <button className="btn-primary" onClick={() => setShowSourcePicker(true)}>
-              <Upload className="w-4 h-4" /> Load Video
-            </button>
-          )}
         </div>
       )}
 
