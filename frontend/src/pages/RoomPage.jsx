@@ -76,10 +76,14 @@ const RoomPage = () => {
     };
   }, [socket, isConnected, isAuthenticated]);
 
-  // Ghost-room guard: if someone presses Back and lands on this page
-  // after the room is already gone, redirect home immediately.
+  // Track whether we've ever received a room:state (guards against false-positive redirect)
+  const hasEverHadRoom = useRef(false);
+  useEffect(() => { if (room) hasEverHadRoom.current = true; }, [room]);
+
+  // Ghost-room guard: only fires after the room was real and became null
+  // (e.g. deleted, kicked, or user presses Back to a dead room URL)
   useEffect(() => {
-    if (!joining && !room && !error) {
+    if (!joining && !room && !error && hasEverHadRoom.current) {
       navigate('/', { replace: true });
     }
   }, [room, joining, error]);
