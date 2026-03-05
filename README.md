@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="frontend/public/logo.png" alt="VibeSync Logo" width="120"/>
+  <img src="./frontend/public/favicon.svg" alt="VibeSync Logo" width="120"/>
   <h1>VibeSync</h1>
   <p><strong>Watch Together, In Perfect Sync.</strong></p>
   <p>Zero-latency watch parties with live chat, voice calls, and synchronized playback across videos, YouTube, and Netflix/Prime (via extension).</p>
