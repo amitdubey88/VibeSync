@@ -4,6 +4,12 @@
  */
 const { cloudinary, isConfigured } = require('../config/cloudinary');
 
+// Try to use MongoDB models gracefully
+let Room;
+try {
+    Room = require('../models/Room');
+} catch (_) { }
+
 /**
  * Extract Cloudinary public_id from a secure_url
  * e.g. https://res.cloudinary.com/mycloud/video/upload/v123/vibesync/abc.mp4
@@ -47,6 +53,13 @@ module.exports = (io, socket, roomStore) => {
 
         // Remove room from store
         roomStore.delete(code);
+
+        // Deactivate in DB to prevent re-hydrating later
+        if (Room) {
+            Room.updateOne({ code }, { $set: { isActive: false } })
+                .catch(e => console.warn('[rooms/delete] DB deactivate failed:', e.message));
+        }
+
         console.log(`🗑️  Room ${code} deleted by ${socket.user.username}`);
     });
 

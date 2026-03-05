@@ -372,7 +372,7 @@ const VideoPlayer = () => {
         <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
           <div className="flex flex-col items-center max-w-md w-full gap-6">
             
-            <div className="w-24 h-24 rounded-full bg-bg-hover flex items-center justify-center animate-pulse-glow shrink-0">
+            <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
               <Play className="w-10 h-10 text-accent-red ml-1" />
             </div>
             
@@ -389,7 +389,7 @@ const VideoPlayer = () => {
               </button>
             )}
 
-            <div className="w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
+            <div className="hidden sm:block w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
               <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-purple/10 rounded-full blur-2xl group-hover:bg-accent-purple/20 transition-colors" />
               
               <div className="flex items-center gap-3 mb-4">
