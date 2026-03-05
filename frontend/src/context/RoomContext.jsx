@@ -4,6 +4,32 @@ import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
 import toast from 'react-hot-toast';
 
+// Simple beep generator for notifications without needing an external audio file
+const playNotifySound = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    
+    // Quick, pleasant "pop" sound
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
+    
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+    
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    
+    osc.start();
+    osc.stop(ctx.currentTime + 0.2);
+  } catch (e) {
+    // Ignore audio context errors (e.g. if user hasn't interacted with page yet)
+  }
+};
+
 const RoomContext = createContext(null);
 
 export const RoomProvider = ({ children }) => {
@@ -24,6 +50,10 @@ export const RoomProvider = ({ children }) => {
   const [joinStatus, setJoinStatus] = useState('joined');
   // roomEndedByHost: set when host deletes the room, shows a persistent modal
   const [roomEndedByHost, setRoomEndedByHost] = useState(null); // null | { message }
+
+  // Chat notifications state
+  const [unreadChatCount, setUnreadChatCount] = useState(0);
+  const [chatMuted, setChatMuted] = useState(false);
 
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
@@ -71,7 +101,30 @@ export const RoomProvider = ({ children }) => {
       if (newHostId === user?.id) toast.success('👑 You are now the host!');
     };
 
-    const onChatMessage = (msg) => setMessages((prev) => [...prev, msg]);
+    const onChatMessage = (msg) => {
+      setMessages((prev) => [...prev, msg]);
+      
+      // If it's not my message, check if we need to notify
+      if (msg.userId !== user?.id && msg.username !== user?.username) {
+        // We use document.hidden or a heuristic (like not being in the chat tab) 
+        // We'll let the UI components handle resetting the unread count when viewed
+        setUnreadChatCount((prev) => prev + 1);
+        
+        // Use the functional state update to access the latest chatMuted value
+        setChatMuted((isMuted) => {
+          if (!isMuted) {
+            playNotifySound();
+            // Show a brief toast for background awareness
+            toast(`💬 ${msg.username}: ${msg.content.length > 30 ? msg.content.substring(0, 30) + '...' : msg.content}`, {
+              duration: 3000,
+              icon: '📩',
+              id: `chat-${msg.id}`
+            });
+          }
+          return isMuted; // return unchanged state
+        });
+      }
+    };
 
     const onSourceChanged = ({ video, videoState: vs }) => {
       setCurrentVideo(video);
@@ -259,6 +312,9 @@ export const RoomProvider = ({ children }) => {
       // Room ended by host
       roomEndedByHost,
       dismissRoomEnded: () => setRoomEndedByHost(null),
+      // Chat notifications
+      unreadChatCount, setUnreadChatCount,
+      chatMuted, setChatMuted
     }}>
       {children}
     </RoomContext.Provider>

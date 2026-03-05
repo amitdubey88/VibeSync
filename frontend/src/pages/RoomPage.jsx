@@ -24,6 +24,7 @@ const RoomPage = () => {
     joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
+    unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
@@ -93,7 +94,8 @@ const RoomPage = () => {
   const handleTabChange = useCallback((tab) => {
     setSidebarTab(tab);
     if (tab === 'participants') refreshParticipants();
-  }, [refreshParticipants]);
+    if (tab === 'chat') setUnreadChatCount(0); // clear unread count when viewing chat
+  }, [refreshParticipants, setUnreadChatCount]);
 
   // Show join-request approval toasts for host
   useEffect(() => {
@@ -305,6 +307,11 @@ const RoomPage = () => {
                     {joinRequests.length}
                   </span>
                 )}
+                {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
+                  <span className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)]">
+                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                  </span>
+                )}
               </button>
             ))}
           </div>
@@ -342,7 +349,7 @@ const RoomPage = () => {
 
           {/* Tab content */}
           <div className="flex-1 overflow-hidden flex flex-col">
-            {sidebarTab === 'chat' && <ChatPanel />}
+            {sidebarTab === 'chat' && <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />}
             {sidebarTab === 'participants' && <ParticipantsList />}
           </div>
 

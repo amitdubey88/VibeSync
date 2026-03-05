@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import MessageBubble from './MessageBubble';
-import { Send, Smile } from 'lucide-react';
+import { Send, Smile, Bell, BellOff } from 'lucide-react';
 
 // Quick emoji sets — no external library needed
 const EMOJI_SETS = [
@@ -11,7 +11,7 @@ const EMOJI_SETS = [
   ['🎉','🍿','👀','🤣','😭','💀','🫶','✨'],
 ];
 
-const ChatPanel = () => {
+const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const { messages, sendMessage, sendReaction } = useRoom();
   const { user } = useAuth();
   const [input, setInput] = useState('');
@@ -52,12 +52,20 @@ const ChatPanel = () => {
 
   return (
     <div className="flex flex-col h-full">
-      {/* ── Header ── */}
       <div className="px-4 py-3 border-b border-border-dark flex items-center justify-between shrink-0">
         <h3 className="text-sm font-bold text-text-primary">Live Chat</h3>
-        <span className="badge bg-accent-red/10 text-accent-red">
-          {messages.filter((m) => m.type === 'text').length} messages
-        </span>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setChatMuted(!chatMuted)}
+            className="p-1.5 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+            title={chatMuted ? "Unmute chat notifications" : "Mute chat notifications"}
+          >
+            {chatMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
+          </button>
+          <span className="badge bg-accent-red/10 text-accent-red">
+            {messages.filter((m) => m.type === 'text').length} messages
+          </span>
+        </div>
       </div>
 
       {/* ── Messages ── */}
