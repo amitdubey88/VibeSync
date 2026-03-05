@@ -113,7 +113,7 @@
     lastPushedTime = ct;
     lastPushedPlaying = isPlaying;
 
-    const backendUrl = settings.vs_backend_url || 'https://vibesync.koyeb.app';
+    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app';
     try {
       await fetch(`${backendUrl}/api/ext/sync/${settings.vs_room_code}`, {
         method: 'POST',
@@ -133,7 +133,7 @@
   // ── Poll server for remote state ──────────────────────────────────────────
   async function pollServer() {
     if (!settings.vs_room_code || !settings.vs_connected) return;
-    const backendUrl = settings.vs_backend_url || 'https://vibesync.koyeb.app';
+    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app';
     try {
       const res = await fetch(
         `${backendUrl}/api/ext/sync/${settings.vs_room_code}?username=${encodeURIComponent(settings.vs_username || 'Guest')}`,
@@ -191,7 +191,7 @@
   // ── Chat send ─────────────────────────────────────────────────────────────
   async function sendChat(text) {
     if (!settings.vs_room_code || !text.trim()) return;
-    const backendUrl = settings.vs_backend_url || 'https://vibesync.koyeb.app';
+    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app';
     await fetch(`${backendUrl}/api/ext/chat/${settings.vs_room_code}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
