@@ -116,6 +116,11 @@ module.exports = (io, roomStore) => {
             if (!pending) return;
 
             room.pendingJoins = room.pendingJoins.filter((p) => p.userId !== userId);
+
+            // Track denied users so they can't immediately re-request
+            room.deniedUsers = room.deniedUsers || new Set();
+            room.deniedUsers.add(userId);
+
             io.to(pending.socketId).emit('room:join-denied', { message: 'The host declined your request to join.' });
             console.log(`❌ ${pending.username} denied from room ${code}`);
         });
@@ -155,6 +160,13 @@ module.exports = (io, roomStore) => {
                 // ── Approval gate (skip for the host themselves) ──────────────────
                 const isRoomHost = socket.user.id === room.hostId;
                 if (room.requiresApproval && !isRoomHost) {
+                    // Check if already denied
+                    if (room.deniedUsers && room.deniedUsers.has(socket.user.id)) {
+                        socket.leave(code);
+                        currentRoomCode = null;
+                        return socket.emit('room:join-denied', { message: 'The host previously declined your request to join this session.' });
+                    }
+
                     // Keep socket in room channel so they can receive the approval event
                     room.pendingJoins = room.pendingJoins || [];
                     room.pendingJoins.push({

@@ -9,7 +9,8 @@ try { Message = require('../models/Message'); } catch (_) { }
 module.exports = (io, socket, roomStore) => {
     // ── chat:send ─────────────────────────────────────────────────────────────
     socket.on('chat:send', async ({ roomCode, content }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
         if (!room) return;
 
         // Sanitize content
@@ -37,7 +38,7 @@ module.exports = (io, socket, roomStore) => {
         // Persist to MongoDB asynchronously (non-blocking)
         if (Message) {
             Message.create({
-                roomId: roomCode,
+                roomId: code,
                 userId,
                 username,
                 avatar,
@@ -47,15 +48,16 @@ module.exports = (io, socket, roomStore) => {
         }
 
         // Broadcast to all in room including sender
-        io.to(roomCode).emit('chat:message', message);
+        io.to(code).emit('chat:message', message);
     });
 
     // ── chat:reaction ─────────────────────────────────────────────────────────
     // Floating emoji reaction on video (not persisted)
     socket.on('chat:reaction', ({ roomCode, emoji }) => {
-        if (!roomStore.has(roomCode)) return;
+        const code = roomCode?.toUpperCase();
+        if (!roomStore.has(code)) return;
         const { username, avatar } = socket.user;
-        io.to(roomCode).emit('chat:reaction', {
+        io.to(code).emit('chat:reaction', {
             id: `rxn_${Date.now()}`,
             username,
             avatar,
@@ -69,12 +71,13 @@ module.exports = (io, socket, roomStore) => {
      * Called externally from the main socket index.
      */
     socket.sendSystemMessage = async (roomCode, content) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
         if (!room) return;
 
         const message = {
             id: `sys_${Date.now()}`,
-            roomId: roomCode,
+            roomId: code,
             userId: 'system',
             username: 'System',
             avatar: null,
@@ -87,10 +90,10 @@ module.exports = (io, socket, roomStore) => {
         room.messages.push(message);
 
         if (Message) {
-            Message.create({ roomId: roomCode, userId: 'system', username: 'System', content, type: 'system' })
+            Message.create({ roomId: code, userId: 'system', username: 'System', content, type: 'system' })
                 .catch(() => { });
         }
 
-        io.to(roomCode).emit('chat:message', message);
+        io.to(code).emit('chat:message', message);
     };
 };
