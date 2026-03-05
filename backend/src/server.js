@@ -33,7 +33,12 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
 const corsOriginFn = (origin, cb) => {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return cb(null, true);
-    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) return cb(null, true);
+    // Allow frontend URLs, Vercel deployments, and browser extensions
+    if (allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.startsWith('chrome-extension://')) {
+        return cb(null, true);
+    }
     return cb(new Error(`CORS blocked: ${origin}`));
 };
 
