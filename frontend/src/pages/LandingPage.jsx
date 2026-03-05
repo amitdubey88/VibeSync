@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
-import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic } from 'lucide-react';
+import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puzzle } from 'lucide-react';
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
@@ -281,6 +281,36 @@ const LandingPage = () => {
           </p>
         </div>
       </main>
+
+      {/* ── Extension promo banner ── */}
+      <section className="w-full border-t border-border-dark bg-bg-primary/60 backdrop-blur-sm py-6 px-6">
+        <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-accent-purple/10 flex items-center justify-center shrink-0">
+              <Puzzle className="w-5 h-5 text-accent-purple" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-text-primary">Watch Netflix, Prime &amp; Hotstar together</p>
+              <p className="text-xs text-text-muted mt-0.5">
+                Install the free browser extension · each person uses their own subscription
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 flex-wrap justify-center">
+            {['Netflix','Prime','Hotstar','JioCinema','Disney+','Zee5'].map((p) => (
+              <span key={p} className="text-xs font-semibold px-2.5 py-1 rounded-full border border-border-dark text-text-muted">{p}</span>
+            ))}
+            <a
+              href="https://github.com/amitdubey88/VibeSync/tree/main/extension"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary text-xs px-4 py-2 flex items-center gap-1.5 shrink-0"
+            >
+              <Puzzle className="w-3.5 h-3.5" /> Get Extension
+            </a>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

@@ -100,8 +100,10 @@ if (useCloudinary) {
 }
 
 // ── Routes ────────────────────────────────────────────────────────────────────
+const extRoutes = require('./routes/ext');
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
+app.use('/api/ext', extRoutes);   // Browser extension sync (no JWT)
 
 // Video upload endpoint
 app.post('/api/upload', (req, res) => {

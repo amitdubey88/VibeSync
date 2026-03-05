@@ -1,0 +1,204 @@
+/* ─── VibeSync Extension Overlay ─────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+#vs-overlay {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  width: 300px;
+  background: rgba(10, 8, 20, 0.95);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 13px;
+  color: #e2e0f0;
+  z-index: 2147483647;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+#vs-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.04);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  cursor: move;
+}
+
+#vs-logo {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 13px;
+  color: #fff;
+  flex: 1;
+}
+
+#vs-platform-badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 20px;
+  color: #fff;
+  opacity: 0.9;
+}
+
+#vs-toggle-btn {
+  background: none;
+  border: none;
+  color: #a0a0b8;
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+#vs-toggle-btn:hover { color: #fff; }
+
+#vs-body {
+  display: flex;
+  flex-direction: column;
+  max-height: 360px;
+}
+
+#vs-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  font-size: 11px;
+  color: #8882aa;
+}
+
+.vs-dot-connected     { width: 7px; height: 7px; border-radius: 50%; background: #10b981; flex-shrink:0; box-shadow: 0 0 6px #10b981; animation: vs-pulse 2s infinite; }
+.vs-dot-disconnected  { width: 7px; height: 7px; border-radius: 50%; background: #6b6888; flex-shrink:0; }
+
+@keyframes vs-pulse {
+  0%,100% { opacity:1; } 50% { opacity:0.5; }
+}
+
+#vs-room-info {
+  padding: 0 12px 6px;
+}
+
+#vs-room-label {
+  font-size: 11px;
+  color: #6b6888;
+  margin-bottom: 6px;
+}
+#vs-room-label strong { color: #c4c0e8; }
+
+#vs-participants-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.vs-participant {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #8b5cf6, #e50914);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+  cursor: default;
+}
+
+#vs-chat-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+}
+
+#vs-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px 12px;
+  max-height: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+#vs-messages::-webkit-scrollbar { width: 4px; }
+#vs-messages::-webkit-scrollbar-track { background: transparent; }
+#vs-messages::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 2px; }
+
+.vs-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  align-items: flex-start;
+}
+.vs-msg.vs-msg-own { align-items: flex-end; }
+
+.vs-msg-user {
+  font-size: 10px;
+  color: #6b6888;
+  font-weight: 600;
+}
+.vs-msg-own .vs-msg-user { display: none; }
+
+.vs-msg-text {
+  background: rgba(255,255,255,0.08);
+  padding: 5px 10px;
+  border-radius: 10px;
+  border-bottom-left-radius: 3px;
+  font-size: 12px;
+  max-width: 220px;
+  word-break: break-word;
+  line-height: 1.4;
+}
+.vs-msg-own .vs-msg-text {
+  background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+  border-bottom-left-radius: 10px;
+  border-bottom-right-radius: 3px;
+  color: #fff;
+}
+
+#vs-chat-input-row {
+  display: flex;
+  gap: 6px;
+  padding: 8px 10px;
+  border-top: 1px solid rgba(255,255,255,0.07);
+}
+
+#vs-chat-input {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #e2e0f0;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.15s;
+}
+#vs-chat-input:focus { border-color: rgba(139,92,246,0.6); }
+#vs-chat-input::placeholder { color: #5a5870; }
+
+#vs-send-btn {
+  background: linear-gradient(135deg, #e50914, #8b5cf6);
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 14px;
+  width: 32px;
+  cursor: pointer;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+#vs-send-btn:hover { opacity: 0.85; }

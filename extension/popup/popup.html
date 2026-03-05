@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VibeSync</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      width: 320px;
+      font-family: 'Inter', system-ui, sans-serif;
+      background: #0a0810;
+      color: #e2e0f0;
+      font-size: 13px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #e50914 0%, #8b5cf6 100%);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .header-logo { font-size: 18px; font-weight: 900; color: #fff; }
+    .header-sub { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+
+    /* ── Body ── */
+    .body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+    /* Status bar */
+    .status-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+      transition: background 0.3s;
+    }
+    .dot.on  { background: #10b981; box-shadow: 0 0 6px #10b981; }
+    .dot.off { background: #4b4869; }
+    .status-text { font-size: 12px; color: #8882aa; flex: 1; }
+    .status-platform { font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 20px; background: #8b5cf6; color: #fff; }
+
+    /* Fields */
+    label { font-size: 11px; font-weight: 600; color: #6b6888; text-transform: uppercase; letter-spacing: 0.05em; display: block; margin-bottom: 4px; }
+
+    input {
+      width: 100%;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 9px 12px;
+      color: #e2e0f0;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    input:focus { border-color: rgba(139,92,246,0.6); }
+    input::placeholder { color: #4b4869; }
+
+    /* Buttons */
+    .btn-connect {
+      width: 100%;
+      padding: 11px;
+      background: linear-gradient(135deg, #e50914, #8b5cf6);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-connect:hover { opacity: 0.88; }
+    .btn-connect:disabled { opacity: 0.4; cursor: default; }
+
+    .btn-disconnect {
+      width: 100%;
+      padding: 10px;
+      background: rgba(239,68,68,0.12);
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 10px;
+      color: #f87171;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-disconnect:hover { background: rgba(239,68,68,0.2); }
+
+    /* Participants */
+    .participants { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .participant-chip {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      background: rgba(255,255,255,0.07);
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 11px;
+    }
+    .participant-avatar {
+      width: 18px; height: 18px; border-radius: 50%;
+      background: linear-gradient(135deg, #8b5cf6, #e50914);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 9px; font-weight: 700; color: #fff;
+    }
+
+    /* Platform icons row */
+    .platforms-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 2px;
+    }
+    .platform-chip {
+      font-size: 10px;
+      font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,0.12);
+      color: #8882aa;
+    }
+
+    /* Advanced toggle */
+    .advanced-toggle {
+      font-size: 11px;
+      color: #5a5870;
+      cursor: pointer;
+      text-align: center;
+      text-decoration: underline;
+    }
+    .advanced-section { display: none; }
+    .advanced-section.open { display: block; }
+
+    .divider {
+      height: 1px;
+      background: rgba(255,255,255,0.07);
+      margin: 0;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #4b4869;
+      line-height: 1.5;
+      text-align: center;
+    }
+    .hint a { color: #8b5cf6; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <div class="header-logo">VibeSync</div>
+      <div class="header-sub">Watch together, perfectly in sync</div>
+    </div>
+  </div>
+
+  <div class="body">
+    <!-- Status -->
+    <div class="status-bar">
+      <span class="dot off" id="dot"></span>
+      <span class="status-text" id="status-text">Not connected</span>
+      <span class="status-platform" id="status-platform" style="display:none"></span>
+    </div>
+
+    <!-- Connected participants -->
+    <div id="participants-section" style="display:none">
+      <label>In this room</label>
+      <div class="participants" id="participants-list"></div>
+    </div>
+
+    <!-- Form -->
+    <div id="connect-form">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <label>Your Name *</label>
+          <input id="input-username" type="text" placeholder="e.g. Amit" autocomplete="off" maxlength="30" />
+        </div>
+        <div>
+          <label>Room Code *</label>
+          <input id="input-room-code" type="text" placeholder="e.g. ABC123" autocomplete="off" maxlength="8" style="text-transform:uppercase;font-family:monospace;letter-spacing:0.1em" />
+        </div>
+      </div>
+      <br/>
+      <button class="btn-connect" id="btn-connect">▶ Connect to Room</button>
+    </div>
+
+    <!-- Connected actions -->
+    <div id="connected-actions" style="display:none;flex-direction:column;gap:8px">
+      <button class="btn-disconnect" id="btn-disconnect">Disconnect</button>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Advanced -->
+    <div class="advanced-toggle" id="advanced-toggle">Advanced settings ▾</div>
+    <div class="advanced-section" id="advanced-section">
+      <br/>
+      <label>Backend URL</label>
+      <input id="input-backend-url" type="url" placeholder="https://vibesync.koyeb.app" />
+    </div>
+
+    <!-- Supported platforms -->
+    <div>
+      <label>Works on</label>
+      <div class="platforms-row">
+        <span class="platform-chip">Netflix</span>
+        <span class="platform-chip">Prime Video</span>
+        <span class="platform-chip">Hotstar</span>
+        <span class="platform-chip">JioCinema</span>
+        <span class="platform-chip">Disney+</span>
+        <span class="platform-chip">Max</span>
+        <span class="platform-chip">SonyLIV</span>
+        <span class="platform-chip">Zee5</span>
+      </div>
+    </div>
+
+    <p class="hint">Each person needs their own subscription. The extension keeps everyone in sync. <a href="https://vibe-sync-psi.vercel.app" target="_blank">Open VibeSync →</a></p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

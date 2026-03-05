@@ -1,0 +1,120 @@
+/**
+ * VibeSync Extension API Routes
+ * Provides sync state and chat for browser extension (no JWT required — just room code)
+ * 
+ * POST /api/ext/sync/:roomCode    — push playback state
+ * GET  /api/ext/sync/:roomCode    — get current state + participants + chat
+ * POST /api/ext/chat/:roomCode    — send a chat message
+ */
+
+const express = require('express');
+const router = express.Router();
+
+// In-memory store: roomCode → { state, participants, messages }
+const extRooms = new Map();
+
+const TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function getRoom(roomCode) {
+  if (!extRooms.has(roomCode)) {
+    extRooms.set(roomCode, {
+      state: null,
+      participants: [],      // array of usernames
+      messages: [],
+      updatedAt: Date.now(),
+    });
+  }
+  return extRooms.get(roomCode);
+}
+
+// Cleanup stale rooms every 30 min
+setInterval(() => {
+  const now = Date.now();
+  for (const [code, room] of extRooms.entries()) {
+    if (now - room.updatedAt > TTL_MS) extRooms.delete(code);
+  }
+}, 30 * 60 * 1000);
+
+// ── POST /api/ext/sync/:roomCode — push state ────────────────────────────────
+router.post('/sync/:roomCode', (req, res) => {
+  const { roomCode } = req.params;
+  const { action, currentTime, isPlaying, pageUrl, platform, username } = req.body;
+
+  if (!username) return res.status(400).json({ error: 'username required' });
+
+  const room = getRoom(roomCode.toUpperCase());
+  room.updatedAt = Date.now();
+
+  // Update participant heartbeat
+  if (!room.participants.includes(username)) {
+    room.participants.push(username);
+  }
+
+  // Only update state for meaningful actions (not background timeupdate heartbeats)
+  if (action !== 'timeupdate' || !room.state) {
+    room.state = {
+      action,
+      currentTime: parseFloat(currentTime) || 0,
+      isPlaying: Boolean(isPlaying),
+      pageUrl,
+      platform,
+      pushedBy: username,
+      updatedAt: Date.now(),
+    };
+  } else {
+    // For timeupdate, just keep currentTime fresh if close enough
+    if (isPlaying && room.state.pushedBy === username) {
+      room.state.currentTime = parseFloat(currentTime) || 0;
+      room.state.updatedAt = Date.now();
+    }
+  }
+
+  res.json({ ok: true });
+});
+
+// ── GET /api/ext/sync/:roomCode — get current state ─────────────────────────
+router.get('/sync/:roomCode', (req, res) => {
+  const roomCode = req.params.roomCode.toUpperCase();
+  const { username } = req.query;
+
+  const room = getRoom(roomCode);
+
+  // Heartbeat: register this participant as online
+  if (username && !room.participants.includes(username)) {
+    room.participants.push(username);
+  }
+
+  // Only return messages from last 5 min
+  const fiveMinAgo = Date.now() - 5 * 60 * 1000;
+  const recentMessages = room.messages.filter((m) => m.timestamp > fiveMinAgo);
+
+  res.json({
+    state:        room.state,
+    participants: room.participants,
+    messages:     recentMessages,
+  });
+});
+
+// ── POST /api/ext/chat/:roomCode — send chat ─────────────────────────────────
+router.post('/chat/:roomCode', (req, res) => {
+  const { roomCode } = req.params;
+  const { message, username } = req.body;
+
+  if (!message || !username) return res.status(400).json({ error: 'message and username required' });
+  if (message.length > 500) return res.status(400).json({ error: 'message too long' });
+
+  const room = getRoom(roomCode.toUpperCase());
+  room.messages.push({
+    id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    username: username.slice(0, 30),
+    message: message.slice(0, 500),
+    timestamp: Date.now(),
+  });
+
+  // Keep last 100 messages only
+  if (room.messages.length > 100) room.messages = room.messages.slice(-100);
+
+  res.json({ ok: true });
+});
+
+module.exports = router;
