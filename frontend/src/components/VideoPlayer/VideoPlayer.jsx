@@ -182,14 +182,17 @@ const VideoPlayer = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Create blob URL → host starts watching IMMEDIATELY, modal stays open as upload status
+    // 1. Create blob URL → host starts watching IMMEDIATELY
     const localUrl = URL.createObjectURL(file);
     blobUrlRef.current = localUrl;
     setBlobUrl(localUrl);
 
+    // Close modal instantly so the host can actually see the video!
+    setShowSourcePicker(false);
+
     // 2. Tell participants host started uploading (they see buffering state, not blank)
     if (room) notifyUploading(file.name);
-    toast.success('▶ Playing now! Uploading for guests…', { duration: 4000 });
+    toast.success('▶ Playing now! Uploading for guests to sync…', { duration: 4000 });
 
     // 3. Upload to Cloudinary in background
     setIsUploading(true);
@@ -215,7 +218,6 @@ const VideoPlayer = () => {
       blobUrlRef.current = null;
       setBlobUrl(null);
 
-      setShowSourcePicker(false);
       toast.success('☁ Uploaded! Guests are now syncing.', { duration: 3000 });
     } catch (err) {
       toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
@@ -254,7 +256,7 @@ const VideoPlayer = () => {
   // Portal modal
   const sourcePicker = showSourcePicker && isHost && (
     <SourcePickerModal
-      onClose={() => { if (!isUploading) setShowSourcePicker(false); }}
+      onClose={() => setShowSourcePicker(false)}
       onUrlSubmit={handleUrlSubmit}
       onFileUpload={handleFileUpload}
       urlInput={urlInput}
