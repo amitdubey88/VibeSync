@@ -18,10 +18,11 @@ export const SocketProvider = ({ children }) => {
     const onConnect = () => setIsConnected(true);
     const onDisconnect = () => setIsConnected(false);
 
+    // Setup listeners BEFORE checking connection state ensuring no skipped events
     s.on('connect', onConnect);
     s.on('disconnect', onDisconnect);
 
-    // Set initial state
+    // Explicitly sync the state in case it connected synchronously or beforehand
     setIsConnected(s.connected);
 
     return () => {

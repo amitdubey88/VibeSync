@@ -206,9 +206,7 @@ const RoomPage = () => {
       <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark bg-bg-secondary shrink-0 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0">
-            <div className="w-7 h-7 rounded-md bg-accent-red flex items-center justify-center">
-              <Tv2 className="w-4 h-4 text-white" />
-            </div>
+            <img src="/favicon.svg" alt="VibeSync Logo" className="w-7 h-7 rounded-md shadow-[0_0_10px_rgba(229,9,20,0.4)]" />
             <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
           </button>
           <div className="w-px h-5 bg-border-dark" />

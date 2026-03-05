@@ -54,9 +54,10 @@ export const AuthProvider = ({ children }) => {
     disconnectSocket();
   }, []);
 
-  // Connect socket on mount if token already exists
+  // Deprecated: socket connection is entirely managed by SocketContext now
+  // to prevent race conditions during React mounts
   useEffect(() => {
-    if (token && user) connectSocket(token);
+    // intentionally left blank to prevent removing hooks completely
   }, [token, user]);
 
   return (
