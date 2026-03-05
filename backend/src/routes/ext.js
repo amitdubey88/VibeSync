@@ -86,7 +86,31 @@ router.get('/sync/:roomCode', (req, res) => {
 
   // Only return messages from last 5 min
   const fiveMinAgo = Date.now() - 5 * 60 * 1000;
-  const recentMessages = room.messages.filter((m) => m.timestamp > fiveMinAgo);
+
+  // ── BRIDGE: Pull messages from main Socket room too ──
+  const mainStore = req.app.locals.roomStore;
+  let allMessages = [...room.messages];
+
+  if (mainStore && mainStore.has(roomCode)) {
+    const mainRoom = mainStore.get(roomCode);
+    if (mainRoom.messages) {
+      allMessages = [...allMessages, ...mainRoom.messages];
+    }
+  }
+
+  // Deduplicate by ID and sort by time, then filter recent
+  const uniqueUrls = new Map();
+  allMessages.forEach(m => uniqueUrls.set(m.id, m));
+
+  const recentMessages = Array.from(uniqueUrls.values())
+    .map(m => ({
+      id: m.id,
+      username: m.username,
+      message: m.content || m.message,
+      timestamp: m.timestamp || new Date(m.createdAt).getTime()
+    }))
+    .filter(m => m.timestamp > fiveMinAgo)
+    .sort((a, b) => a.timestamp - b.timestamp);
 
   res.json({
     state:        room.state,
@@ -103,16 +127,43 @@ router.post('/chat/:roomCode', (req, res) => {
   if (!message || !username) return res.status(400).json({ error: 'message and username required' });
   if (message.length > 500) return res.status(400).json({ error: 'message too long' });
 
-  const room = getRoom(roomCode.toUpperCase());
-  room.messages.push({
+  const code = roomCode.toUpperCase();
+  const room = getRoom(code);
+  const msgObj = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     username: username.slice(0, 30),
     message: message.slice(0, 500),
     timestamp: Date.now(),
-  });
+  };
 
-  // Keep last 100 messages only
+  room.messages.push(msgObj);
   if (room.messages.length > 100) room.messages = room.messages.slice(-100);
+
+  // ── BRIDGE TO MAIN SOCKET ROOM ──
+  const io = req.app.locals.io;
+  const mainStore = req.app.locals.roomStore;
+
+  if (io && mainStore && mainStore.has(code)) {
+    const mainRoom = mainStore.get(code);
+    const socketMsg = {
+      id: msgObj.id,
+      roomId: code,
+      userId: `ext_${username}`,
+      username: username,
+      avatar: null,
+      content: msgObj.message,
+      type: 'text',
+      createdAt: new Date().toISOString()
+    };
+
+    // Add to main room history
+    mainRoom.messages = mainRoom.messages || [];
+    mainRoom.messages.push(socketMsg);
+    if (mainRoom.messages.length > 500) mainRoom.messages.shift();
+
+    // Broadcast to the web clients
+    io.to(code).emit('chat:message', socketMsg);
+  }
 
   res.json({ ok: true });
 });
