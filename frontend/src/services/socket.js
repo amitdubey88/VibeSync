@@ -1,13 +1,24 @@
 import { io } from 'socket.io-client';
 
 let socket = null;
+let currentToken = null;
 
 /**
  * Connect to the Socket.IO server with the user's JWT token.
- * Returns the singleton socket instance.
+ * If already connected with the SAME token, returns the existing socket.
+ * If the token changed (new login / username change), disconnects first and reconnects.
  */
 export const connectSocket = (token) => {
-    if (socket?.connected) return socket;
+    // If same token and still connected — reuse
+    if (socket?.connected && currentToken === token) return socket;
+
+    // Different token or disconnected — tear down old connection first
+    if (socket) {
+        socket.disconnect();
+        socket = null;
+    }
+
+    currentToken = token;
 
     const SERVER_URL = import.meta.env.VITE_API_URL || '/';
     socket = io(SERVER_URL, {
@@ -35,6 +46,7 @@ export const disconnectSocket = () => {
         socket.disconnect();
         socket = null;
     }
+    currentToken = null;
 };
 
 /**

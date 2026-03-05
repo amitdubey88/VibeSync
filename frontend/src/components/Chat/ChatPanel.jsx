@@ -68,9 +68,10 @@ const ChatPanel = () => {
             <p className="text-text-muted text-sm">No messages yet.<br />Say hello!</p>
           </div>
         )}
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} message={msg} isOwn={msg.userId === user?.id} />
-        ))}
+        {messages.map((msg) => {
+          const isOwn = msg.userId === user?.id || msg.username === user?.username;
+          return <MessageBubble key={msg.id} message={msg} isOwn={isOwn} />;
+        })}
         <div ref={bottomRef} />
       </div>
 

@@ -61,7 +61,7 @@ const ParticipantsList = () => {
       {/* List */}
       <div className="flex-1 overflow-y-auto scroll-area px-2 py-2">
         {participants.map((p) => {
-          const isMe = p.userId === user?.id;
+          const isMe = p.userId === user?.id || p.username === user?.username;
           const isRoomHost = p.userId === room?.hostId;
           const isInVoice = voiceParticipants.some((vp) => vp.userId === p.userId);
           const voiceData = voiceParticipants.find((vp) => vp.userId === p.userId);
