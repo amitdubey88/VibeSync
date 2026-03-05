@@ -377,8 +377,8 @@ const VideoPlayer = () => {
             </div>
             
             <div>
-              <h3 className="text-2xl font-bold text-text-primary mb-2">No Video Loaded</h3>
-              <p className="text-text-secondary text-sm">
+              <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
+              <p className="text-gray-300 text-sm font-medium">
                 {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video, or start a streaming party.'}
               </p>
             </div>

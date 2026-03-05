@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
@@ -8,6 +8,7 @@ import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puz
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [tab, setTab] = useState('join');
   const [username, setUsername] = useState('');
@@ -111,6 +112,32 @@ const LandingPage = () => {
           Real-time sync
         </div>
       </header>
+
+      {/* ── Room Ended by Host Modal ── */}
+      {location.state?.roomEnded && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="card text-center max-w-sm w-full shadow-2xl border border-border-light">
+            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+              <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-black text-text-primary mb-2">Session Ended</h2>
+            <p className="text-gray-300 text-sm mb-1">{location.state.roomEnded}</p>
+            <p className="text-text-muted text-xs mb-7">You have been returned to the home screen.</p>
+            <button
+              type="button"
+              onClick={() => {
+                // Clear the state so it doesn't show up again on refresh
+                navigate('/', { replace: true, state: {} });
+              }}
+              className="btn-primary w-full py-3 text-base font-bold"
+            >
+              OK, Got It
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Hero */}
       <main className="flex-1 flex flex-col lg:flex-row items-center justify-center gap-12 px-6 py-8 max-w-6xl mx-auto w-full">
