@@ -94,7 +94,10 @@ export const RoomProvider = ({ children }) => {
       toast.error(message || 'The room has been deleted.', { duration: 4000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
-      setTimeout(() => { window.location.href = '/'; }, 800);
+      setTimeout(() => {
+        window.history.replaceState(null, '', '/');
+        window.location.href = '/';
+      }, 800);
     };
 
     // ── kicked → hard redirect ─────────────────────────────────────────────
@@ -102,7 +105,10 @@ export const RoomProvider = ({ children }) => {
       toast.error(message || 'You were removed from the room.', { duration: 4000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
-      setTimeout(() => { window.location.href = '/'; }, 800);
+      setTimeout(() => {
+        window.history.replaceState(null, '', '/');
+        window.location.href = '/';
+      }, 800);
     };
 
     const onMuted = () => {

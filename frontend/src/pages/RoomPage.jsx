@@ -76,6 +76,14 @@ const RoomPage = () => {
     };
   }, [socket, isConnected, isAuthenticated]);
 
+  // Ghost-room guard: if someone presses Back and lands on this page
+  // after the room is already gone, redirect home immediately.
+  useEffect(() => {
+    if (!joining && !room && !error) {
+      navigate('/', { replace: true });
+    }
+  }, [room, joining, error]);
+
   // Refresh participant list when switching to participants tab
   const handleTabChange = useCallback((tab) => {
     setSidebarTab(tab);
@@ -125,12 +133,12 @@ const RoomPage = () => {
       }
     }
     leaveRoom();
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const confirmLeave = (transferToUserId) => {
     if (transferToUserId) transferHost(transferToUserId);
-    setTimeout(() => { leaveRoom(); navigate('/'); }, transferToUserId ? 300 : 0);
+    setTimeout(() => { leaveRoom(); navigate('/', { replace: true }); }, transferToUserId ? 300 : 0);
   };
 
   const handleDeleteRoom = () => setShowDeleteConfirm(true);
@@ -345,7 +353,7 @@ const RoomPage = () => {
         message="This will end the session for all participants and cannot be undone."
         confirmLabel="Delete Room"
         danger
-        onConfirm={() => { deleteRoom(); navigate('/'); }}
+        onConfirm={() => { deleteRoom(); navigate('/', { replace: true }); }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
 
