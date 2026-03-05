@@ -403,7 +403,7 @@ const VideoPlayer = () => {
               </div>
 
               <div className="flex flex-wrap gap-2 mb-5">
-                {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max'].map(p => (
+                {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max', 'MX Player', 'MiniTV'].map(p => (
                   <span key={p} className="text-[10px] font-semibold tracking-wide px-2 py-1 rounded-md bg-bg-primary/50 text-text-muted border border-border-dark">{p}</span>
                 ))}
               </div>

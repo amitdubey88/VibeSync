@@ -20,7 +20,9 @@
     "*://*.hbomax.com/*",
     "*://*.tv.apple.com/*",
     "*://*.sonyliv.com/*",
-    "*://*.zee5.com/*"
+    "*://*.zee5.com/*",
+    "*://*.mxplayer.in/*",
+    "*://*.amazon.in/minitv/*"
   ],
   "content_scripts": [
     {
@@ -33,7 +35,9 @@
         "*://*.disneyplus.com/*",
         "*://*.max.com/*",
         "*://*.sonyliv.com/*",
-        "*://*.zee5.com/*"
+        "*://*.zee5.com/*",
+        "*://*.mxplayer.in/*",
+        "*://*.amazon.in/minitv/*"
       ],
       "js": ["src/content_script.js"],
       "css": ["src/overlay.css"],

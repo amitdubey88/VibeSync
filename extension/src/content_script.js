@@ -59,6 +59,18 @@
       videoSelector: 'video',
       titleSelector: '[class*="title"]',
     },
+    'mxplayer.in': {
+      name: 'MX Player',
+      color: '#0132cf',
+      videoSelector: 'video',
+      titleSelector: '[class*="title"], .video-title',
+    },
+    'amazon.in': {
+      name: 'Amazon MiniTV',
+      color: '#ff9900',
+      videoSelector: 'video',
+      titleSelector: '.minitv-video-title, [class*="title"]',
+    },
   };
 
   const hostname = window.location.hostname.replace('www.', '');
@@ -113,7 +125,7 @@
     lastPushedTime = ct;
     lastPushedPlaying = isPlaying;
 
-    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app';
+    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app/';
     try {
       await fetch(`${backendUrl}/api/ext/sync/${settings.vs_room_code}`, {
         method: 'POST',
@@ -191,7 +203,7 @@
   // ── Chat send ─────────────────────────────────────────────────────────────
   async function sendChat(text) {
     if (!settings.vs_room_code || !text.trim()) return;
-    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app';
+    const backendUrl = settings.vs_backend_url || 'https://elderly-ameline-vibesync2001-89a44bd5.koyeb.app/';
     await fetch(`${backendUrl}/api/ext/chat/${settings.vs_room_code}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
