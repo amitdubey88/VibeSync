@@ -20,10 +20,10 @@ export const RoomProvider = ({ children }) => {
   const [reactions, setReactions] = useState([]);
   const [isMutedByHost, setIsMutedByHost] = useState(false);
   const [requiresApproval, setRequiresApproval] = useState(false);
-  // joinRequests: pending approval requests shown to host
   const [joinRequests, setJoinRequests] = useState([]);
-  // joinStatus: 'joined' | 'pending' | 'denied'
   const [joinStatus, setJoinStatus] = useState('joined');
+  // roomEndedByHost: set when host deletes the room, shows a persistent modal
+  const [roomEndedByHost, setRoomEndedByHost] = useState(null); // null | { message }
 
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
@@ -89,15 +89,11 @@ export const RoomProvider = ({ children }) => {
       setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3500);
     };
 
-    // ── room deleted → hard redirect for all participants ───────────────────
+    // ── room deleted → show persistent modal, participant clicks OK to go home ──
     const onRoomDeleted = ({ message }) => {
-      toast.error(message || 'The room has been deleted.', { duration: 4000 });
+      setRoomEndedByHost({ message: message || 'The host has ended this session.' });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
-      setTimeout(() => {
-        window.history.replaceState(null, '', '/');
-        window.location.href = '/';
-      }, 800);
     };
 
     // ── kicked → hard redirect ─────────────────────────────────────────────
@@ -260,6 +256,9 @@ export const RoomProvider = ({ children }) => {
       // Join approval
       requiresApproval, joinRequests, joinStatus,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
+      // Room ended by host
+      roomEndedByHost,
+      dismissRoomEnded: () => setRoomEndedByHost(null),
     }}>
       {children}
     </RoomContext.Provider>

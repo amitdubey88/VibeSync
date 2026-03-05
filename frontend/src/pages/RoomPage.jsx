@@ -23,6 +23,7 @@ const RoomPage = () => {
     room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
     joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
+    roomEndedByHost, dismissRoomEnded,
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
@@ -361,7 +362,37 @@ const RoomPage = () => {
         onCancel={() => setShowDeleteConfirm(false)}
       />
 
-      {/* Host leave modal */}
+      {/* ── Room Ended by Host modal (persistent — user must click OK) ── */}
+      {roomEndedByHost && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
+          <div className="card text-center max-w-sm w-full shadow-2xl border border-border-light">
+            {/* Icon */}
+            <div className="w-20 h-20 rounded-full bg-red-500/10 flex items-center justify-center mx-auto mb-5">
+              <svg className="w-10 h-10 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </div>
+
+            <h2 className="text-xl font-black text-text-primary mb-2">Session Ended</h2>
+            <p className="text-text-secondary text-sm mb-1">
+              {roomEndedByHost.message}
+            </p>
+            <p className="text-text-muted text-xs mb-7">You have been returned to the home screen.</p>
+
+            <button
+              type="button"
+              onClick={() => {
+                dismissRoomEnded();
+                navigate('/', { replace: true });
+              }}
+              className="btn-primary w-full py-3 text-base font-bold"
+            >
+              OK, Got It
+            </button>
+          </div>
+        </div>
+      )}
       {showLeaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
           <div className="card w-full max-w-sm">
