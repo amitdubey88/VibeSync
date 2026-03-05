@@ -21,7 +21,7 @@ const RoomPage = () => {
   const { socket, isConnected } = useSocket();
   const {
     room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
-    joinStatus, joinRequests, requiresApproval,
+    joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
   } = useRoom();
 
@@ -29,7 +29,13 @@ const RoomPage = () => {
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
   const hasJoinedRef = useRef(false);
+
+  // Reset join guard when socket changes (new token / reconnect)
+  useEffect(() => {
+    hasJoinedRef.current = false;
+  }, [socket]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,6 +58,9 @@ const RoomPage = () => {
         const password = location.state?.password;
         await joinRoom(code, password);
         socketJoin(code);
+        // After joining, explicitly request fresh participant list
+        // (fixes 'no participants visible' on rejoin / server restart)
+        setTimeout(() => refreshParticipants(), 800);
         setJoining(false);
       } catch (err) {
         setError(err.response?.data?.message || 'Could not join room');
@@ -105,7 +114,24 @@ const RoomPage = () => {
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
   const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
 
-  const handleLeave = () => { leaveRoom(); navigate('/'); };
+  const handleLeave = () => {
+    if (isHost) {
+      const others = participants.filter(
+        (p) => p.userId !== user?.id && p.isOnline !== false
+      );
+      if (others.length > 0) {
+        setShowLeaveModal(true);
+        return;
+      }
+    }
+    leaveRoom();
+    navigate('/');
+  };
+
+  const confirmLeave = (transferToUserId) => {
+    if (transferToUserId) transferHost(transferToUserId);
+    setTimeout(() => { leaveRoom(); navigate('/'); }, transferToUserId ? 300 : 0);
+  };
 
   const handleDeleteRoom = () => setShowDeleteConfirm(true);
 
@@ -322,6 +348,65 @@ const RoomPage = () => {
         onConfirm={() => { deleteRoom(); navigate('/'); }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
+
+      {/* Host leave modal */}
+      {showLeaveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="card w-full max-w-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5 text-accent-yellow" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-text-primary">Transfer Host Before Leaving</h2>
+                <p className="text-xs text-text-muted mt-0.5">Pick a new host, or leave anyway</p>
+              </div>
+            </div>
+
+            <div className="space-y-2 max-h-56 overflow-y-auto scroll-area mb-4">
+              {participants
+                .filter(p => p.userId !== user?.id && p.isOnline !== false)
+                .map(p => (
+                  <button
+                    key={p.userId}
+                    type="button"
+                    onClick={() => { setShowLeaveModal(false); confirmLeave(p.userId); }}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-bg-hover hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-transparent transition-all text-left"
+                  >
+                    <div
+                      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                      style={{ backgroundColor: p.avatar || '#8b5cf6' }}
+                    >
+                      {p.username?.slice(0, 2)?.toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-text-primary truncate">{p.username}</p>
+                      <p className="text-xs text-text-muted">{p.isGuest ? 'Guest' : 'Member'}</p>
+                    </div>
+                    <Crown className="w-4 h-4 text-accent-yellow opacity-60" />
+                  </button>
+                ))}
+            </div>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setShowLeaveModal(false)}
+                className="btn-ghost flex-1 text-sm"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowLeaveModal(false); confirmLeave(null); }}
+                className="flex items-center justify-center gap-1.5 flex-1 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-semibold transition-colors"
+              >
+                <LogOut className="w-4 h-4" /> Leave anyway
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
