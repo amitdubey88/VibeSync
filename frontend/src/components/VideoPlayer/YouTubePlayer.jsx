@@ -212,16 +212,32 @@ const YouTubePlayer = ({ videoId }) => {
       onTouchStart={handleInteraction}
       onClick={handleInteraction}
     >
-      <div className="w-full h-full pointer-events-none sm:pointer-events-auto" ref={containerRef} />
+      <div 
+        className={`w-full h-full ${!isHost ? 'pointer-events-none' : 'pointer-events-auto'}`} 
+        ref={containerRef} 
+      />
       
-      {/* Overlay to block events on mobile for smoother interaction, while allowing host controls */}
-      {!isHost && (
-        <div className="absolute inset-0 z-10 sm:hidden" onClick={handleInteraction} />
+      {/* 
+        Interaction & Blocking Layer:
+        - For host: Transparent and pointer-events-none (allows clicking iframe)
+        - For guest: Transparent but captures all clicks to toggle UI & block direct YT control
+      */}
+      {!isHost ? (
+        <div 
+          className="absolute inset-0 z-10 cursor-pointer" 
+          onClick={(e) => {
+            e.stopPropagation();
+            handleInteraction();
+          }}
+        />
+      ) : (
+        /* Host still needs a small overlay or logic to ensure controls show when clicking near edges */
+        <div className="absolute inset-0 z-0 pointer-events-none" />
       )}
 
       {/* Control Buttons Group (Top Left) */}
       <div className={`absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-        {/* PiP Button */}
+        {/* ... buttons remain same ... */}
         <button
           type="button"
           onClick={toggleYouTubePiP}
@@ -235,7 +251,6 @@ const YouTubePlayer = ({ videoId }) => {
           <span className="hidden xs:inline">{isPiP ? 'Exit PiP' : 'PiP'}</span>
         </button>
 
-        {/* Fullscreen Button - accessible to everyone */}
         <button
           type="button"
           onClick={toggleFullscreen}
@@ -248,7 +263,6 @@ const YouTubePlayer = ({ videoId }) => {
           <span className="hidden xs:inline">{isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
         </button>
 
-        {/* Voice Controls - only in fullscreen mode */}
         {isFullscreen && (
           <div className="flex items-center gap-2">
             {!isInVoice ? (
@@ -273,8 +287,8 @@ const YouTubePlayer = ({ videoId }) => {
         )}
       </div>
 
-      {/* Reaction Bar */}
-      <VideoReactionBar />
+      {/* Reaction Bar - Now synced with showControls */}
+      <VideoReactionBar visible={showControls} />
 
       {!isHost && (
         <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-300 pointer-events-none z-20 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>

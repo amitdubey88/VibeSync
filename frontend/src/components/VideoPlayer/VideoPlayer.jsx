@@ -441,9 +441,22 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls overlay (host only — guests have controls disabled in VideoControls) */}
+      {/* 
+        Interaction & Blocking Layer (Non-host):
+        An invisible layer that captures taps to show controls,
+        preventing browsers from showing native video menus.
+      */}
+      {!isHost && activeSrc && (
+        <div 
+          className="absolute inset-0 z-10 cursor-pointer" 
+          onClick={handleMouseMove}
+          onTouchStart={handleMouseMove}
+        />
+      )}
+
+      {/* Controls overlay */}
       {activeSrc && (
-        <div className={`absolute inset-0 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+        <div className={`absolute inset-0 transition-opacity duration-300 z-20 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
           <VideoControls
             videoRef={videoRef}
             currentTime={currentTime}
@@ -456,7 +469,7 @@ const VideoPlayer = () => {
 
       {/* Teams-style floating reaction bar — animations visible everywhere, bar hidden on mobile */}
       {activeSrc && (
-        <VideoReactionBar />
+        <VideoReactionBar visible={showControls} />
       )}
 
       {sourcePicker}

@@ -36,30 +36,33 @@ const FloatingReaction = ({ emoji, x, id, onDone }) => {
   );
 };
 
-const VideoReactionBar = () => {
+const VideoReactionBar = ({ visible: visibleProp }) => {
   const { sendReaction, reactions } = useRoom();
   const [floaters, setFloaters] = useState([]);
-  const [visible, setVisible] = useState(false);
+  const [internalVisible, setInternalVisible] = useState(false);
   const hideTimerRef = useRef(null);
 
-  // Show the bar on mouse move over the video container
+  // If visibleProp is provided, we use it. Otherwise we use internalVisible.
+  const isVisible = visibleProp !== undefined ? visibleProp : internalVisible;
+
+  // Internal visibility logic (only if prop not used)
   useEffect(() => {
+    if (visibleProp !== undefined) return;
+
     const container = document.querySelector('.video-reaction-host');
     if (!container) return;
 
     const onEnter = () => {
-      setVisible(true);
+      setInternalVisible(true);
       clearTimeout(hideTimerRef.current);
     };
     const onLeave = () => {
-      hideTimerRef.current = setTimeout(() => setVisible(false), 2000);
+      hideTimerRef.current = setTimeout(() => setInternalVisible(false), 2000);
     };
 
     container.addEventListener('mouseenter', onEnter);
     container.addEventListener('mousemove', onEnter);
     container.addEventListener('mouseleave', onLeave);
-
-    // Show on touch devices
     container.addEventListener('touchstart', onEnter, { passive: true });
 
     return () => {
@@ -69,7 +72,7 @@ const VideoReactionBar = () => {
       container.removeEventListener('touchstart', onEnter);
       clearTimeout(hideTimerRef.current);
     };
-  }, []);
+  }, [visibleProp]);
 
   const processedIdsRef = useRef(new Set());
 
@@ -130,7 +133,7 @@ const VideoReactionBar = () => {
       {/* Reaction button bar - Teams style, auto-hides/shows on interaction */}
       <div
         className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300
-          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
+          ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
       >
         <div className="flex flex-wrap justify-center items-center gap-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl sm:rounded-full px-3 py-2 shadow-2xl max-w-[90vw] sm:max-w-none">
           {REACTIONS.map(({ emoji, label }) => (
