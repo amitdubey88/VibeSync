@@ -146,10 +146,6 @@ const VideoReactionBar = ({ visible: visibleProp }) => {
               className="relative group w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/15 transition-all duration-150 hover:scale-125 active:scale-100"
             >
               <span className="text-xl leading-none">{emoji}</span>
-              {/* Tooltip */}
-              <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[10px] font-semibold px-2 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-                {label}
-              </span>
             </button>
           ))}
         </div>
