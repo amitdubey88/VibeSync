@@ -161,43 +161,80 @@ const useWebRTC = () => {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
             screenStreamRef.current = stream;
 
-            // Add track to all existing peer connections
             const videoTrack = stream.getVideoTracks()[0];
-            Object.values(peersRef.current).forEach(pc => {
-                pc.addTrack(videoTrack, stream);
-            });
+
+            // Add track + RENEGOTIATE with every connected peer
+            // Without renegotiation the remote side never learns about the new track
+            await Promise.all(
+                Object.entries(peersRef.current).map(async ([peerId, pc]) => {
+                    pc.addTrack(videoTrack, stream);
+
+                    // Trigger renegotiation: create & send a new offer
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    if (socket) {
+                        socket.emit('voice:offer', {
+                            targetSocketId: peerId,
+                            offer,
+                            roomCode,
+                        });
+                    }
+                })
+            );
 
             setIsSharingScreen(true);
             setVoiceError(null);
 
-            // Listen for native "Stop sharing" button from browser
-            videoTrack.onended = () => {
-                stopScreenShare();
-            };
+            // Listen for native browser "Stop sharing" button
+            videoTrack.addEventListener('ended', () => { stopScreenShareRef.current?.(); }, { once: true });
         } catch (err) {
             console.error('[voice] getDisplayMedia failed:', err);
-            setVoiceError('Screen share cancelled or denied.');
+            if (err.name !== 'NotAllowedError') {
+                setVoiceError('Screen share cancelled or denied.');
+            }
         }
-    }, [isInVoice]);
+    }, [isInVoice, socket, roomCode]);
 
-    const stopScreenShare = useCallback(() => {
+    // Keep a ref so the 'ended' event above can always call the latest version
+    const stopScreenShareRef = useRef(null);
+
+    const stopScreenShare = useCallback(async () => {
         if (!screenStreamRef.current) return;
 
+        const videoTrack = screenStreamRef.current.getVideoTracks()[0];
         screenStreamRef.current.getTracks().forEach(t => t.stop());
 
-        // Remove track from all peers (trickier than adding, but simpler to renegotiate via restarting ice, 
-        // or just removing track properly)
-        const videoTrack = screenStreamRef.current.getVideoTracks()[0];
-        if (videoTrack) {
-            Object.values(peersRef.current).forEach(pc => {
+        // Remove track from each peer + renegotiate so remote side closes the video
+        await Promise.all(
+            Object.entries(peersRef.current).map(async ([peerId, pc]) => {
                 const sender = pc.getSenders().find(s => s.track === videoTrack);
                 if (sender) pc.removeTrack(sender);
-            });
-        }
+
+                // Renegotiate after removal
+                try {
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    if (socket) {
+                        socket.emit('voice:offer', {
+                            targetSocketId: peerId,
+                            offer,
+                            roomCode,
+                        });
+                    }
+                } catch (_) { /* peer may have already disconnected */ }
+            })
+        );
 
         screenStreamRef.current = null;
         setIsSharingScreen(false);
-    }, []);
+
+        // Clean up remoteScreens entry for our own socket (shouldn't exist, but just in case)
+        setRemoteScreens(prev => {
+            const next = { ...prev };
+            if (socket) delete next[socket.id];
+            return next;
+        });
+    }, [socket, roomCode]);
 
     // ── Socket signaling events ───────────────────────────────────────────────
     useEffect(() => {
@@ -215,7 +252,13 @@ const useWebRTC = () => {
         // We received an offer — create answer
         const onOffer = async ({ fromSocketId, offer }) => {
             if (!localStreamRef.current) return;
-            const pc = createPeerConnection(fromSocketId);
+
+            // Check if we already have a connection (this means it's a renegotiation)
+            let pc = peersRef.current[fromSocketId];
+            if (!pc) {
+                pc = createPeerConnection(fromSocketId);
+            }
+
             await pc.setRemoteDescription(new RTCSessionDescription(offer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
