@@ -44,15 +44,34 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
     setIsMuted(newMuted);
   }, [videoRef, isMuted]);
 
-  const toggleFullscreen = useCallback(() => {
+  const toggleFullscreen = useCallback(async () => {
     const container = videoRef.current?.closest('.group');
     if (!container) return;
-    if (!document.fullscreenElement) {
-      container.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+
+    try {
+      if (!document.fullscreenElement) {
+        await container.requestFullscreen();
+        setIsFullscreen(true);
+        
+        // Lock orientation to landscape on mobile if supported
+        if (window.screen?.orientation?.lock) {
+          try {
+            await window.screen.orientation.lock('landscape');
+          } catch (err) {
+            console.warn('Orientation lock failed:', err);
+          }
+        }
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+        
+        // Unlock orientation when exiting fullscreen
+        if (window.screen?.orientation?.unlock) {
+          window.screen.orientation.unlock();
+        }
+      }
+    } catch (err) {
+      console.error('Fullscreen toggle failed:', err);
     }
   }, [videoRef]);
 

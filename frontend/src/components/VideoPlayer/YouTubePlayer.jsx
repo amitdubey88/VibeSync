@@ -186,8 +186,10 @@ const YouTubePlayer = ({ videoId }) => {
         {isPiP ? 'Exit PiP' : 'PiP'}
       </button>
 
-      {/* Reaction Bar */}
-      <VideoReactionBar />
+      {/* Reaction Bar - hidden on mobile */}
+      <div className="hidden sm:block">
+        <VideoReactionBar />
+      </div>
 
       {!isHost && (
         <div className="absolute bottom-3 left-1/2 -translate-x-1/2 text-xs text-white/30 select-none">
