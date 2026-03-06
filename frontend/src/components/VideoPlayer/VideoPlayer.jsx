@@ -385,9 +385,33 @@ const VideoPlayer = () => {
             </div>
 
             {isHost && (
-              <button className="btn-primary" onClick={() => setShowSourcePicker(true)}>
-                <Upload className="w-4 h-4" /> Load Video File / URL
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-3">
+                <button className="btn-primary" onClick={() => setShowSourcePicker(true)}>
+                  <Upload className="w-4 h-4" /> Load Video File / URL
+                </button>
+                
+                {/* Screen Share CTA */}
+                {isInVoice ? (
+                  <button 
+                    className={`btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all border
+                      ${isSharingScreen 
+                        ? 'bg-accent-blue/20 text-accent-blue border-accent-blue/40 hover:bg-accent-blue/30' 
+                        : 'bg-bg-primary border-border-light text-text-primary hover:border-accent-blue/50 hover:bg-bg-hover'}`}
+                    onClick={isSharingScreen ? stopScreenShare : shareScreen}
+                  >
+                    {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
+                    {isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
+                  </button>
+                ) : (
+                  <button 
+                    className="btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold bg-bg-primary border border-border-light text-text-secondary hover:text-text-primary hover:border-border-dark cursor-not-allowed opacity-70"
+                    title="Join voice chat first to share screen"
+                    disabled
+                  >
+                    <MonitorUp className="w-4 h-4" /> Share Screen (Requires Voice)
+                  </button>
+                )}
+              </div>
             )}
 
             <div className="hidden sm:block w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">

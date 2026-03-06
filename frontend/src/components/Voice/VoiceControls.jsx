@@ -54,20 +54,6 @@ const VoiceControls = () => {
           )}
         </button>
 
-        {/* Share Screen (only when in call) */}
-        {isInVoice && (
-          <button
-            onClick={isSharingScreen ? stopScreenShare : shareScreen}
-            className={`btn-icon w-10 h-10 rounded-lg border transition-all duration-200
-              ${isSharingScreen
-                ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/30'
-                : 'bg-bg-hover text-text-secondary border-border-light hover:text-text-primary'
-              }`}
-            title={isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
-          >
-            {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
-          </button>
-        )}
 
         {/* Mute toggle (only when in call) */}
         {isInVoice && (
