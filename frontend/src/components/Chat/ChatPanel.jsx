@@ -20,8 +20,16 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
+  const [showSwipeGuide, setShowSwipeGuide] = useState(
+    () => localStorage.getItem('vs_swipe_guide_seen') !== 'true'
+  );
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
+
+  const dismissSwipeGuide = () => {
+    localStorage.setItem('vs_swipe_guide_seen', 'true');
+    setShowSwipeGuide(false);
+  };
 
   // Auto-scroll to latest message
   useEffect(() => {
@@ -75,6 +83,37 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
       {/* ── Messages ── */}
       <div className="flex-1 overflow-y-auto scroll-area px-3 py-3 space-y-1">
+
+        {/* Swipe-to-reply guide — shown once until user dismisses */}
+        {showSwipeGuide && (
+          <div className="mb-3 rounded-2xl border border-accent-purple/30 bg-accent-purple/10 backdrop-blur-sm overflow-hidden animate-fade-in">
+            <div className="px-4 pt-3 pb-2">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">👈</span>
+                <span className="text-sm font-bold text-text-primary">Swipe to Reply</span>
+              </div>
+              <p className="text-xs text-text-secondary leading-relaxed">
+                Drag any message <span className="font-semibold text-accent-purple">rightward</span> to reply to it — just like WhatsApp!
+                A reply icon appears as you swipe, and releases when you let go.
+              </p>
+              <div className="mt-2.5 flex items-center gap-2">
+                {/* Animated demo */}
+                <div className="flex-1 flex items-center gap-2 bg-bg-hover rounded-xl px-3 py-1.5">
+                  <div className="w-5 h-5 rounded-full bg-accent-purple/40 shrink-0" />
+                  <div className="flex-1 h-2 rounded-full bg-bg-primary/80" />
+                  <span className="text-xs text-accent-purple animate-bounce">→</span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={dismissSwipeGuide}
+              className="w-full py-2 text-xs font-bold text-accent-purple hover:bg-accent-purple/20 transition-colors border-t border-accent-purple/20"
+            >
+              Got it, don't show again ✓
+            </button>
+          </div>
+        )}
+
         {messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-8">
             <div className="text-4xl">💬</div>
