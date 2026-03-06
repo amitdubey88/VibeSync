@@ -127,9 +127,9 @@ const VideoReactionBar = () => {
         ))}
       </div>
 
-      {/* Reaction button bar - Teams style */}
+      {/* Reaction button bar - Teams style, hidden on mobile */}
       <div
-        className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300
+        className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300 hidden sm:flex
           ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
       >
         <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-2 shadow-2xl">

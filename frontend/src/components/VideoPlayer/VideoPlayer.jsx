@@ -452,11 +452,9 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Teams-style floating reaction bar — explicitly hidden on mobile, and only when video loaded */}
+      {/* Teams-style floating reaction bar — animations visible everywhere, bar hidden on mobile */}
       {activeSrc && (
-        <div className="hidden sm:block">
-          <VideoReactionBar />
-        </div>
+        <VideoReactionBar />
       )}
 
       {sourcePicker}

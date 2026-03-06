@@ -45,12 +45,18 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   }, [videoRef, isMuted]);
 
   const toggleFullscreen = useCallback(async () => {
-    const container = videoRef.current?.closest('.group');
+    const container = videoRef.current?.closest('.video-reaction-host');
     if (!container) return;
 
     try {
-      if (!document.fullscreenElement) {
-        await container.requestFullscreen();
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (container.requestFullscreen) {
+          await container.requestFullscreen();
+        } else if (container.webkitRequestFullscreen) {
+          await container.webkitRequestFullscreen();
+        } else if (container.msRequestFullscreen) {
+          await container.msRequestFullscreen();
+        }
         setIsFullscreen(true);
         
         // Lock orientation to landscape on mobile if supported
@@ -62,7 +68,13 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
           }
         }
       } else {
-        await document.exitFullscreen();
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
         setIsFullscreen(false);
         
         // Unlock orientation when exiting fullscreen

@@ -13,6 +13,7 @@ const YouTubePlayer = ({ videoId }) => {
   const { room, isHost, setVideoState } = useRoom();
   const playerRef = useRef(null);
   const containerRef = useRef(null);
+  const mainContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
   const [isPiP, setIsPiP] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -133,16 +134,30 @@ const YouTubePlayer = ({ videoId }) => {
   }, [socket, isHost]);
 
   const toggleFullscreen = useCallback(async () => {
-    const el = containerRef.current?.parentElement;
+    const el = mainContainerRef.current;
     if (!el) return;
     try {
       if (!document.fullscreenElement) {
-        await el.requestFullscreen();
+        if (el.requestFullscreen) {
+          await el.requestFullscreen();
+        } else if (el.webkitRequestFullscreen) {
+          await el.webkitRequestFullscreen();
+        } else if (el.msRequestFullscreen) {
+          await el.msRequestFullscreen();
+        }
+        
         if (window.screen?.orientation?.lock) {
           try { await window.screen.orientation.lock('landscape'); } catch (_) {}
         }
       } else {
-        await document.exitFullscreen();
+        if (document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitExitFullscreen) {
+          await document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+          await document.msExitFullscreen();
+        }
+        
         if (window.screen?.orientation?.unlock) window.screen.orientation.unlock();
       }
     } catch (err) {
@@ -188,6 +203,7 @@ const YouTubePlayer = ({ videoId }) => {
 
   return (
     <div 
+      ref={mainContainerRef}
       className="w-full h-full bg-black flex items-center justify-center video-reaction-host relative group"
       onMouseMove={handleInteraction}
       onTouchStart={handleInteraction}
@@ -229,10 +245,8 @@ const YouTubePlayer = ({ videoId }) => {
         </button>
       </div>
 
-      {/* Reaction Bar - hidden on mobile */}
-      <div className="hidden sm:block">
-        <VideoReactionBar />
-      </div>
+      {/* Reaction Bar */}
+      <VideoReactionBar />
 
       {!isHost && (
         <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 transition-opacity duration-300 pointer-events-none z-20 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
