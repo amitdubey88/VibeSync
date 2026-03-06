@@ -1,17 +1,37 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
+import { useWebRTCContext } from '../../context/WebRTCContext';
 import { formatTime } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import {
-  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload, PictureInPicture
+  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload, PictureInPicture,
+  Mic, MicOff, Phone
 } from 'lucide-react';
 
 const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick }) => {
   const { videoState } = useRoom();
+  const { isInVoice, isMuted, toggleMute, joinVoice } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
-  const [isMuted, setIsMuted] = useState(false);
+  const [isMutedLocal, setIsMutedLocal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isPiP, setIsPiP] = useState(false);
+
+  // Monitor fullscreen changes
+  useEffect(() => {
+    const onFsChange = () => {
+      setIsFullscreen(!!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement));
+    };
+    
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('msfullscreenchange', onFsChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('msfullscreenchange', onFsChange);
+    };
+  }, []);
 
   const isPlaying = videoState?.isPlaying || false;
 
@@ -37,12 +57,12 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
     setIsMuted(v === 0);
   };
 
-  const toggleMute = useCallback(() => {
+  const toggleMuteVideo = useCallback(() => {
     if (!videoRef.current) return;
-    const newMuted = !isMuted;
+    const newMuted = !isMutedLocal;
     videoRef.current.muted = newMuted;
-    setIsMuted(newMuted);
-  }, [videoRef, isMuted]);
+    setIsMutedLocal(newMuted);
+  }, [videoRef, isMutedLocal]);
 
   const toggleFullscreen = useCallback(async () => {
     const container = videoRef.current?.closest('.video-reaction-host');
@@ -115,7 +135,31 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 video-gradient-bottom pt-16 pb-3 px-4">
+    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-16 pb-3 px-4">
+      {/* ── Fullscreen Voice Controls ── */}
+      {isFullscreen && (
+        <div className="absolute -top-[300px] left-0 flex items-center gap-2">
+           {!isInVoice ? (
+              <button
+                onClick={joinVoice}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/80 hover:bg-accent-purple backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Join Audio</span>
+              </button>
+            ) : (
+              <button
+                onClick={toggleMute}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg
+                  ${isMuted ? 'bg-red-500/80 hover:bg-red-500' : 'bg-green-500/80 hover:bg-green-500'}`}
+              >
+                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+              </button>
+            )}
+        </div>
+      )}
+
       {/* ── Progress bar ── */}
       <div
         className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
@@ -146,8 +190,8 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
         </button>
 
         {/* Volume */}
-        <button onClick={toggleMute} className="btn-icon text-white">
-          {isMuted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+        <button onClick={toggleMuteVideo} className="btn-icon text-white">
+          {isMutedLocal || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
         <input
           type="range" min="0" max="1" step="0.05"

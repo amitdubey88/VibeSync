@@ -182,7 +182,7 @@ const VideoPlayer = () => {
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
     clearTimeout(controlsTimer.current);
-    controlsTimer.current = setTimeout(() => setShowControls(false), 3000);
+    controlsTimer.current = setTimeout(() => setShowControls(false), 3500);
   }, []);
 
   // ── File upload: INSTANT local play + background upload ────────────────────
@@ -353,8 +353,10 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host"
+      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden"
       onMouseMove={handleMouseMove}
+      onTouchStart={handleMouseMove}
+      onClick={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
       {/* Background upload progress bar — thin strip at top (host only) */}

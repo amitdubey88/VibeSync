@@ -127,12 +127,12 @@ const VideoReactionBar = () => {
         ))}
       </div>
 
-      {/* Reaction button bar - Teams style, hidden on mobile */}
+      {/* Reaction button bar - Teams style, auto-hides/shows on interaction */}
       <div
-        className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300 hidden sm:flex
+        className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300
           ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}`}
       >
-        <div className="flex items-center gap-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-full px-3 py-2 shadow-2xl">
+        <div className="flex flex-wrap justify-center items-center gap-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl sm:rounded-full px-3 py-2 shadow-2xl max-w-[90vw] sm:max-w-none">
           {REACTIONS.map(({ emoji, label }) => (
             <button
               key={label}

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import { useRoom } from '../../context/RoomContext';
+import { useWebRTCContext } from '../../context/WebRTCContext';
 import VideoReactionBar from './VideoReactionBar';
-import { PictureInPicture, Maximize2, Minimize2 } from 'lucide-react';
+import { PictureInPicture, Maximize2, Minimize2, Mic, MicOff, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /**
@@ -11,6 +12,7 @@ import toast from 'react-hot-toast';
 const YouTubePlayer = ({ videoId }) => {
   const { socket } = useSocket();
   const { room, isHost, setVideoState } = useRoom();
+  const { isInVoice, isMuted, toggleMute, joinVoice } = useWebRTCContext();
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const mainContainerRef = useRef(null);
@@ -24,7 +26,7 @@ const YouTubePlayer = ({ videoId }) => {
   const handleInteraction = useCallback(() => {
     setShowControls(true);
     clearTimeout(controlsTimerRef.current);
-    controlsTimerRef.current = setTimeout(() => setShowControls(false), 3000);
+    controlsTimerRef.current = setTimeout(() => setShowControls(false), 3500);
   }, []);
 
   useEffect(() => {
@@ -79,12 +81,21 @@ const YouTubePlayer = ({ videoId }) => {
     }
 
     // Monitor fullscreen changes
-    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    const onFsChange = () => {
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+      setIsFullscreen(isFs);
+      if (isFs) setShowControls(true); // Always show controls initially when entering FS
+    };
+    
     document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('msfullscreenchange', onFsChange);
 
     return () => {
       playerRef.current?.destroy();
       document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('msfullscreenchange', onFsChange);
       if (pipWindowRef.current && !pipWindowRef.current.closed) {
         pipWindowRef.current.close();
         pipWindowRef.current = null;
@@ -137,26 +148,18 @@ const YouTubePlayer = ({ videoId }) => {
     const el = mainContainerRef.current;
     if (!el) return;
     try {
-      if (!document.fullscreenElement) {
-        if (el.requestFullscreen) {
-          await el.requestFullscreen();
-        } else if (el.webkitRequestFullscreen) {
-          await el.webkitRequestFullscreen();
-        } else if (el.msRequestFullscreen) {
-          await el.msRequestFullscreen();
-        }
+      if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
+        if (el.requestFullscreen) await el.requestFullscreen();
+        else if (el.webkitRequestFullscreen) await el.webkitRequestFullscreen();
+        else if (el.msRequestFullscreen) await el.msRequestFullscreen();
         
         if (window.screen?.orientation?.lock) {
           try { await window.screen.orientation.lock('landscape'); } catch (_) {}
         }
       } else {
-        if (document.exitFullscreen) {
-          await document.exitFullscreen();
-        } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
-        }
+        if (document.exitFullscreen) await document.exitFullscreen();
+        else if (document.webkitExitFullscreen) await document.webkitExitFullscreen();
+        else if (document.msExitFullscreen) await document.msExitFullscreen();
         
         if (window.screen?.orientation?.unlock) window.screen.orientation.unlock();
       }
@@ -204,9 +207,10 @@ const YouTubePlayer = ({ videoId }) => {
   return (
     <div 
       ref={mainContainerRef}
-      className="w-full h-full bg-black flex items-center justify-center video-reaction-host relative group"
+      className="w-full h-full bg-black flex items-center justify-center video-reaction-host relative group overflow-hidden"
       onMouseMove={handleInteraction}
       onTouchStart={handleInteraction}
+      onClick={handleInteraction}
     >
       <div className="w-full h-full pointer-events-none sm:pointer-events-auto" ref={containerRef} />
       
@@ -215,19 +219,19 @@ const YouTubePlayer = ({ videoId }) => {
         <div className="absolute inset-0 z-10 sm:hidden" onClick={handleInteraction} />
       )}
 
-      {/* Control Buttons Group */}
-      <div className={`absolute top-3 left-3 z-20 flex items-center gap-2 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+      {/* Control Buttons Group (Top Left) */}
+      <div className={`absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
         {/* PiP Button */}
         <button
           type="button"
           onClick={toggleYouTubePiP}
           title={isPiP ? 'Exit PiP' : 'PiP'}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
-            bg-black/60 backdrop-blur-sm border border-white/10 text-white text-xs font-semibold
+          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl
+            bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold
             hover:bg-black/80 hover:border-white/30 transition-all duration-200
             ${isPiP ? 'text-accent-purple border-accent-purple/50' : ''}`}
         >
-          <PictureInPicture className="w-3.5 h-3.5" />
+          <PictureInPicture className="w-4 h-4" />
           <span className="hidden xs:inline">{isPiP ? 'Exit PiP' : 'PiP'}</span>
         </button>
 
@@ -236,22 +240,46 @@ const YouTubePlayer = ({ videoId }) => {
           type="button"
           onClick={toggleFullscreen}
           title="Fullscreen"
-          className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg
-            bg-black/60 backdrop-blur-sm border border-white/10 text-white text-xs font-semibold
-            hover:bg-black/80 hover:border-white/30 transition-all duration-200"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl
+            bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold
+            hover:bg-black/80 hover:border-white/30 transition-all duration-200 shadow-lg"
         >
-          {isFullscreen ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
           <span className="hidden xs:inline">{isFullscreen ? 'Exit Full' : 'Fullscreen'}</span>
         </button>
+
+        {/* Voice Controls - only in fullscreen mode */}
+        {isFullscreen && (
+          <div className="flex items-center gap-2">
+            {!isInVoice ? (
+              <button
+                onClick={joinVoice}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/80 hover:bg-accent-purple backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg"
+              >
+                <Phone className="w-4 h-4" />
+                <span>Join Audio</span>
+              </button>
+            ) : (
+              <button
+                onClick={toggleMute}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg
+                  ${isMuted ? 'bg-red-500/80 hover:bg-red-500' : 'bg-green-500/80 hover:bg-green-500'}`}
+              >
+                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Reaction Bar */}
       <VideoReactionBar />
 
       {!isHost && (
-        <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 transition-opacity duration-300 pointer-events-none z-20 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-          <div className="bg-black/40 backdrop-blur-md border border-white/10 px-4 py-2 rounded-full shadow-lg">
-             <p className="text-[10px] sm:text-xs text-white/50 font-medium whitespace-nowrap">
+        <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-300 pointer-events-none z-20 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
+          <div className="bg-black/40 backdrop-blur-md border border-white/10 px-5 py-2.5 rounded-full shadow-2xl">
+             <p className="text-[10px] sm:text-xs text-white/60 font-medium whitespace-nowrap tracking-wide">
               👑 Only the host can control playback
             </p>
           </div>
