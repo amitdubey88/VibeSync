@@ -4,7 +4,7 @@ import { useRoom } from '../../context/RoomContext';
 
 const VoiceControls = () => {
   const { isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute } = useWebRTC();
-  const { voiceParticipants } = useRoom();
+  const { voiceParticipants, isHost, muteAllParticipants } = useRoom();
 
   return (
     <div className="px-4 py-3 border-t border-border-dark">
@@ -54,6 +54,17 @@ const VoiceControls = () => {
             title={isMuted ? 'Unmute' : 'Mute'}
           >
             {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+        )}
+
+        {/* Mute All (only for host, when in call and multiple people) */}
+        {isHost && isInVoice && voiceParticipants.length > 1 && (
+          <button
+            onClick={muteAllParticipants}
+            className="flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-accent-purple/10 text-accent-purple border border-accent-purple/30 hover:bg-accent-purple/20 transition-all duration-200"
+            title="Mute Everyone Else"
+          >
+            <MicOff className="w-3.5 h-3.5" /> Mute All
           </button>
         )}
       </div>

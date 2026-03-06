@@ -63,6 +63,19 @@ module.exports = (io, socket, roomStore) => {
         console.log(`🗑️  Room ${code} deleted by ${socket.user.username}`);
     });
 
+    // ── room:toggle-lock ──────────────────────────────────────────────────────
+    socket.on('room:toggle-lock', ({ roomCode, isLocked }) => {
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
+        if (!room) return socket.emit('error', { message: 'Room not found' });
+        if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can lock the room' });
+
+        room.isLocked = !!isLocked;
+        io.to(code).emit('room:lock-changed', { isLocked: room.isLocked });
+
+        console.log(`🔒 Room ${code} is now ${room.isLocked ? 'locked' : 'unlocked'}`);
+    });
+
     // ── room:transfer-host ────────────────────────────────────────────────────
     socket.on('room:transfer-host', ({ roomCode, targetUserId }) => {
         const code = roomCode?.toUpperCase();
@@ -145,5 +158,24 @@ module.exports = (io, socket, roomStore) => {
         }
 
         console.log(`🔇 ${target.username} muted in room ${code} by ${socket.user.username}`);
+    });
+
+    // ── room:mute-all ─────────────────────────────────────────────────────────
+    socket.on('room:mute-all', ({ roomCode }) => {
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
+        if (!room) return socket.emit('error', { message: 'Room not found' });
+        if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can mute participants' });
+
+        room.participants.forEach((p) => {
+            if (p.userId !== socket.user.id) {
+                const targetSocket = io.sockets.sockets.get(p.socketId);
+                if (targetSocket) {
+                    targetSocket.emit('room:muted', { mutedBy: socket.user.username });
+                }
+            }
+        });
+
+        console.log(`🔇 All participants muted in room ${code} by ${socket.user.username}`);
     });
 };

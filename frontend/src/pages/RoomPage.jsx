@@ -8,7 +8,7 @@ import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { createPortal } from 'react-dom';
@@ -25,7 +25,7 @@ const RoomPage = () => {
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
     unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
-    setUserStatus
+    setUserStatus, isLocked, toggleRoomLock
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
@@ -353,34 +353,63 @@ const RoomPage = () => {
             ))}
           </div>
 
-          {/* Host: approval mode toggle (below tab bar, visible on participants tab) */}
+          {/* Host: controls sidebar block */}
           {isHost && sidebarTab === 'participants' && (
-            <div className="flex items-center justify-between px-4 py-2 border-b border-border-dark bg-bg-primary/50 shrink-0">
-              <div className="flex items-center gap-2">
-                {requiresApproval
-                  ? <ShieldCheck className="w-4 h-4 text-accent-green" />
-                  : <ShieldOff className="w-4 h-4 text-text-muted" />}
-                <span className="text-xs font-semibold text-text-secondary">
-                  {requiresApproval ? 'Approval ON' : 'Approval OFF'}
-                </span>
-                {requiresApproval && joinRequests.length > 0 && (
-                  <span className="text-xs text-accent-yellow font-semibold">
-                    ({joinRequests.length} waiting)
+            <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">
+              
+              {/* Approval mode toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {requiresApproval
+                    ? <ShieldCheck className="w-4 h-4 text-accent-green" />
+                    : <ShieldOff className="w-4 h-4 text-text-muted" />}
+                  <span className="text-xs font-semibold text-text-secondary">
+                    {requiresApproval ? 'Approval ON' : 'Approval OFF'}
                   </span>
-                )}
+                  {requiresApproval && joinRequests.length > 0 && (
+                    <span className="text-xs text-accent-yellow font-semibold">
+                      ({joinRequests.length} waiting)
+                    </span>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setApprovalRequired(!requiresApproval)}
+                  className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
+                    requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-dark'
+                  }`}
+                  title={requiresApproval ? 'Disable approval' : 'Enable approval'}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    requiresApproval ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => setApprovalRequired(!requiresApproval)}
-                className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
-                  requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-dark'
-                }`}
-                title={requiresApproval ? 'Disable approval' : 'Enable approval'}
-              >
-                <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                  requiresApproval ? 'translate-x-5' : 'translate-x-0'
-                }`} />
-              </button>
+
+              {/* Lock Room toggle */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {isLocked
+                    ? <Lock className="w-4 h-4 text-red-500" />
+                    : <Unlock className="w-4 h-4 text-text-muted" />}
+                  <span className="text-xs font-semibold text-text-secondary">
+                    {isLocked ? 'Room Locked' : 'Room Unlocked'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => toggleRoomLock(!isLocked)}
+                  className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
+                    isLocked ? 'bg-red-500' : 'bg-bg-hover border border-border-dark'
+                  }`}
+                  title={isLocked ? 'Unlock Room' : 'Lock Room'}
+                >
+                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                    isLocked ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+
             </div>
           )}
 

@@ -79,7 +79,7 @@ module.exports = (io, roomStore) => {
                 joinedAt: Date.now(),
             });
 
-            // Send full state to the approved user
+            // Sent to the user who was approved
             io.to(pending.socketId).emit('room:state', {
                 room: {
                     code: room.code, name: room.name, hostId: room.hostId,
@@ -89,6 +89,7 @@ module.exports = (io, roomStore) => {
                     participants: room.participants,
                     voiceParticipants: room.voiceParticipants || [],
                     requiresApproval: room.requiresApproval || false,
+                    isLocked: room.isLocked || false,
                 },
             });
 
@@ -127,6 +128,10 @@ module.exports = (io, roomStore) => {
             const code = roomCode?.toUpperCase();
             const room = roomStore.get(code);
             if (!room) return socket.emit('error', { message: 'Room not found' });
+
+            if (room.isLocked && socket.user.id !== room.hostId) {
+                return socket.emit('room:join-error', { message: 'This room is currently locked by the host.' });
+            }
 
             // Leave previous room if any
             if (currentRoomCode && currentRoomCode !== code) {
@@ -211,6 +216,7 @@ module.exports = (io, roomStore) => {
                     participants: room.participants,
                     voiceParticipants: room.voiceParticipants || [],
                     requiresApproval: room.requiresApproval || false,
+                    isLocked: room.isLocked || false,
                 },
             });
 

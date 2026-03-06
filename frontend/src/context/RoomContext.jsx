@@ -54,6 +54,7 @@ export const RoomProvider = ({ children }) => {
   // Chat notifications state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [chatMuted, setChatMuted] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
 
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
@@ -89,6 +90,7 @@ export const RoomProvider = ({ children }) => {
       setCurrentVideo(r.currentVideo);
       setIsHost(r.hostId === user?.id);
       setRequiresApproval(r.requiresApproval || false);
+      setIsLocked(r.isLocked || false);
       setJoinStatus('joined'); // receiving full state means we're in
     };
 
@@ -183,6 +185,13 @@ export const RoomProvider = ({ children }) => {
     };
     // Approval requirement toggle
     const onApprovalChanged = ({ requiresApproval: ra }) => setRequiresApproval(ra);
+    
+    // Lock status toggle
+    const onLockChanged = ({ isLocked: locked }) => {
+      setIsLocked(locked);
+      if (locked) toast('The room has been locked by the host.', { icon: '🔒', duration: 3000 });
+      else toast('The room is now unlocked.', { icon: '🔓', duration: 3000 });
+    };
 
     socket.on('room:state', onRoomState);
     socket.on('room:participant-update', onParticipantUpdate);
@@ -199,6 +208,7 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:join-pending', onJoinPending);
     socket.on('room:join-denied', onJoinDenied);
     socket.on('room:approval-changed', onApprovalChanged);
+    socket.on('room:lock-changed', onLockChanged);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -216,6 +226,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:join-pending', onJoinPending);
       socket.off('room:join-denied', onJoinDenied);
       socket.off('room:approval-changed', onApprovalChanged);
+      socket.off('room:lock-changed', onLockChanged);
     };
   }, [socket, user]);
 
@@ -278,6 +289,12 @@ export const RoomProvider = ({ children }) => {
     setRequiresApproval(value);
   }, [socket, room]);
 
+  const toggleRoomLock = useCallback((locked) => {
+    if (!socket || !room) return;
+    socket.emit('room:toggle-lock', { roomCode: room.code, isLocked: locked });
+    setIsLocked(locked);
+  }, [socket, room]);
+
   // ── Host control actions ──────────────────────────────────────────────────
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
@@ -299,6 +316,11 @@ export const RoomProvider = ({ children }) => {
     socket.emit('room:mute', { roomCode: room.code, targetUserId });
   }, [socket, room]);
 
+  const muteAllParticipants = useCallback(() => {
+    if (!socket || !room) return;
+    socket.emit('room:mute-all', { roomCode: room.code });
+  }, [socket, room]);
+
   const setUserStatus = useCallback((status) => {
     if (!socket || !room) return;
     socket.emit('room:set-status', { roomCode: room.code, status });
@@ -311,10 +333,11 @@ export const RoomProvider = ({ children }) => {
       reactions, joinRoom, leaveRoom, sendMessage,
       sendReaction, setVideoSource, notifyUploading,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
-      // Join approval
-      requiresApproval, joinRequests, joinStatus,
-      approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
-      // Room ended by host
+      // Join approval & locking
+      requiresApproval, joinRequests, joinStatus, isLocked,
+      approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
+      // Host controls
+      deleteRoom, transferHost, kickParticipant, muteParticipant, muteAllParticipants,
       roomEndedByHost,
       dismissRoomEnded: () => setRoomEndedByHost(null),
       // Chat notifications

@@ -2,7 +2,7 @@ import { useState, useCallback, useRef } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { formatTime } from '../../utils/helpers';
 import {
-  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload
+  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload, PictureInPicture
 } from 'lucide-react';
 
 const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick }) => {
@@ -51,6 +51,21 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
     } else {
       document.exitFullscreen();
       setIsFullscreen(false);
+    }
+  }, [videoRef]);
+
+  const togglePictureInPicture = useCallback(async () => {
+    const video = videoRef.current;
+    if (!video) return;
+    
+    try {
+      if (document.pictureInPictureElement) {
+        await document.exitPictureInPicture();
+      } else if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+        await video.requestPictureInPicture();
+      }
+    } catch (err) {
+      console.error('Failed to toggle PiP:', err);
     }
   }, [videoRef]);
 
@@ -111,6 +126,11 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
             <Upload className="w-4 h-4" />
           </button>
         )}
+
+        {/* PiP */}
+        <button onClick={togglePictureInPicture} className="btn-icon text-white" title="Picture in Picture">
+          <PictureInPicture className="w-4 h-4" />
+        </button>
 
         {/* Fullscreen */}
         <button onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">
