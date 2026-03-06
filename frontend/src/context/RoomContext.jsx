@@ -299,6 +299,11 @@ export const RoomProvider = ({ children }) => {
     socket.emit('room:mute', { roomCode: room.code, targetUserId });
   }, [socket, room]);
 
+  const setUserStatus = useCallback((status) => {
+    if (!socket || !room) return;
+    socket.emit('room:set-status', { roomCode: room.code, status });
+  }, [socket, room]);
+
   return (
     <RoomContext.Provider value={{
       room, participants, voiceParticipants, messages,
@@ -314,7 +319,9 @@ export const RoomProvider = ({ children }) => {
       dismissRoomEnded: () => setRoomEndedByHost(null),
       // Chat notifications
       unreadChatCount, setUnreadChatCount,
-      chatMuted, setChatMuted
+      chatMuted, setChatMuted,
+      // Status
+      setUserStatus
     }}>
       {children}
     </RoomContext.Provider>

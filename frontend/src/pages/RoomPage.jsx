@@ -24,7 +24,8 @@ const RoomPage = () => {
     joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
-    unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted
+    unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
+    setUserStatus
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
@@ -145,7 +146,13 @@ const RoomPage = () => {
       const others = participants.filter(
         (p) => p.userId !== user?.id && p.isOnline !== false
       );
-      if (others.length > 0) {
+      if (others.length === 1) {
+        // Auto-transfer to the only other participant before leaving
+        transferHost(others[0].userId);
+        setTimeout(() => { leaveRoom(); navigate('/', { replace: true }); }, 100);
+        return;
+      } else if (others.length > 1) {
+        // Must explicitly choose host
         setShowLeaveModal(true);
         return;
       }
@@ -248,6 +255,27 @@ const RoomPage = () => {
           </button>
           <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
             Share
+          </button>
+
+          {/* BRB / Away Toggle */}
+          <button
+            onClick={() => {
+              const p = participants.find(p => p.userId === user?.id);
+              const newStatus = p?.status === 'away' ? 'online' : 'away';
+              setUserStatus(newStatus);
+              toast.success(`You are now marked as ${newStatus}`);
+            }}
+            className={`flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 transition-colors ${
+              participants.find(p => p.userId === user?.id)?.status === 'away' 
+                ? 'bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/40 hover:bg-accent-yellow/30' 
+                : 'text-text-muted hover:text-accent-yellow'
+            }`}
+             title="Toggle Away Status"
+          >
+            <Clock className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">
+               {participants.find(p => p.userId === user?.id)?.status === 'away' ? 'Away' : 'BRB'}
+            </span>
           </button>
 
           {/* Leave Room */}
@@ -388,7 +416,7 @@ const RoomPage = () => {
               </div>
               <div>
                 <h2 className="text-base font-bold text-text-primary">Transfer Host Before Leaving</h2>
-                <p className="text-xs text-text-muted mt-0.5">Pick a new host, or leave anyway</p>
+                <p className="text-xs text-text-muted mt-0.5">Pick a new host to continue the session.</p>
               </div>
             </div>
 
@@ -424,13 +452,6 @@ const RoomPage = () => {
                 className="btn-ghost flex-1 text-sm"
               >
                 Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowLeaveModal(false); confirmLeave(null); }}
-                className="flex items-center justify-center gap-1.5 flex-1 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 text-sm font-semibold transition-colors"
-              >
-                <LogOut className="w-4 h-4" /> Leave anyway
               </button>
             </div>
           </div>

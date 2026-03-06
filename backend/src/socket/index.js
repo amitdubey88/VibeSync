@@ -74,6 +74,7 @@ module.exports = (io, roomStore) => {
                 avatar: pending.avatar,
                 isGuest: pending.isGuest,
                 isOnline: true,
+                status: 'online',
                 isBuffering: false,
                 joinedAt: Date.now(),
             });
@@ -191,6 +192,7 @@ module.exports = (io, roomStore) => {
                     avatar: socket.user.avatar,
                     isGuest: socket.user.isGuest || false,
                     isOnline: true,
+                    status: 'online',
                     isBuffering: false,
                     joinedAt: Date.now(),
                 });
@@ -230,6 +232,19 @@ module.exports = (io, roomStore) => {
             io.to(code).emit('chat:message', systemMsg);
 
             console.log(`👥 ${socket.user.username} joined room ${code} (${room.participants.length} participants)`);
+        });
+
+        // ── room:set-status ───────────────────────────────────────────────────
+        socket.on('room:set-status', ({ roomCode, status }) => {
+            const code = roomCode?.toUpperCase();
+            const room = roomStore.get(code);
+            if (!room) return;
+
+            const participant = room.participants.find((p) => p.userId === socket.user.id);
+            if (participant) {
+                participant.status = status; // e.g., 'online', 'away'
+                io.to(code).emit('room:participant-update', { participants: room.participants });
+            }
         });
 
         // ── room:leave ─────────────────────────────────────────────────────────

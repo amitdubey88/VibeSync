@@ -71,13 +71,12 @@ const ParticipantsList = () => {
 
           return (
             <div key={p.userId} className="participant-row relative">
-              {/* Avatar */}
               <div className="relative shrink-0">
                 <div className="avatar w-9 h-9 text-sm text-white" style={{ backgroundColor: avatarBg }}>
                   {getInitials(p.username)}
                 </div>
                 <span className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-bg-card
-                  ${isOnline ? 'bg-accent-green' : 'bg-text-muted'}`} />
+                  ${p.status === 'away' ? 'bg-accent-yellow' : isOnline ? 'bg-accent-green' : 'bg-text-muted'}`} />
               </div>
 
               {/* Name + badges */}
@@ -90,8 +89,8 @@ const ParticipantsList = () => {
                   {p.isGuest && <span className="badge bg-bg-hover text-text-muted text-[9px] px-1.5 py-0">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`text-[10px] ${isOnline ? 'text-accent-green' : 'text-text-muted'}`}>
-                    {isOnline ? 'Online' : 'Offline'}
+                  <span className={`text-[10px] ${p.status === 'away' ? 'text-accent-yellow font-semibold' : isOnline ? 'text-accent-green' : 'text-text-muted'}`}>
+                    {p.status === 'away' ? 'Away' : isOnline ? 'Online' : 'Offline'}
                   </span>
                   {p.isBuffering && (
                     <span className="flex items-center gap-1 text-[10px] text-accent-yellow">
