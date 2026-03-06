@@ -3,7 +3,7 @@ import { useSocket } from '../../context/SocketContext';
 import { useRoom } from '../../context/RoomContext';
 import { useWebRTCContext } from '../../context/WebRTCContext';
 import VideoReactionBar from './VideoReactionBar';
-import { PictureInPicture, Maximize2, Minimize2, Mic, MicOff, Phone } from 'lucide-react';
+import { Maximize2, Minimize2, Mic, MicOff, Phone } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 /**
@@ -17,11 +17,9 @@ const YouTubePlayer = ({ videoId }) => {
   const containerRef = useRef(null);
   const mainContainerRef = useRef(null);
   const isSyncingRef = useRef(false);
-  const [isPiP, setIsPiP] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const controlsTimerRef = useRef(null);
-  const pipWindowRef = useRef(null);
 
   const handleInteraction = useCallback(() => {
     setShowControls(true);
@@ -96,11 +94,6 @@ const YouTubePlayer = ({ videoId }) => {
       document.removeEventListener('fullscreenchange', onFsChange);
       document.removeEventListener('webkitfullscreenchange', onFsChange);
       document.removeEventListener('msfullscreenchange', onFsChange);
-      if (pipWindowRef.current && !pipWindowRef.current.closed) {
-        pipWindowRef.current.close();
-        pipWindowRef.current = null;
-        setIsPiP(false);
-      }
       clearTimeout(controlsTimerRef.current);
     };
   }, [videoId, isHost]);
@@ -168,42 +161,6 @@ const YouTubePlayer = ({ videoId }) => {
     }
   }, []);
 
-  const toggleYouTubePiP = useCallback(async () => {
-    if (pipWindowRef.current && !pipWindowRef.current.closed) {
-      pipWindowRef.current.close();
-      pipWindowRef.current = null;
-      setIsPiP(false);
-      return;
-    }
-    if (!window.documentPictureInPicture) {
-      toast.error('Picture-in-Picture is not supported in your browser for YouTube.');
-      return;
-    }
-    try {
-      const iframeEl = containerRef.current?.querySelector('iframe');
-      if (!iframeEl) { toast.error('Player not ready yet.'); return; }
-      const width = Math.min(640, screen.width * 0.5);
-      const height = Math.round(width * 9 / 16);
-      const pipWindow = await window.documentPictureInPicture.requestWindow({ width, height });
-      pipWindowRef.current = pipWindow;
-      setIsPiP(true);
-      const pipDoc = pipWindow.document;
-      pipDoc.documentElement.style.cssText = 'margin:0;padding:0;background:#000;width:100%;height:100%;';
-      pipDoc.body.style.cssText = 'margin:0;padding:0;width:100%;height:100%;';
-      iframeEl.style.cssText = 'width:100%;height:100%;border:none;';
-      pipDoc.body.appendChild(iframeEl);
-      pipWindow.addEventListener('pagehide', () => {
-        containerRef.current?.appendChild(iframeEl);
-        iframeEl.style.cssText = '';
-        pipWindowRef.current = null;
-        setIsPiP(false);
-      });
-    } catch (err) {
-      console.error('[YT PiP]', err);
-      toast.error('Could not open Picture-in-Picture.');
-    }
-  }, []);
-
   return (
     <div 
       ref={mainContainerRef}
@@ -219,49 +176,37 @@ const YouTubePlayer = ({ videoId }) => {
       
       {/* 
         Interaction & Blocking Layer:
-        - For host: Transparent and pointer-events-none (allows clicking iframe)
-        - For guest: Transparent but captures all clicks to toggle UI & block direct YT control
+        - Captured for ALL users to toggle UI (essential for host on mobile too)
+        - For guest: Also stops propagation to block direct YT control
       */}
-      {!isHost ? (
-        <div 
-          className="absolute inset-0 z-30 cursor-pointer bg-transparent touch-none select-none" 
-          onClick={(e) => {
+      <div 
+        className="absolute inset-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none" 
+        onClick={(e) => {
+          if (!isHost) {
             e.preventDefault();
             e.stopPropagation();
-            handleInteraction();
-          }}
-          onTouchStart={(e) => {
-            e.preventDefault();
+          }
+          handleInteraction();
+        }}
+        onTouchStart={(e) => {
+          // Don't preventDefault here to allow tap/interaction detection
+          if (!isHost) {
             e.stopPropagation();
-            handleInteraction();
-          }}
-          onTouchEnd={(e) => {
-            e.preventDefault();
+          }
+          handleInteraction();
+        }}
+        onTouchEnd={(e) => {
+          if (!isHost) {
             e.stopPropagation();
-          }}
-          onContextMenu={(e) => e.preventDefault()}
-        />
-      ) : (
-        /* Host still needs a small overlay or logic to ensure controls show when clicking near edges */
-        <div className="absolute inset-0 z-0 pointer-events-none" />
-      )}
+          }
+        }}
+        onContextMenu={(e) => {
+          if (!isHost) e.preventDefault();
+        }}
+      />
 
       {/* Control Buttons Group (Top Left) */}
-      <div className={`absolute top-4 left-4 z-20 flex flex-wrap items-center gap-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
-        {/* ... buttons remain same ... */}
-        <button
-          type="button"
-          onClick={toggleYouTubePiP}
-          title={isPiP ? 'Exit PiP' : 'PiP'}
-          className={`flex items-center gap-1.5 px-3 py-2 rounded-xl
-            bg-black/60 backdrop-blur-md border border-white/10 text-white text-xs font-semibold
-            hover:bg-black/80 hover:border-white/30 transition-all duration-200
-            ${isPiP ? 'text-accent-purple border-accent-purple/50' : ''}`}
-        >
-          <PictureInPicture className="w-4 h-4" />
-          <span className="hidden xs:inline">{isPiP ? 'Exit PiP' : 'PiP'}</span>
-        </button>
-
+      <div className={`absolute top-4 left-4 z-40 flex flex-wrap items-center gap-2 transition-all duration-300 ${showControls ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
         <button
           type="button"
           onClick={toggleFullscreen}

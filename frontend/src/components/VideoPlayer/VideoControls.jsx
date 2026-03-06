@@ -4,7 +4,7 @@ import { useWebRTCContext } from '../../context/WebRTCContext';
 import { formatTime } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import {
-  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload, PictureInPicture,
+  Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload,
   Mic, MicOff, Phone
 } from 'lucide-react';
 
@@ -14,7 +14,6 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const [volume, setVolume] = useState(1);
   const [isMutedLocal, setIsMutedLocal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [isPiP, setIsPiP] = useState(false);
 
   // Monitor fullscreen changes
   useEffect(() => {
@@ -107,31 +106,6 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
     }
   }, [videoRef]);
 
-  const togglePictureInPicture = useCallback(async () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (!document.pictureInPictureEnabled) {
-      toast.error('Picture-in-Picture is not supported in this browser.');
-      return;
-    }
-
-    try {
-      if (document.pictureInPictureElement) {
-        await document.exitPictureInPicture();
-        setIsPiP(false);
-      } else {
-        await video.requestPictureInPicture();
-        setIsPiP(true);
-        // Update state when user closes PiP via the native browser controls
-        video.addEventListener('leavepictureinpicture', () => setIsPiP(false), { once: true });
-      }
-    } catch (err) {
-      console.error('Failed to toggle PiP:', err);
-      toast.error('Could not enable Picture-in-Picture.');
-    }
-  }, [videoRef]);
-
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
@@ -213,16 +187,6 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
             <Upload className="w-4 h-4" />
           </button>
         )}
-
-        {/* PiP */}
-        <button
-          type="button"
-          onClick={togglePictureInPicture}
-          className={`btn-icon text-white transition-colors ${isPiP ? 'text-accent-purple' : ''}`}
-          title={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
-        >
-          <PictureInPicture className="w-4 h-4" />
-        </button>
 
         {/* Fullscreen */}
         <button type="button" onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">

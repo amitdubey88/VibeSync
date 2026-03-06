@@ -440,24 +440,34 @@ const VideoPlayer = () => {
         An invisible layer that captures taps to show controls,
         preventing browsers from showing native video menus.
       */}
-      {!isHost && activeSrc && (
+      {/* 
+        Interaction & Blocking Layer:
+        Captured for ALL users to toggle UI (essential for host on mobile too)
+      */}
+      {activeSrc && (
         <div 
-          className="absolute inset-0 z-30 cursor-pointer bg-transparent touch-none select-none" 
+          className="absolute inset-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none" 
           onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            if (!isHost) {
+              e.preventDefault();
+              e.stopPropagation();
+            }
             handleMouseMove();
           }}
           onTouchStart={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            if (!isHost) {
+              e.stopPropagation();
+            }
             handleMouseMove();
           }}
           onTouchEnd={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
+            if (!isHost) {
+              e.stopPropagation();
+            }
           }}
-          onContextMenu={(e) => e.preventDefault()}
+          onContextMenu={(e) => {
+            if (!isHost) e.preventDefault();
+          }}
         />
       )}
 
