@@ -284,6 +284,31 @@
     const div = document.createElement('div');
     div.className = `vs-msg ${isOwn ? 'vs-msg-own' : ''}`;
     div.innerHTML = `<span class="vs-msg-user">${username}</span><span class="vs-msg-text">${escapeHtml(message)}</span>`;
+
+    // Swipe-to-dismiss logic
+    let startX = 0;
+    div.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+    }, { passive: true });
+
+    div.addEventListener('touchend', (e) => {
+      const endX = e.changedTouches[0].clientX;
+      if (Math.abs(startX - endX) > 50) { // 50px swipe threshold
+        div.style.transition = 'opacity 0.2s';
+        div.style.opacity = '0';
+        setTimeout(() => div.remove(), 200);
+      }
+    });
+
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+      if (div.parentNode) {
+        div.style.transition = 'opacity 0.3s';
+        div.style.opacity = '0';
+        setTimeout(() => div.remove(), 300);
+      }
+    }, 3000);
+
     el.appendChild(div);
     el.scrollTop = el.scrollHeight;
   }

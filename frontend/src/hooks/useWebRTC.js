@@ -59,6 +59,9 @@ const useWebRTC = () => {
                 document.body.appendChild(audio);
             }
             audio.srcObject = event.streams[0];
+
+            // Explicitly play the audio to handle browser autoplay policies
+            audio.play().catch(err => console.error('[voice] auto-play failed:', err));
         };
 
         // Add local audio tracks to the connection
