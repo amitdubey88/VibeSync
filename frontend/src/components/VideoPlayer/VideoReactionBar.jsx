@@ -71,16 +71,37 @@ const VideoReactionBar = () => {
     };
   }, []);
 
+  const processedIdsRef = useRef(new Set());
+
   // Convert incoming room reactions to floaters
   useEffect(() => {
     if (!reactions.length) return;
-    const latest = reactions[reactions.length - 1];
-    const id = latest.id || `${Date.now()}-${Math.random()}`;
-    // Only add if not already tracked
+
     setFloaters(prev => {
-      if (prev.find(f => f.id === id)) return prev;
-      return [...prev, { id, emoji: latest.emoji, x: 10 + Math.random() * 80 }];
+      const newFloaters = [];
+      reactions.forEach(r => {
+        const id = r.id || `${r.timestamp}-${r.username}`;
+        if (!processedIdsRef.current.has(id)) {
+          processedIdsRef.current.add(id);
+          newFloaters.push({
+            id,
+            emoji: r.emoji,
+            x: 10 + Math.random() * 80
+          });
+        }
+      });
+
+      if (newFloaters.length === 0) return prev;
+      return [...prev, ...newFloaters];
     });
+
+    // Cleanup old IDs periodically if the array gets too long
+    if (processedIdsRef.current.size > 200) {
+      const currentIds = new Set(reactions.map(r => r.id || `${r.timestamp}-${r.username}`));
+      processedIdsRef.current.forEach(id => {
+        if (!currentIds.has(id)) processedIdsRef.current.delete(id);
+      });
+    }
   }, [reactions]);
 
   const removeFloater = useCallback((id) => {

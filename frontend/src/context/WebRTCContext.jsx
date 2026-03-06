@@ -159,6 +159,13 @@ export const WebRTCProvider = ({ children }) => {
         setIsSharingScreen(false);
     }, [socket, roomCode]);
 
+    // ── Auto-stop screen share when video loads ──────────────────────────────
+    useEffect(() => {
+        if (room?.currentVideo && isSharingScreen) {
+            stopScreenShare();
+        }
+    }, [room?.currentVideo, isSharingScreen, stopScreenShare]);
+
     useEffect(() => {
         if (!socket) return;
         const onUserJoined = async ({ socketId }) => {
