@@ -3,6 +3,7 @@ import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SocketProvider } from './context/SocketContext';
 import { RoomProvider } from './context/RoomContext';
+import { WebRTCProvider } from './context/WebRTCContext';
 import LandingPage from './pages/LandingPage';
 import RoomPage from './pages/RoomPage';
 
@@ -27,7 +28,9 @@ const AppRoutes = () => (
       element={
         <SocketProvider>
           <RoomProvider>
-            <ProtectedRoom />
+            <WebRTCProvider>
+              <ProtectedRoom />
+            </WebRTCProvider>
           </RoomProvider>
         </SocketProvider>
       }
