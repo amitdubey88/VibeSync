@@ -237,7 +237,7 @@ const RoomPage = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className={`items-center gap-1.5 text-xs hidden sm:flex
+          <div className={`flex items-center gap-1.5 text-xs
             ${isConnected ? 'text-accent-green' : 'text-red-400'}`}>
             {isConnected
               ? <><Wifi className="w-3.5 h-3.5" /> Live</>
