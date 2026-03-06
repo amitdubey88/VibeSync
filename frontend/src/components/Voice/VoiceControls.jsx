@@ -10,7 +10,7 @@ const VoiceControls = () => {
     isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute,
     isSharingScreen, shareScreen, stopScreenShare, remoteScreens 
   } = useWebRTC();
-  const { voiceParticipants, isHost, muteAllParticipants, participants } = useRoom();
+  const { room, voiceParticipants, isHost, muteAllParticipants, participants } = useRoom();
   const { user } = useAuth();
 
   const canShareScreen = participants.find(p => p.userId === user?.id)?.canShareScreen || false;
