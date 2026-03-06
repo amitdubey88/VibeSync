@@ -118,7 +118,7 @@ export const RoomProvider = ({ children }) => {
             playNotifySound();
             // Show a brief toast for background awareness
             toast(`💬 ${msg.username}: ${msg.content.length > 30 ? msg.content.substring(0, 30) + '...' : msg.content}`, {
-              duration: 3000,
+              duration: 2000,
               icon: '📩',
               id: `chat-${msg.id}`
             });
@@ -153,7 +153,7 @@ export const RoomProvider = ({ children }) => {
 
     // ── kicked → hard redirect ─────────────────────────────────────────────
     const onKicked = ({ message }) => {
-      toast.error(message || 'You were removed from the room.', { duration: 4000 });
+      toast.error(message || 'You were removed from the room.', { duration: 2000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
       setTimeout(() => {
@@ -164,7 +164,7 @@ export const RoomProvider = ({ children }) => {
 
     const onMuted = () => {
       setIsMutedByHost(true);
-      toast('🔇 You were muted by the host', { duration: 3000 });
+      toast('🔇 You were muted by the host', { duration: 2000 });
     };
 
     // ── Join approval events ────────────────────────────────────────────────────────
@@ -180,8 +180,8 @@ export const RoomProvider = ({ children }) => {
     // Joiner was denied
     const onJoinDenied = ({ message }) => {
       setJoinStatus('denied');
-      toast.error(message || 'Your join request was declined.', { duration: 5000 });
-      setTimeout(() => { window.location.href = '/'; }, 2500);
+      toast.error(message || 'Your join request was declined.', { duration: 2000 });
+      setTimeout(() => { window.location.href = '/'; }, 2000);
     };
     // Approval requirement toggle
     const onApprovalChanged = ({ requiresApproval: ra }) => setRequiresApproval(ra);
@@ -189,8 +189,8 @@ export const RoomProvider = ({ children }) => {
     // Lock status toggle
     const onLockChanged = ({ isLocked: locked }) => {
       setIsLocked(locked);
-      if (locked) toast('The room has been locked by the host.', { icon: '🔒', duration: 3000 });
-      else toast('The room is now unlocked.', { icon: '🔓', duration: 3000 });
+      if (locked) toast('The room has been locked by the host.', { icon: '🔒', duration: 2000 });
+      else toast('The room is now unlocked.', { icon: '🔓', duration: 2000 });
     };
 
     socket.on('room:state', onRoomState);
@@ -231,9 +231,9 @@ export const RoomProvider = ({ children }) => {
   }, [socket, user]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
-  const sendMessage = useCallback((content) => {
+  const sendMessage = useCallback((content, replyTo = null) => {
     if (!socket || !room) return;
-    socket.emit('chat:send', { roomCode: room.code, content });
+    socket.emit('chat:send', { roomCode: room.code, content, replyTo });
   }, [socket, room]);
 
   const sendReaction = useCallback((emoji) => {
@@ -337,8 +337,7 @@ export const RoomProvider = ({ children }) => {
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
       // Host controls
-      deleteRoom, transferHost, kickParticipant, muteParticipant, muteAllParticipants,
-      roomEndedByHost,
+      muteAllParticipants, roomEndedByHost,
       dismissRoomEnded: () => setRoomEndedByHost(null),
       // Chat notifications
       unreadChatCount, setUnreadChatCount,

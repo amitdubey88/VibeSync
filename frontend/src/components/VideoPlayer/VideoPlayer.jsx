@@ -4,6 +4,7 @@ import { useRoom } from '../../context/RoomContext';
 import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
+import VideoReactionBar from './VideoReactionBar';
 import YouTubePlayer from './YouTubePlayer';
 import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
@@ -345,7 +346,7 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group"
+      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host"
       onMouseMove={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
@@ -441,6 +442,9 @@ const VideoPlayer = () => {
           />
         </div>
       )}
+
+      {/* Teams-style floating reaction bar — always shown on hover */}
+      <VideoReactionBar />
 
       {sourcePicker}
     </div>

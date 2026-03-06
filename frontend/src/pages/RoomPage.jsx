@@ -309,15 +309,8 @@ const RoomPage = () => {
         {/* ── Video area ── */}
         {/* Mobile: fixed height so chat is visible | Desktop: fills remaining width */}
         <div className="h-[42vw] min-h-[200px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
+          <div id="screen-share-container" className="absolute top-4 right-4 flex flex-col gap-4 z-40 pointer-events-none" />
           <VideoPlayer />
-          {/* Floating emoji reactions */}
-          <div className="absolute bottom-16 left-4 pointer-events-none z-30">
-            {reactions.map((r) => (
-              <div key={r.id} className="reaction-float absolute text-3xl select-none" style={{ bottom: 0 }}>
-                {r.emoji}
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* ── Sidebar ── */}

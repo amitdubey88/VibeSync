@@ -8,7 +8,7 @@ try { Message = require('../models/Message'); } catch (_) { }
 
 module.exports = (io, socket, roomStore) => {
     // ── chat:send ─────────────────────────────────────────────────────────────
-    socket.on('chat:send', async ({ roomCode, content }) => {
+    socket.on('chat:send', async ({ roomCode, content, replyTo }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room) return;
@@ -27,6 +27,7 @@ module.exports = (io, socket, roomStore) => {
             avatar,
             content: trimmed,
             type: 'text',
+            replyTo: replyTo || null,
             createdAt: new Date().toISOString(),
         };
 
@@ -44,6 +45,7 @@ module.exports = (io, socket, roomStore) => {
                 avatar,
                 content: trimmed,
                 type: 'text',
+                replyTo: replyTo || null,
             }).catch((err) => console.error('[chat:persist]', err.message));
         }
 

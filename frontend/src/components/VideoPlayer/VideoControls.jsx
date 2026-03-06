@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { formatTime } from '../../utils/helpers';
+import toast from 'react-hot-toast';
 import {
   Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload, PictureInPicture
 } from 'lucide-react';
@@ -10,6 +11,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isPiP, setIsPiP] = useState(false);
 
   const isPlaying = videoState?.isPlaying || false;
 
@@ -57,15 +59,25 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const togglePictureInPicture = useCallback(async () => {
     const video = videoRef.current;
     if (!video) return;
-    
+
+    if (!document.pictureInPictureEnabled) {
+      toast.error('Picture-in-Picture is not supported in this browser.');
+      return;
+    }
+
     try {
       if (document.pictureInPictureElement) {
         await document.exitPictureInPicture();
-      } else if (document.pictureInPictureEnabled && video.requestPictureInPicture) {
+        setIsPiP(false);
+      } else {
         await video.requestPictureInPicture();
+        setIsPiP(true);
+        // Update state when user closes PiP via the native browser controls
+        video.addEventListener('leavepictureinpicture', () => setIsPiP(false), { once: true });
       }
     } catch (err) {
       console.error('Failed to toggle PiP:', err);
+      toast.error('Could not enable Picture-in-Picture.');
     }
   }, [videoRef]);
 
@@ -128,12 +140,17 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
         )}
 
         {/* PiP */}
-        <button onClick={togglePictureInPicture} className="btn-icon text-white" title="Picture in Picture">
+        <button
+          type="button"
+          onClick={togglePictureInPicture}
+          className={`btn-icon text-white transition-colors ${isPiP ? 'text-accent-purple' : ''}`}
+          title={isPiP ? 'Exit Picture in Picture' : 'Picture in Picture'}
+        >
           <PictureInPicture className="w-4 h-4" />
         </button>
 
         {/* Fullscreen */}
-        <button onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">
+        <button type="button" onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>

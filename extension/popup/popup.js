@@ -13,6 +13,7 @@ const btnConnect = document.getElementById('btn-connect');
 const btnDisconnect = document.getElementById('btn-disconnect');
 const connectForm = document.getElementById('connect-form');
 const connectedActions = document.getElementById('connected-actions');
+const toggleOverlay = document.getElementById('toggle-overlay');
 const participantsSection = document.getElementById('participants-section');
 const participantsList = document.getElementById('participants-list');
 const advancedToggle = document.getElementById('advanced-toggle');
@@ -50,11 +51,13 @@ function setConnected(is, roomCode, platform, participants) {
 
 // ── Load saved state ──────────────────────────────────────────────────────────
 chrome.storage.local.get(
-  ['vs_room_code', 'vs_username', 'vs_backend_url', 'vs_connected'],
+  ['vs_room_code', 'vs_username', 'vs_backend_url', 'vs_connected', 'vs_show_overlay'],
   async (data) => {
     if (data.vs_username) inputUsername.value = data.vs_username;
     if (data.vs_room_code) inputRoomCode.value = data.vs_room_code;
     if (data.vs_backend_url) inputBackendUrl.value = data.vs_backend_url;
+
+    toggleOverlay.checked = data.vs_show_overlay !== false; // default true
 
     if (data.vs_connected && data.vs_room_code) {
       setConnected(true, data.vs_room_code);
@@ -109,6 +112,19 @@ btnConnect.addEventListener('click', async () => {
 btnDisconnect.addEventListener('click', () => {
   chrome.runtime.sendMessage({ type: 'DISCONNECT' }, () => {
     setConnected(false);
+  });
+});
+
+// ── Toggle Overlay ────────────────────────────────────────────────────────────
+toggleOverlay.addEventListener('change', (e) => {
+  const show = e.target.checked;
+  chrome.storage.local.set({ vs_show_overlay: show });
+
+  // Send message to active tab to hide/show immediately
+  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+    if (tabs[0]) {
+      chrome.tabs.sendMessage(tabs[0].id, { type: 'TOGGLE_OVERLAY', show });
+    }
   });
 });
 

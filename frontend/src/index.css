@@ -201,6 +201,19 @@
   100% { transform: translateY(-160px) scale(0.8); opacity: 0; }
 }
 
+@keyframes reactionRise {
+  0%   { transform: translateY(0) scale(0.5) rotate(-10deg); opacity: 0; }
+  10%  { transform: translateY(-20px) scale(1.2) rotate(5deg); opacity: 1; }
+  30%  { transform: translateY(-80px) scale(1) rotate(-3deg); opacity: 1; }
+  70%  { transform: translateY(-200px) scale(0.9) rotate(2deg); opacity: 0.7; }
+  100% { transform: translateY(-320px) scale(0.6) rotate(0deg); opacity: 0; }
+}
+
+.animate-reaction-rise {
+  animation: reactionRise 3.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
+}
+
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position: 200% 0; }

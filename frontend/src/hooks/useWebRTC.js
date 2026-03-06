@@ -21,9 +21,12 @@ const useWebRTC = () => {
 
     const [isInVoice, setIsInVoice] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
+    const [isSharingScreen, setIsSharingScreen] = useState(false);
     const [voiceError, setVoiceError] = useState(null);
+    const [remoteScreens, setRemoteScreens] = useState({}); // { [socketId]: MediaStream }
 
     const localStreamRef = useRef(null);
+    const screenStreamRef = useRef(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
     const audioContainerRef = useRef(null);
 
@@ -48,26 +51,40 @@ const useWebRTC = () => {
             }
         };
 
-        // When remote stream arrives, create an <audio> element to play it
+        // When remote stream arrives, handle audio and video tracks
         pc.ontrack = (event) => {
-            let audio = document.getElementById(`audio-${remoteSocketId}`);
-            if (!audio) {
-                audio = document.createElement('audio');
-                audio.id = `audio-${remoteSocketId}`;
-                audio.autoplay = true;
-                audio.playsInline = true;
-                document.body.appendChild(audio);
-            }
-            audio.srcObject = event.streams[0];
+            const stream = event.streams[0];
 
-            // Explicitly play the audio to handle browser autoplay policies
-            audio.play().catch(err => console.error('[voice] auto-play failed:', err));
+            if (event.track.kind === 'audio') {
+                let audio = document.getElementById(`audio-${remoteSocketId}`);
+                if (!audio) {
+                    audio = document.createElement('audio');
+                    audio.id = `audio-${remoteSocketId}`;
+                    audio.autoplay = true;
+                    audio.playsInline = true;
+                    document.body.appendChild(audio);
+                }
+                audio.srcObject = stream;
+                audio.play().catch(err => console.error('[voice] auto-play failed:', err));
+            }
+
+            if (event.track.kind === 'video') {
+                setRemoteScreens((prev) => ({
+                    ...prev,
+                    [remoteSocketId]: stream
+                }));
+            }
         };
 
-        // Add local audio tracks to the connection
+        // Add local tracks to the connection
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((track) => {
                 pc.addTrack(track, localStreamRef.current);
+            });
+        }
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach((track) => {
+                pc.addTrack(track, screenStreamRef.current);
             });
         }
 
@@ -83,6 +100,12 @@ const useWebRTC = () => {
         }
         const audio = document.getElementById(`audio-${remoteSocketId}`);
         if (audio) audio.remove();
+
+        setRemoteScreens((prev) => {
+            const next = { ...prev };
+            delete next[remoteSocketId];
+            return next;
+        });
     }, []);
 
     // ── Join voice channel ─────────────────────────────────────────────────────
@@ -103,11 +126,20 @@ const useWebRTC = () => {
     // ── Leave voice channel ────────────────────────────────────────────────────
     const leaveVoice = useCallback(() => {
         if (!socket || !roomCode) return;
+
         localStreamRef.current?.getTracks().forEach((t) => t.stop());
         localStreamRef.current = null;
+
+        if (screenStreamRef.current) {
+            screenStreamRef.current.getTracks().forEach((t) => t.stop());
+            screenStreamRef.current = null;
+        }
+
         Object.keys(peersRef.current).forEach(closePeer);
         setIsInVoice(false);
         setIsMuted(false);
+        setIsSharingScreen(false);
+        setRemoteScreens({});
         socket.emit('voice:leave', { roomCode });
     }, [socket, roomCode, closePeer]);
 
@@ -121,6 +153,51 @@ const useWebRTC = () => {
             socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
         }
     }, [isMuted, socket, roomCode]);
+
+    // ── Screen sharing ────────────────────────────────────────────────────────
+    const shareScreen = useCallback(async () => {
+        if (!isInVoice) return setVoiceError('Join voice chat first to share screen.');
+        try {
+            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
+            screenStreamRef.current = stream;
+
+            // Add track to all existing peer connections
+            const videoTrack = stream.getVideoTracks()[0];
+            Object.values(peersRef.current).forEach(pc => {
+                pc.addTrack(videoTrack, stream);
+            });
+
+            setIsSharingScreen(true);
+            setVoiceError(null);
+
+            // Listen for native "Stop sharing" button from browser
+            videoTrack.onended = () => {
+                stopScreenShare();
+            };
+        } catch (err) {
+            console.error('[voice] getDisplayMedia failed:', err);
+            setVoiceError('Screen share cancelled or denied.');
+        }
+    }, [isInVoice]);
+
+    const stopScreenShare = useCallback(() => {
+        if (!screenStreamRef.current) return;
+
+        screenStreamRef.current.getTracks().forEach(t => t.stop());
+
+        // Remove track from all peers (trickier than adding, but simpler to renegotiate via restarting ice, 
+        // or just removing track properly)
+        const videoTrack = screenStreamRef.current.getVideoTracks()[0];
+        if (videoTrack) {
+            Object.values(peersRef.current).forEach(pc => {
+                const sender = pc.getSenders().find(s => s.track === videoTrack);
+                if (sender) pc.removeTrack(sender);
+            });
+        }
+
+        screenStreamRef.current = null;
+        setIsSharingScreen(false);
+    }, []);
 
     // ── Socket signaling events ───────────────────────────────────────────────
     useEffect(() => {
@@ -162,11 +239,20 @@ const useWebRTC = () => {
         // Peer left voice
         const onUserLeft = ({ socketId }) => closePeer(socketId);
 
+        // Host muted this user (Mute All) — actually disable the mic track
+        const onMutedByHost = () => {
+            if (localStreamRef.current) {
+                localStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = false; });
+                setIsMuted(true);
+            }
+        };
+
         socket.on('voice:user-joined', onUserJoined);
         socket.on('voice:offer', onOffer);
         socket.on('voice:answer', onAnswer);
         socket.on('voice:ice-candidate', onIceCandidate);
         socket.on('voice:user-left', onUserLeft);
+        socket.on('room:muted', onMutedByHost);
 
         return () => {
             socket.off('voice:user-joined', onUserJoined);
@@ -174,6 +260,7 @@ const useWebRTC = () => {
             socket.off('voice:answer', onAnswer);
             socket.off('voice:ice-candidate', onIceCandidate);
             socket.off('voice:user-left', onUserLeft);
+            socket.off('room:muted', onMutedByHost);
         };
     }, [socket, roomCode, createPeerConnection, closePeer]);
 
@@ -185,7 +272,12 @@ const useWebRTC = () => {
         };
     }, [closePeer]);
 
-    return { isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute };
+    return {
+        isInVoice, isMuted, voiceError,
+        joinVoice, leaveVoice, toggleMute,
+        isSharingScreen, shareScreen, stopScreenShare,
+        remoteScreens
+    };
 };
 
 export default useWebRTC;

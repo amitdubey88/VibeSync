@@ -92,7 +92,7 @@
   // ── Get settings from storage ─────────────────────────────────────────────
   function loadSettings(cb) {
     chrome.storage.local.get(
-      ['vs_room_code', 'vs_username', 'vs_backend_url', 'vs_connected'],
+      ['vs_room_code', 'vs_username', 'vs_backend_url', 'vs_connected', 'vs_show_overlay'],
       (data) => {
         settings = data;
         cb();
@@ -215,6 +215,13 @@
   }
 
   // ── Overlay UI ────────────────────────────────────────────────────────────
+  function applyOverlayVisibility() {
+    const overlay = document.getElementById('vs-overlay');
+    if (overlay) {
+      overlay.style.display = settings.vs_show_overlay === false ? 'none' : 'block';
+    }
+  }
+
   function buildOverlay() {
     if (document.getElementById('vs-overlay')) return;
 
@@ -276,6 +283,8 @@
     };
     input.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSend(); });
     sendBtn.addEventListener('click', doSend);
+
+    applyOverlayVisibility();
   }
 
   function appendMessage({ username, message, isOwn }) {
@@ -377,6 +386,11 @@
   chrome.runtime.onMessage.addListener((msg) => {
     if (msg.type === 'CONNECT') {
       settings = { vs_room_code: msg.roomCode, vs_username: msg.username, vs_backend_url: msg.backendUrl, vs_connected: true };
+      // Preserve current overlay setting
+      chrome.storage.local.get('vs_show_overlay', (data) => {
+        settings.vs_show_overlay = data.vs_show_overlay !== false;
+        applyOverlayVisibility();
+      });
       updateOverlayConnected(true);
       if (!video) waitForVideo(attachListeners);
     }
@@ -384,6 +398,10 @@
       settings.vs_connected = false;
       clearInterval(pollInterval);
       updateOverlayConnected(false);
+    }
+    if (msg.type === 'TOGGLE_OVERLAY') {
+      settings.vs_show_overlay = msg.show;
+      applyOverlayVisibility();
     }
   });
 
