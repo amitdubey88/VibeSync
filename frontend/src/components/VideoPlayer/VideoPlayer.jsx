@@ -442,11 +442,13 @@ const VideoPlayer = () => {
       */}
       {/* 
         Interaction & Blocking Layer:
-        Captured for ALL users to toggle UI (essential for host on mobile too)
+        - For Hosts: Only covers the top 25% for UI toggle.
+        - For Guests: Covers 100% to block direct video control.
       */}
       {activeSrc && (
         <div 
-          className="absolute inset-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none" 
+          className={`absolute inset-x-0 top-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none
+            ${isHost ? 'h-1/4' : 'h-full'}`} 
           onClick={(e) => {
             if (!isHost) {
               e.preventDefault();

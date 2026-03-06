@@ -176,11 +176,12 @@ const YouTubePlayer = ({ videoId }) => {
       
       {/* 
         Interaction & Blocking Layer:
-        - Captured for ALL users to toggle UI (essential for host on mobile too)
-        - For guest: Also stops propagation to block direct YT control
+        - For Hosts: Only covers the top 25% to allow clicking native YT controls (play/seek) in the middle/bottom.
+        - For Guests: Covers 100% to block direct YT control.
       */}
       <div 
-        className="absolute inset-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none" 
+        className={`absolute inset-x-0 top-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none
+          ${isHost ? 'h-1/4' : 'h-full'}`} 
         onClick={(e) => {
           if (!isHost) {
             e.preventDefault();
@@ -189,7 +190,6 @@ const YouTubePlayer = ({ videoId }) => {
           handleInteraction();
         }}
         onTouchStart={(e) => {
-          // Don't preventDefault here to allow tap/interaction detection
           if (!isHost) {
             e.stopPropagation();
           }
