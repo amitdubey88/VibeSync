@@ -443,8 +443,12 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Teams-style floating reaction bar — always shown on hover */}
-      <VideoReactionBar />
+      {/* Teams-style floating reaction bar — explicitly hidden on mobile, and only when video loaded */}
+      {activeSrc && (
+        <div className="hidden sm:block">
+          <VideoReactionBar />
+        </div>
+      )}
 
       {sourcePicker}
     </div>
