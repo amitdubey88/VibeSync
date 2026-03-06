@@ -148,7 +148,21 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </div>
         )}
 
-        <form onSubmit={handleSend} className="flex items-center gap-1 px-2 py-2">
+        {/* Quick-access video reactions row — above the input */}
+        <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-dark/50">
+          <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider mr-1">React</span>
+          {QUICK_REACTIONS.map(e => (
+            <button
+              key={e}
+              type="button"
+              onClick={() => handleEmojiReaction(e)}
+              title="React on video"
+              className="w-8 h-8 flex items-center justify-center rounded-lg text-lg hover:bg-accent-purple/20 hover:scale-125 transition-all duration-150"
+            >{e}</button>
+          ))}
+        </div>
+
+        <form onSubmit={handleSend} className="flex items-center gap-2 px-3 py-2">
           <button
             type="button"
             onClick={() => setShowEmoji((s) => !s)}
@@ -157,19 +171,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           >
             <Smile className="w-5 h-5" />
           </button>
-
-          {/* Quick-access video reactions inline */}
-          <div className="flex items-center gap-0.5 shrink-0">
-            {QUICK_REACTIONS.map(e => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => handleEmojiReaction(e)}
-                title="React on video"
-                className="w-7 h-7 flex items-center justify-center rounded-md text-base hover:bg-accent-purple/20 hover:scale-125 transition-all duration-150"
-              >{e}</button>
-            ))}
-          </div>
 
           <input
             ref={inputRef}
@@ -192,6 +193,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </button>
         </form>
       </div>
+
     </div>
   );
 };
