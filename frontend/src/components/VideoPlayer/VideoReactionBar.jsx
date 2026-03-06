@@ -11,6 +11,12 @@ const REACTIONS = [
   { emoji: '✋', label: 'Raise Hand' },
   { emoji: '👏', label: 'Clap' },
   { emoji: '🔥', label: 'Fire' },
+  { emoji: '🎉', label: 'Party' },
+  { emoji: '💯', label: '100' },
+  { emoji: '🤯', label: 'Mind Blown' },
+  { emoji: '💀', label: 'Dead' },
+  { emoji: '🤡', label: 'Clown' },
+  { emoji: '🍿', label: 'Popcorn' },
 ];
 
 // A single floating emoji that rises and fades

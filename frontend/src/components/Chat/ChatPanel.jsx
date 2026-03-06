@@ -11,8 +11,8 @@ const EMOJI_SETS = [
   ['🎉','🍿','👀','🤣','😭','💀','🫶','✨'],
 ];
 
-// The quick-access video reaction emojis shown inline in the input bar
-const QUICK_REACTIONS = ['👍','❤️','😂','✋','🔥'];
+// The quick-access video reaction emojis shown inline above the input bar
+const QUICK_REACTIONS = ['👍','❤️','😂','✋','🔥', '🎉', '🤯', '💀'];
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const { messages, sendMessage, sendReaction } = useRoom();
