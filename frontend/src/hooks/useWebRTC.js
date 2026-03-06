@@ -155,8 +155,9 @@ const useWebRTC = () => {
     }, [isMuted, socket, roomCode]);
 
     // ── Screen sharing ────────────────────────────────────────────────────────
-    const shareScreen = useCallback(async () => {
+    const shareScreen = useCallback(async (canShareScreen) => {
         if (!isInVoice) return setVoiceError('Join voice chat first to share screen.');
+        if (!canShareScreen) return setVoiceError('You do not have permission to share your screen.');
         try {
             const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
             screenStreamRef.current = stream;

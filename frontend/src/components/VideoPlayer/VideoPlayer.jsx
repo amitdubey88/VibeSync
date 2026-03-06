@@ -9,6 +9,7 @@ import YouTubePlayer from './YouTubePlayer';
 import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
 const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, isUploading, uploadProgress }) =>
@@ -87,9 +88,12 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
+  const { currentVideo, room, isHost, setVideoSource, notifyUploading, participants } = useRoom();
+  const { user } = useAuth();
   const { socket } = useSocket();
   const videoRef = useRef(null);
+
+  const canShareScreen = participants.find(p => p.userId === user?.id)?.canShareScreen || false;
 
   // Host-only blob URL — lets host play instantly from local file while uploading
   const [blobUrl, setBlobUrl] = useState(null);
@@ -390,26 +394,28 @@ const VideoPlayer = () => {
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
                 
-                {/* Screen Share CTA */}
-                {isInVoice ? (
-                  <button 
-                    className={`btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all border
-                      ${isSharingScreen 
-                        ? 'bg-accent-blue/20 text-accent-blue border-accent-blue/40 hover:bg-accent-blue/30' 
-                        : 'bg-bg-primary border-border-light text-text-primary hover:border-accent-blue/50 hover:bg-bg-hover'}`}
-                    onClick={isSharingScreen ? stopScreenShare : shareScreen}
-                  >
-                    {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
-                    {isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
-                  </button>
-                ) : (
-                  <button 
-                    className="btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold bg-bg-primary border border-border-light text-text-secondary hover:text-text-primary hover:border-border-dark cursor-not-allowed opacity-70"
-                    title="Join voice chat first to share screen"
-                    disabled
-                  >
-                    <MonitorUp className="w-4 h-4" /> Share Screen (Requires Voice)
-                  </button>
+                {/* Screen Share CTA (Only visible if user has permission) */}
+                {canShareScreen && (
+                  isInVoice ? (
+                    <button 
+                      className={`btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all border
+                        ${isSharingScreen 
+                          ? 'bg-accent-blue/20 text-accent-blue border-accent-blue/40 hover:bg-accent-blue/30' 
+                          : 'bg-bg-primary border-border-light text-text-primary hover:border-accent-blue/50 hover:bg-bg-hover'}`}
+                      onClick={() => isSharingScreen ? stopScreenShare() : shareScreen(canShareScreen)}
+                    >
+                      {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
+                      {isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
+                    </button>
+                  ) : (
+                    <button 
+                      className="btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold bg-bg-primary border border-border-light text-text-secondary hover:text-text-primary hover:border-border-dark cursor-not-allowed opacity-70"
+                      title="Join voice chat first to share screen"
+                      disabled
+                    >
+                      <MonitorUp className="w-4 h-4" /> Share Screen (Requires Voice)
+                    </button>
+                  )
                 )}
               </div>
             )}

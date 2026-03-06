@@ -200,6 +200,7 @@ module.exports = (io, roomStore) => {
                     status: 'online',
                     isBuffering: false,
                     joinedAt: Date.now(),
+                    canShareScreen: isRoomHost, // host gets default access
                 });
             }
 

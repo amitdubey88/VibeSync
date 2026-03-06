@@ -178,4 +178,21 @@ module.exports = (io, socket, roomStore) => {
 
         console.log(`🔇 All participants muted in room ${code} by ${socket.user.username}`);
     });
+
+    // ── room:toggle-screen-share-permission ──────────────────────────────────
+    socket.on('room:toggle-screen-share-permission', ({ roomCode, targetUserId, canShare }) => {
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
+        if (!room) return socket.emit('error', { message: 'Room not found' });
+        if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can change permissions' });
+
+        const target = room.participants.find((p) => p.userId === targetUserId);
+        if (!target) return socket.emit('error', { message: 'Participant not found' });
+
+        target.canShareScreen = !!canShare;
+
+        // Broadcast the updated participant list to everyone so the UI updates
+        io.to(code).emit('room:participant-update', { participants: room.participants });
+        console.log(`🛡️ Screen share permission for ${target.username} set to ${canShare} by ${socket.user.username}`);
+    });
 };
