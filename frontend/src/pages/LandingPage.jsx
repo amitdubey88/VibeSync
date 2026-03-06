@@ -91,7 +91,7 @@ const LandingPage = () => {
         password: roomType === 'private' ? password : undefined,
       });
       toast.success('Room created!');
-      navigate(`/room/${room.code}`);
+      navigate(`/room/${room.code}`, { state: { password } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create room');
     } finally {

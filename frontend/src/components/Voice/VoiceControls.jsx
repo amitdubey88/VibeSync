@@ -84,8 +84,8 @@ const VoiceControls = () => {
           </button>
         )}
 
-        {/* Mute All (only for host, when in call and multiple people) */}
-        {isHost && isInVoice && voiceParticipants.length > 1 && (
+        {/* Mute All (only for host, when in call) */}
+        {isHost && isInVoice && (
           <button
             onClick={muteAllParticipants}
             className="flex items-center justify-center gap-1.5 px-3 rounded-lg text-xs font-semibold bg-accent-purple/10 text-accent-purple border border-accent-purple/30 hover:bg-accent-purple/20 transition-all duration-200"
