@@ -10,6 +10,7 @@ import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle } from 'luci
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
+import useWebRTC from '../../hooks/useWebRTC';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
 const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, isUploading, uploadProgress }) =>
@@ -91,9 +92,11 @@ const VideoPlayer = () => {
   const { currentVideo, room, isHost, setVideoSource, notifyUploading, participants } = useRoom();
   const { user } = useAuth();
   const { socket } = useSocket();
+  const { remoteScreens } = useWebRTC();
   const videoRef = useRef(null);
 
   const canShareScreen = participants.find(p => p.userId === user?.id)?.canShareScreen || false;
+  const hasActiveScreenShare = Object.keys(remoteScreens || {}).length > 0;
 
   // Host-only blob URL — lets host play instantly from local file while uploading
   const [blobUrl, setBlobUrl] = useState(null);
@@ -374,83 +377,59 @@ const VideoPlayer = () => {
           preload="auto"
         />
       ) : (
-        <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
-          <div className="flex flex-col items-center max-w-md w-full gap-6">
-            
-            <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
-              <Play className="w-10 h-10 text-accent-red ml-1" />
-            </div>
-            
-            <div>
-              <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
-              <p className="text-gray-300 text-sm font-medium">
-                {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video, or start a streaming party.'}
-              </p>
-            </div>
+        !hasActiveScreenShare && (
+          <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
+            <div className="flex flex-col items-center max-w-md w-full gap-6">
+              
+              <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
+                <Play className="w-10 h-10 text-accent-red ml-1" />
+              </div>
+              
+              <div>
+                <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
+                <p className="text-gray-300 text-sm font-medium">
+                  {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video, or start a streaming party.'}
+                </p>
+              </div>
 
-            {isHost && (
-              <div className="flex flex-col sm:flex-row items-center gap-3">
-                <button className="btn-primary" onClick={() => setShowSourcePicker(true)}>
+              {isHost && (
+                <button className="btn-primary mt-3" onClick={() => setShowSourcePicker(true)}>
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
+              )}
+
+              <div className="hidden sm:block w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
+                <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-purple/10 rounded-full blur-2xl group-hover:bg-accent-purple/20 transition-colors" />
                 
-                {/* Screen Share CTA (Only visible if user has permission) */}
-                {canShareScreen && (
-                  isInVoice ? (
-                    <button 
-                      className={`btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold transition-all border
-                        ${isSharingScreen 
-                          ? 'bg-accent-blue/20 text-accent-blue border-accent-blue/40 hover:bg-accent-blue/30' 
-                          : 'bg-bg-primary border-border-light text-text-primary hover:border-accent-blue/50 hover:bg-bg-hover'}`}
-                      onClick={() => isSharingScreen ? stopScreenShare() : shareScreen(canShareScreen)}
-                    >
-                      {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
-                      {isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
-                    </button>
-                  ) : (
-                    <button 
-                      className="btn flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold bg-bg-primary border border-border-light text-text-secondary hover:text-text-primary hover:border-border-dark cursor-not-allowed opacity-70"
-                      title="Join voice chat first to share screen"
-                      disabled
-                    >
-                      <MonitorUp className="w-4 h-4" /> Share Screen (Requires Voice)
-                    </button>
-                  )
-                )}
-              </div>
-            )}
-
-            <div className="hidden sm:block w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
-              <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-purple/10 rounded-full blur-2xl group-hover:bg-accent-purple/20 transition-colors" />
-              
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-2 bg-accent-purple/20 rounded-lg">
-                  <Puzzle className="w-5 h-5 text-accent-purple" />
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-accent-purple/20 rounded-lg">
+                    <Puzzle className="w-5 h-5 text-accent-purple" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-text-primary text-base">Watch Netflix, Prime & more</h4>
+                    <p className="text-xs text-text-muted mt-0.5">Sync playback across premium streaming platforms</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-text-primary text-base">Watch Netflix, Prime & more</h4>
-                  <p className="text-xs text-text-muted mt-0.5">Sync playback across premium streaming platforms</p>
+
+                <div className="flex flex-wrap gap-2 mb-5">
+                  {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max', 'MX Player', 'MiniTV'].map(p => (
+                    <span key={p} className="text-[10px] font-semibold tracking-wide px-2 py-1 rounded-md bg-bg-primary/50 text-text-muted border border-border-dark">{p}</span>
+                  ))}
                 </div>
+
+                <a 
+                  href="https://github.com/amitdubey88/VibeSync/tree/main/extension" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="btn-secondary w-full justify-center text-sm py-2.5"
+                >
+                  Install Browser Extension
+                </a>
               </div>
 
-              <div className="flex flex-wrap gap-2 mb-5">
-                {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max', 'MX Player', 'MiniTV'].map(p => (
-                  <span key={p} className="text-[10px] font-semibold tracking-wide px-2 py-1 rounded-md bg-bg-primary/50 text-text-muted border border-border-dark">{p}</span>
-                ))}
-              </div>
-
-              <a 
-                href="https://github.com/amitdubey88/VibeSync/tree/main/extension" 
-                target="_blank" 
-                rel="noreferrer"
-                className="btn-secondary w-full justify-center text-sm py-2.5"
-              >
-                Install Browser Extension
-              </a>
             </div>
-
           </div>
-        </div>
+        )
       )}
 
       {/* Buffering spinner */}

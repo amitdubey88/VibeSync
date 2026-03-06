@@ -1,6 +1,7 @@
 import useWebRTC from '../../hooks/useWebRTC';
 import { Mic, MicOff, PhoneCall, PhoneOff, AlertCircle, MonitorUp, MonitorX } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
+import { useAuth } from '../../context/AuthContext';
 import { createPortal } from 'react-dom';
 import { useState, useEffect } from 'react';
 
@@ -9,7 +10,10 @@ const VoiceControls = () => {
     isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute,
     isSharingScreen, shareScreen, stopScreenShare, remoteScreens 
   } = useWebRTC();
-  const { voiceParticipants, isHost, muteAllParticipants } = useRoom();
+  const { voiceParticipants, isHost, muteAllParticipants, participants } = useRoom();
+  const { user } = useAuth();
+
+  const canShareScreen = participants.find(p => p.userId === user?.id)?.canShareScreen || false;
 
   const [portalContainer, setPortalContainer] = useState(null);
 
@@ -54,6 +58,20 @@ const VoiceControls = () => {
           )}
         </button>
 
+        {/* Share Screen (only when in call AND has permission) */}
+        {isInVoice && canShareScreen && (
+          <button
+            onClick={() => isSharingScreen ? stopScreenShare() : shareScreen(canShareScreen)}
+            className={`btn-icon w-10 h-10 rounded-lg border transition-all duration-200
+              ${isSharingScreen
+                ? 'bg-accent-blue/10 text-accent-blue border-accent-blue/30'
+                : 'bg-bg-hover text-text-secondary border-border-light hover:text-text-primary'
+              }`}
+            title={isSharingScreen ? 'Stop Sharing' : 'Share Screen'}
+          >
+            {isSharingScreen ? <MonitorX className="w-4 h-4" /> : <MonitorUp className="w-4 h-4" />}
+          </button>
+        )}
 
         {/* Mute toggle (only when in call) */}
         {isInVoice && (
@@ -82,17 +100,23 @@ const VoiceControls = () => {
         )}
       </div>
 
-      {/* Render Remote Screens via Portal into RoomPage */}
+    {/* Render Remote Screens via Portal into RoomPage */}
       {portalContainer && Object.keys(remoteScreens).length > 0 && createPortal(
         Object.entries(remoteScreens).map(([socketId, stream]) => {
           const participantName = voiceParticipants.find(p => p.socketId === socketId)?.username || 'Someone';
+          const hasVideo = !!room?.currentVideo;
+
           return (
-            <div key={socketId} className="relative w-64 md:w-80 aspect-video bg-black rounded-xl overflow-hidden shadow-2xl border-2 border-accent-blue/50 pointer-events-auto group">
+            <div 
+              key={socketId} 
+              className={`relative bg-black overflow-hidden pointer-events-auto group
+                ${hasVideo ? 'w-64 md:w-80 aspect-video rounded-xl border-2 border-accent-blue/50 shadow-2xl' : 'w-full h-full'}`}
+            >
               <video
                 autoPlay
                 playsInline
                 ref={(el) => { if (el) el.srcObject = stream; }}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain"
               />
               <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-semibold text-white shadow-sm flex items-center gap-1.5">
                 <MonitorUp className="w-3 h-3 text-accent-blue" />
