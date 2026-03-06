@@ -224,11 +224,22 @@ const YouTubePlayer = ({ videoId }) => {
       */}
       {!isHost ? (
         <div 
-          className="absolute inset-0 z-10 cursor-pointer" 
+          className="absolute inset-0 z-30 cursor-pointer bg-transparent touch-none select-none" 
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             handleInteraction();
           }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleInteraction();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onContextMenu={(e) => e.preventDefault()}
         />
       ) : (
         /* Host still needs a small overlay or logic to ensure controls show when clicking near edges */

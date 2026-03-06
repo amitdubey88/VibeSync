@@ -326,11 +326,6 @@ export const RoomProvider = ({ children }) => {
     socket.emit('room:set-status', { roomCode: room.code, status });
   }, [socket, room]);
 
-  const toggleScreenSharePermission = useCallback((targetUserId, canShare) => {
-    if (!socket || !room) return;
-    socket.emit('room:toggle-screen-share-permission', { roomCode: room.code, targetUserId, canShare });
-  }, [socket, room]);
-
   return (
     <RoomContext.Provider value={{
       room, participants, voiceParticipants, messages,
@@ -342,7 +337,7 @@ export const RoomProvider = ({ children }) => {
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
       // Host controls
-      muteAllParticipants, roomEndedByHost, toggleScreenSharePermission,
+      muteAllParticipants, roomEndedByHost,
       dismissRoomEnded: () => setRoomEndedByHost(null),
       // Chat notifications
       unreadChatCount, setUnreadChatCount,

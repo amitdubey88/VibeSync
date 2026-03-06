@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
-import { Crown, Loader2, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut, MonitorUp, MonitorX } from 'lucide-react';
+import { Crown, Loader2, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut } from 'lucide-react';
 import ConfirmDialog from '../UI/ConfirmDialog';
 
 const ParticipantsList = () => {
@@ -109,13 +109,6 @@ const ParticipantsList = () => {
                 </div>
               )}
 
-              {/* Screen Share Perm indicator */}
-              {p.canShareScreen && !isRoomHost && (
-                <div className="shrink-0 text-accent-blue" title="Can share screen">
-                  <MonitorUp className="w-3.5 h-3.5" />
-                </div>
-              )}
-
               {/* Host controls ⋮ */}
               {canControl && (
                 <div className="relative shrink-0 ml-1" ref={openMenuId === p.userId ? menuRef : null}>
@@ -128,13 +121,6 @@ const ParticipantsList = () => {
 
                   {openMenuId === p.userId && (
                     <div className="absolute right-0 top-8 z-50 w-48 rounded-xl bg-bg-card border border-border-dark shadow-2xl overflow-hidden">
-                      <button
-                        onClick={() => { toggleScreenSharePermission(p.userId, !p.canShareScreen); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-blue transition-colors"
-                      >
-                        {p.canShareScreen ? <MonitorX className="w-4 h-4 text-accent-blue" /> : <MonitorUp className="w-4 h-4 text-accent-blue" />}
-                        {p.canShareScreen ? 'Revoke Screen Share' : 'Allow Screen Share'}
-                      </button>
                       <button
                         onClick={() => { setConfirm({ type: 'makeHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
                         className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-yellow transition-colors"

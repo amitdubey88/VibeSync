@@ -12,12 +12,9 @@ export const WebRTCProvider = ({ children }) => {
 
     const [isInVoice, setIsInVoice] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
-    const [isSharingScreen, setIsSharingScreen] = useState(false);
     const [voiceError, setVoiceError] = useState(null);
-    const [remoteScreens, setRemoteScreens] = useState({}); // { [socketId]: MediaStream }
 
     const localStreamRef = useRef(null);
-    const screenStreamRef = useRef(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
     
     const roomCode = room?.code;
@@ -53,16 +50,10 @@ export const WebRTCProvider = ({ children }) => {
                 }
                 audio.srcObject = stream;
             }
-            if (event.track.kind === 'video') {
-                setRemoteScreens((prev) => ({ ...prev, [remoteSocketId]: stream }));
-            }
         };
 
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current));
-        }
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, screenStreamRef.current));
         }
 
         peersRef.current[remoteSocketId] = pc;
@@ -77,12 +68,6 @@ export const WebRTCProvider = ({ children }) => {
         }
         const audio = document.getElementById(`audio-${remoteSocketId}`);
         if (audio) audio.remove();
-
-        setRemoteScreens((prev) => {
-            const next = { ...prev };
-            delete next[remoteSocketId];
-            return next;
-        });
     }, []);
 
     const joinVoice = useCallback(async () => {
@@ -102,15 +87,9 @@ export const WebRTCProvider = ({ children }) => {
         if (!socket || !roomCode) return;
         localStreamRef.current?.getTracks().forEach((t) => t.stop());
         localStreamRef.current = null;
-        if (screenStreamRef.current) {
-            screenStreamRef.current.getTracks().forEach((t) => t.stop());
-            screenStreamRef.current = null;
-        }
         Object.keys(peersRef.current).forEach(closePeer);
         setIsInVoice(false);
         setIsMuted(false);
-        setIsSharingScreen(false);
-        setRemoteScreens({});
         socket.emit('voice:leave', { roomCode });
     }, [socket, roomCode, closePeer]);
 
@@ -121,50 +100,6 @@ export const WebRTCProvider = ({ children }) => {
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, socket, roomCode]);
-
-    const shareScreen = useCallback(async (canShare) => {
-        if (!isInVoice) return setVoiceError('Join voice chat first.');
-        if (!canShare) return setVoiceError('No permission.');
-        try {
-            const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: false });
-            screenStreamRef.current = stream;
-            const videoTrack = stream.getVideoTracks()[0];
-            await Promise.all(Object.entries(peersRef.current).map(async ([peerId, pc]) => {
-                pc.addTrack(videoTrack, stream);
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('voice:offer', { targetSocketId: peerId, offer, roomCode });
-            }));
-            setIsSharingScreen(true);
-            videoTrack.addEventListener('ended', () => stopScreenShare(), { once: true });
-        } catch (err) {
-            console.error(err);
-        }
-    }, [isInVoice, socket, roomCode]);
-
-    const stopScreenShare = useCallback(async () => {
-        if (!screenStreamRef.current) return;
-        const videoTrack = screenStreamRef.current.getVideoTracks()[0];
-        screenStreamRef.current.getTracks().forEach(t => t.stop());
-        await Promise.all(Object.entries(peersRef.current).map(async ([peerId, pc]) => {
-            const sender = pc.getSenders().find(s => s.track === videoTrack);
-            if (sender) pc.removeTrack(sender);
-            try {
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('voice:offer', { targetSocketId: peerId, offer, roomCode });
-            } catch (_) {}
-        }));
-        screenStreamRef.current = null;
-        setIsSharingScreen(false);
-    }, [socket, roomCode]);
-
-    // ── Auto-stop screen share when video loads ──────────────────────────────
-    useEffect(() => {
-        if (room?.currentVideo && isSharingScreen) {
-            stopScreenShare();
-        }
-    }, [room?.currentVideo, isSharingScreen, stopScreenShare]);
 
     useEffect(() => {
         if (!socket) return;
@@ -218,8 +153,7 @@ export const WebRTCProvider = ({ children }) => {
 
     return (
         <WebRTCContext.Provider value={{
-            isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute,
-            isSharingScreen, shareScreen, stopScreenShare, remoteScreens
+            isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute
         }}>
             {children}
         </WebRTCContext.Provider>

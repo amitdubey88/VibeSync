@@ -309,14 +309,6 @@ const RoomPage = () => {
         {/* ── Video area ── */}
         {/* Mobile: fixed height so chat is visible | Desktop: fills remaining width */}
         <div className="h-[42vw] min-h-[200px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
-          <div 
-            id="screen-share-container" 
-            className={`absolute z-40 pointer-events-none flex flex-col gap-4 overflow-hidden
-              ${room?.currentVideo 
-                ? 'top-4 right-4 items-end' 
-                : 'inset-0 items-center justify-center'}`} 
-          />
-          {/* Only render the VideoPlayer UI if there are no full-screen screen shares? Actually, no, the empty state UI inside VideoPlayer should be hidden if a screen-share is active and taking up the full screen, OR we can just let the screen-share container sit on top of it. bg-bg-secondary handles hiding the empty state. */}
           <VideoPlayer />
         </div>
 

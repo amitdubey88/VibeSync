@@ -89,14 +89,10 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, room, isHost, setVideoSource, notifyUploading, participants } = useRoom();
+  const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
   const { user } = useAuth();
   const { socket } = useSocket();
-  const { remoteScreens } = useWebRTC();
   const videoRef = useRef(null);
-
-  const canShareScreen = participants.find(p => p.userId === user?.id)?.canShareScreen || false;
-  const hasActiveScreenShare = Object.keys(remoteScreens || {}).length > 0;
 
   // Host-only blob URL — lets host play instantly from local file while uploading
   const [blobUrl, setBlobUrl] = useState(null);
@@ -379,8 +375,7 @@ const VideoPlayer = () => {
           preload="auto"
         />
       ) : (
-        !hasActiveScreenShare && (
-          <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
+        <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
             <div className="flex flex-col items-center max-w-md w-full gap-6">
               
               <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
@@ -431,7 +426,6 @@ const VideoPlayer = () => {
 
             </div>
           </div>
-        )
       )}
 
       {/* Buffering spinner */}
@@ -448,9 +442,22 @@ const VideoPlayer = () => {
       */}
       {!isHost && activeSrc && (
         <div 
-          className="absolute inset-0 z-10 cursor-pointer" 
-          onClick={handleMouseMove}
-          onTouchStart={handleMouseMove}
+          className="absolute inset-0 z-30 cursor-pointer bg-transparent touch-none select-none" 
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMouseMove();
+          }}
+          onTouchStart={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleMouseMove();
+          }}
+          onTouchEnd={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onContextMenu={(e) => e.preventDefault()}
         />
       )}
 
