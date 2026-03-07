@@ -50,7 +50,21 @@ export const WebRTCProvider = ({ children }) => {
 
         pc.ontrack = (event) => {
             const stream = event.streams[0];
-            if (event.track.kind === 'audio') {
+            if (event.track.kind === 'video') {
+                // This is the premier stream broadcast from the host
+                console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
+                setRemotePremierStream(stream);
+                
+                // If an audio tag was created for this stream's audio track prematurely, remove it
+                let oldAudio = document.getElementById(`audio-${remoteSocketId}`);
+                if (oldAudio && oldAudio.srcObject?.id === stream.id) {
+                    oldAudio.remove();
+                }
+            } else if (event.track.kind === 'audio') {
+                // If this audio track belongs to the premier stream, don't create a voice chat audio tag!
+                // The <video> element in VideoPlayer will play it.
+                if (stream.getVideoTracks().length > 0) return;
+
                 let audio = document.getElementById(`audio-${remoteSocketId}`);
                 if (!audio) {
                     audio = document.createElement('audio');
@@ -62,10 +76,6 @@ export const WebRTCProvider = ({ children }) => {
                 audio.srcObject = stream;
                 // Mute remote audio if we are in passive mode
                 audio.muted = !isInVoice;
-            } else if (event.track.kind === 'video') {
-                // This is the premier stream broadcast from the host
-                console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
-                setRemotePremierStream(stream);
             }
         };
 
@@ -166,32 +176,47 @@ export const WebRTCProvider = ({ children }) => {
         premierStreamRef.current = stream;
         
         // If we're already connected to peers, we need to add/update tracks
-        if (stream && socket) {
-            const videoTrack = stream.getVideoTracks()[0];
-            if (!videoTrack) return;
-
-            // Update all existing peer connections
+        if (socket) {
             const peers = Object.entries(peersRef.current);
             for (const [targetSocketId, pc] of peers) {
+                // First, remove existing premier stream tracks from this peer
                 const senders = pc.getSenders();
-                const videoSender = senders.find(s => s.track?.kind === 'video');
-                
-                if (videoSender) {
-                    // Replace existing track
-                    videoSender.replaceTrack(videoTrack);
+                senders.forEach(sender => {
+                    // We can't easily tell which stream a sender belongs to natively in all browsers,
+                    // but we know mic is only audio. However, we can just replace or add.
+                    // Instead of removing, let's just add the tracks.
+                });
+
+                if (stream) {
+                    stream.getTracks().forEach(track => {
+                        // Check if we already have a sender for this track kind (video)
+                        const sender = senders.find(s => s.track?.kind === track.kind && s.track?.id === track.id);
+                        if (!sender) {
+                            pc.addTrack(track, stream);
+                        }
+                    });
                 } else {
-                    // Add new track
-                    pc.addTrack(videoTrack, stream);
-                    
-                    // Trigger renegotiation
+                    // If stream is null (stopped), we should remove the video track sender
+                    senders.forEach(sender => {
+                        if (sender.track?.kind === 'video') {
+                            pc.removeTrack(sender);
+                        }
+                    });
+                }
+                
+                // Trigger renegotiation
+                try {
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
                     const encryptedOffer = await encryptData(offer, roomKey);
                     socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
+                } catch (err) {
+                    console.error('[WebRTC] Failed to renegotiate premier stream:', err);
                 }
             }
         }
     }, [roomCode, roomKey, socket]);
+
 
     useEffect(() => {
         if (!socket) return;

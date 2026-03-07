@@ -8,7 +8,7 @@ import {
   Mic, MicOff, Phone
 } from 'lucide-react';
 
-const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, visible }) => {
+const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoadClick, visible }) => {
   const { videoState, currentVideo } = useRoom();
   const { isInVoice, isMuted, toggleMute, joinVoice, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
@@ -55,7 +55,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
       videoRef.current.volume = isMutedLocal ? 0 : volume;
       videoRef.current.muted = isMutedLocal;
     }
-  }, [videoRef, volume, isMutedLocal]);
+  }, [videoRef, videoEl, volume, isMutedLocal]);
 
   const handleVolume = (e) => {
     const v = parseFloat(e.target.value);
@@ -116,7 +116,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
   const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || (currentVideo?.type === 'live' || currentVideo?.type === 'uploading');
   
   // For participants in live mode, use the synced time/duration from host
-  const displayTime = (!isHost && isLive && videoState?.currentTime) ? videoState.currentTime : currentTime;
+  const displayTime = (!isHost && isLive && videoState?.currentTime !== undefined) ? videoState.currentTime : currentTime;
   const displayDuration = (duration > 0 && duration !== Infinity) ? duration : (videoState?.duration || 0);
   
   const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;

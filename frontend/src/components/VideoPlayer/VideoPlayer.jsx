@@ -509,6 +509,7 @@ const VideoPlayer = () => {
             src={activeSrc}
             playsInline
             preload="auto"
+            autoPlay={isHost && !!blobUrl}
             onCanPlay={() => setIsLoading(false)}
           />
         ) : (
@@ -553,6 +554,7 @@ const VideoPlayer = () => {
           <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
             <VideoControls
               videoRef={videoRef}
+              videoEl={videoEl}
               currentTime={currentTime}
               duration={duration}
               isHost={isHost}
