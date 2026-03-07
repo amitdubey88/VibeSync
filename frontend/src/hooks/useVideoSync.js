@@ -111,8 +111,14 @@ const useVideoSync = (videoEl) => {
             setVideoState((prev) => ({ ...prev, currentTime }));
         };
 
-        const onSyncState = ({ videoState: vs }) => {
+        const onSyncState = ({ videoState: vs, currentVideo }) => {
             if (!videoEl || isHost) return;
+
+            // Bypass drift correction for Live Streams (WebRTC) to prevent flickering
+            if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
+                return;
+            }
+
             // Only correct drift if playing to avoid jitter while paused
             if (vs.isPlaying) {
                 applyTimeIfNeeded(vs.currentTime);

@@ -107,7 +107,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading } = useRoom();
+  const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading, syncDuration } = useRoom();
   const { setPremierStream, remotePremierStream } = useWebRTC();
   const { user } = useAuth();
   const { socket } = useSocket();
@@ -200,14 +200,11 @@ const VideoPlayer = () => {
   // Host: sync duration to room state once metadata/source is loaded
   useEffect(() => {
     if (isHost && duration > 0 && currentVideo && videoState && (!videoState.duration || videoState.duration === 0)) {
-      setVideoSource(currentVideo, { 
-        currentTime: videoState.currentTime, 
-        duration: duration,
-        isPlaying: videoState.isPlaying,
-        preserveState: true // Don't reset play state
-      });
+       // Just sync the duration instead of re-setting the whole source, 
+       // to avoid race conditions with play/pause state
+       syncDuration(duration);
     }
-  }, [isHost, duration, currentVideo, videoState?.duration]);
+  }, [isHost, duration, currentVideo, videoState?.duration, syncDuration]);
 
   // When Cloudinary URL replaces blob URL: seek to saved position once metadata loads
   const pendingSeekRef = useRef(null);
@@ -473,7 +470,7 @@ const VideoPlayer = () => {
           remotePremierStream ? (
             <video 
               autoPlay 
-              muted // Required for browser autoplay policy
+              defaultMuted={true} // Allow volume control later
               playsInline 
               className="w-full h-full object-contain"
               ref={(el) => {

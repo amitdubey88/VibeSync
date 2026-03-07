@@ -344,6 +344,12 @@ export const RoomProvider = ({ children }) => {
     }
   }, [socket, room, roomKey]);
 
+  const syncDuration = useCallback((duration) => {
+    if (!socket || !room) return;
+    socket.emit('video:sync-duration', { roomCode: room.code, duration });
+    setVideoState(prev => prev ? { ...prev, duration } : { currentTime: 0, duration, isPlaying: false, lastUpdated: Date.now() });
+  }, [socket, room]);
+
   const notifyUploading = useCallback((title) => {
     if (!socket || !room) return;
     socket.emit('video:set-uploading', { roomCode: room.code, title });
@@ -413,7 +419,7 @@ export const RoomProvider = ({ children }) => {
       room, roomKey, participants, voiceParticipants, messages,
       videoState, setVideoState, currentVideo, isHost, isMutedByHost,
       reactions, joinRoom, leaveRoom, sendMessage,
-      sendReaction, setVideoSource, notifyUploading,
+      sendReaction, setVideoSource, notifyUploading, syncDuration,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,

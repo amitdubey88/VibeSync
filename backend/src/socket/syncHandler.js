@@ -104,6 +104,25 @@ module.exports = (io, socket, roomStore) => {
         console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${roomCode}`);
     });
 
+    // ── video:sync-duration ───────────────────────────────────────────────────
+    // Host reports the duration of a newly loaded video/stream.
+    socket.on('video:sync-duration', ({ roomCode, duration }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        // Update the duration without causing a full source change event
+        if (room.videoState) {
+            room.videoState.duration = duration;
+        } else {
+            room.videoState = { currentTime: 0, isPlaying: false, duration, lastUpdated: Date.now() };
+        }
+
+        const hashedCode = hashRoomCode(roomCode);
+        // We can just blast out a state update request. Clients handle onSyncState
+        io.to(hashedCode).emit('video:source-changed', { video: room.currentVideo, videoState: room.videoState });
+        console.log(`[sync] Duration synced @${duration.toFixed(2)}s in room ${roomCode}`);
+    });
+
     // ── video:request-sync ────────────────────────────────────────────────────
     // Called by late joiners or reconnecting clients to get current state.
     // Server calculates the adjusted currentTime based on elapsed wall-clock time.
