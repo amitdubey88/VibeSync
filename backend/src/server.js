@@ -8,7 +8,7 @@ const morgan = require('morgan');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
+const { cloudinary, uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
