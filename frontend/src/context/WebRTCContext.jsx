@@ -56,6 +56,7 @@ export const WebRTCProvider = ({ children }) => {
                 audio.srcObject = stream;
             } else if (event.track.kind === 'video') {
                 // This is the premier stream broadcast from the host
+                console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
                 setRemotePremierStream(stream);
             }
         };

@@ -170,7 +170,8 @@ const VideoPlayer = () => {
     
     if (shouldBroadcast && videoEl.captureStream) {
       try {
-        const stream = videoEl.captureStream();
+        // Use 25fps hint to ensure better stream consistency
+        const stream = videoEl.captureStream(25);
         setPremierStream(stream);
       } catch (err) {
         console.error('Failed to capture premier stream:', err);
@@ -439,6 +440,7 @@ const VideoPlayer = () => {
         {remotePremierStream ? (
            <video 
              autoPlay 
+             muted
              playsInline 
              className="w-full h-full object-contain"
              ref={el => { if (el) el.srcObject = remotePremierStream; }}
