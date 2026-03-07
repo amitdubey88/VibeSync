@@ -110,7 +110,8 @@ export const RoomProvider = ({ children }) => {
     const onRoomState = async ({ room: r }) => {
       setRoom(r);
       setParticipants(r.participants || []);
-      setVoiceParticipants(r.voiceParticipants || []);
+      const activeVoice = (r.voiceParticipants || []).filter(p => !p.isPassive);
+      setVoiceParticipants(activeVoice);
       setVideoState(r.videoState);
       
       // Decrypt video source if needed
@@ -130,7 +131,10 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onParticipantUpdate = ({ participants: pts }) => setParticipants(pts || []);
-    const onVoiceUpdate = ({ voiceParticipants: vp }) => setVoiceParticipants(vp || []);
+    const onVoiceUpdate = ({ voiceParticipants: vp }) => {
+      const active = (vp || []).filter(p => !p.isPassive);
+      setVoiceParticipants(active);
+    };
 
     const onHostChanged = ({ newHostId, newHostUsername }) => {
       setIsHost(newHostId === user?.id);

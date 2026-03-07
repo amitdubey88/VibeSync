@@ -52,8 +52,11 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const handleVolume = (e) => {
     const v = parseFloat(e.target.value);
     setVolume(v);
-    if (videoRef.current) videoRef.current.volume = v;
-    setIsMuted(v === 0);
+    if (videoRef.current) {
+      videoRef.current.volume = v;
+      videoRef.current.muted = (v === 0);
+    }
+    setIsMutedLocal(v === 0);
   };
 
   const toggleMuteVideo = useCallback(() => {
@@ -106,50 +109,42 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
     }
   }, [videoRef]);
 
+  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading';
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-16 pb-3 px-4">
-      {/* ── Fullscreen Voice Controls ── */}
-      {isFullscreen && (
-        <div className="absolute -top-[300px] left-0 flex items-center gap-2">
-           {!isInVoice ? (
-              <button
-                onClick={joinVoice}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/80 hover:bg-accent-purple backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg"
-              >
-                <Phone className="w-4 h-4" />
-                <span>Join Audio</span>
-              </button>
-            ) : (
-              <button
-                onClick={toggleMute}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg
-                  ${isMuted ? 'bg-red-500/80 hover:bg-red-500' : 'bg-green-500/80 hover:bg-green-500'}`}
-              >
-                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                <span>{isMuted ? 'Unmute' : 'Mute'}</span>
-              </button>
-            )}
+    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5">
+      {/* ── Contextual Action Layer (Join Audio) ── */}
+      {!isInVoice && (
+        <div className="absolute -top-12 left-5 animate-bounce-subtle">
+           <button
+             onClick={joinVoice}
+             className="flex items-center gap-2 px-4 py-2 rounded-full bg-accent-purple/90 hover:bg-accent-purple backdrop-blur-md border border-white/20 text-white text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-[0_0_20px_rgba(168,85,247,0.4)]"
+           >
+             <Phone className="w-3.5 h-3.5" />
+             <span>Hear Audio</span>
+           </button>
         </div>
       )}
 
-      {/* ── Progress bar ── */}
-      <div
-        className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
-        onClick={handleSeek}
-      >
+      {/* ── Progress bar (Hidden if live) ── */}
+      {!isLive && (
         <div
-          className="h-full rounded-full bg-accent-red transition-all duration-150"
-          style={{ width: `${progress}%` }}
-        />
-        {isHost && (
+          className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
+          onClick={handleSeek}
+        >
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
-            style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+            className="h-full rounded-full bg-accent-red transition-all duration-150"
+            style={{ width: `${progress}%` }}
           />
-        )}
-      </div>
+          {isHost && (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
+              style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
+            />
+          )}
+        </div>
+      )}
 
       {/* ── Buttons row ── */}
       <div className="flex items-center gap-3">

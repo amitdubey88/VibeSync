@@ -83,14 +83,18 @@ export const WebRTCProvider = ({ children }) => {
         if (audio) audio.remove();
     }, []);
 
-    const joinVoice = useCallback(async () => {
+    const joinVoice = useCallback(async (isPassive = false) => {
         if (!socket || !roomCode) return;
         try {
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-            localStreamRef.current = stream;
-            setIsInVoice(true);
+            // Only request mic if NOT passive
+            if (!isPassive) {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                localStreamRef.current = stream;
+                setIsInVoice(true);
+            }
+            
             setVoiceError(null);
-            socket.emit('voice:join', { roomCode });
+            socket.emit('voice:join', { roomCode, passive: isPassive });
         } catch (err) {
             setVoiceError('Microphone access denied.');
         }
@@ -213,6 +217,11 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('voice:ice-candidate', onIceCandidate);
         socket.on('voice:user-left', onUserLeft);
         socket.on('room:muted', onMutedByHost);
+
+        // Passive registration: join voice signaling pool automatically
+        if (roomCode) {
+            joinVoice(true);
+        }
 
         return () => {
             socket.off('voice:user-joined', onUserJoined);

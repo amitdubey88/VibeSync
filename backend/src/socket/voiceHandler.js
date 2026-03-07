@@ -13,21 +13,27 @@ const { hashRoomCode } = require('../utils/hash');
 module.exports = (io, socket, roomStore) => {
     // ── voice:join ────────────────────────────────────────────────────────────
     // Client announces they want to join the voice channel.
-    socket.on('voice:join', ({ roomCode }) => {
+    socket.on('voice:join', ({ roomCode, passive }) => {
         const room = roomStore.get(roomCode);
         if (!room) return;
 
         room.voiceParticipants = room.voiceParticipants || [];
 
         // Avoid duplicate entries
-        if (!room.voiceParticipants.find((p) => p.socketId === socket.id)) {
-            room.voiceParticipants.push({
+        let participant = room.voiceParticipants.find((p) => p.socketId === socket.id);
+        if (!participant) {
+            participant = {
                 socketId: socket.id,
                 userId: socket.user.id,
                 username: socket.user.username,
                 avatar: socket.user.avatar,
                 isMuted: false,
-            });
+                isPassive: !!passive,
+            };
+            room.voiceParticipants.push(participant);
+        } else {
+            // Update passive status if re-joining
+            participant.isPassive = !!passive;
         }
 
         const hashedCode = hashRoomCode(roomCode);

@@ -170,8 +170,8 @@ const VideoPlayer = () => {
     
     if (shouldBroadcast && videoEl.captureStream) {
       try {
-        // Use 25fps hint to ensure better stream consistency
-        const stream = videoEl.captureStream(25);
+        // Boost to 60fps for premium motion quality during live premier
+        const stream = videoEl.captureStream(60);
         setPremierStream(stream);
       } catch (err) {
         console.error('Failed to capture premier stream:', err);
@@ -383,31 +383,7 @@ const VideoPlayer = () => {
     />
   );
 
-  // ── Participant waiting state during host upload ──────────────────────────
-  if (!isHost && currentVideo?.type === 'uploading') {
-    return (
-      <div className="relative w-full h-full bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
-            <CloudUpload className="w-9 h-9 text-accent-purple" />
-          </div>
-          <div>
-            <h3 className="text-lg font-bold text-text-primary mb-1">Video loading…</h3>
-            <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" /> Starting shortly, please wait
-            </p>
-          </div>
-          <div className="flex gap-1.5 mt-1">
-            {[0, 1, 2].map(i => (
-              <span key={i} className="w-2 h-2 rounded-full bg-accent-purple/60 animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }} />
-            ))}
-          </div>
-        </div>
-        {sourcePicker}
-      </div>
-    );
-  }
+  // YouTube player remains a separate simplified fallback as it doesn't use the same controls/ref system
 
   // ── YouTube player ────────────────────────────────────────────────────────
   if (currentVideo?.type === 'youtube') {
@@ -433,48 +409,12 @@ const VideoPlayer = () => {
     );
   }
 
-  // ── Participant waiting state (host is uploading or live streaming) ─────────
-  if (!isHost && (currentVideo?.type === 'uploading' || currentVideo?.type === 'live')) {
-    return (
-      <div className="relative w-full h-full bg-black flex items-center justify-center">
-        {remotePremierStream ? (
-           <video 
-             autoPlay 
-             muted
-             playsInline 
-             className="w-full h-full object-contain"
-             ref={el => { if (el) el.srcObject = remotePremierStream; }}
-           />
-        ) : (
-          <div className="flex flex-col items-center gap-4 p-8 text-center">
-            <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
-              <CloudUpload className="w-9 h-9 text-accent-purple" />
-            </div>
-            <div>
-              <h3 className="text-lg font-bold text-text-primary mb-1">
-                {currentVideo?.type === 'live' ? 'Live Stream Started' : 'Host is uploading a video'}
-              </h3>
-              <p className="text-text-secondary text-sm font-medium">{currentVideo.title || 'Video'}</p>
-              <div className="flex items-center justify-center gap-2 mt-3 mb-2">
-                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
-                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  <span className="text-[10px] font-black tracking-widest uppercase">Live Streaming</span>
-                </div>
-              </div>
-              <p className="text-text-muted text-xs flex items-center justify-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> {currentVideo?.type === 'live' ? 'Connected to host feed…' : 'Watching live via Premier Feed…'}
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  }
+  // Regular / file / URL video / Direct Live Broadcast
 
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden"
+      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden rounded-2xl border border-border-light shadow-2xl transition-all duration-500"
       onMouseMove={handleMouseMove}
       onTouchStart={handleMouseMove}
       onClick={handleMouseMove}
@@ -487,10 +427,8 @@ const VideoPlayer = () => {
             className="h-full bg-gradient-to-r from-accent-purple via-accent-red to-accent-yellow transition-all duration-300 relative"
             style={{ width: `${uploadProgress}%` }}
           >
-            {/* Glossy overlay */}
             <div className="absolute inset-0 bg-white/10" />
           </div>
-          {/* Percentage label */}
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <span className="text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] uppercase tracking-tighter">
               Uploading {uploadProgress}%
@@ -500,141 +438,111 @@ const VideoPlayer = () => {
       )}
 
       {/* LIVE Badge (Visible to everyone during live streaming or premier) */}
-      {(isUploading || currentVideo?.type === 'live') && (
-        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600 px-2.5 py-1 rounded-md shadow-lg animate-fade-in">
+      {(isUploading || currentVideo?.type === 'live' || isDirectStreaming) && (
+        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/90 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
-            {currentVideo?.type === 'live' ? 'Direct Live' : 'Live Premier'}
+            {isDirectStreaming || currentVideo?.type === 'live' ? 'Direct Live' : 'Live Premier'}
           </span>
         </div>
       )}
 
-      {activeSrc ? (
-        <video
-          ref={setVideoRef}
-          key={activeSrc}   /* Force remount when src changes so events reattach cleanly */
-          className="w-full h-full object-contain"
-          src={activeSrc}
-          playsInline
-          preload="auto"
-        />
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
+      {/* Main Content Area */}
+      <div className="w-full h-full flex items-center justify-center">
+        {!isHost && (currentVideo?.type === 'uploading' || currentVideo?.type === 'live') ? (
+          /* Participant: Show Direct/Premier Feed */
+          remotePremierStream ? (
+            <video 
+              autoPlay 
+              muted // Required for browser autoplay policy
+              playsInline 
+              className="w-full h-full object-contain"
+              ref={(el) => {
+                setVideoRef(el);
+                if (el) el.srcObject = remotePremierStream;
+              }}
+              onCanPlay={() => setIsLoading(false)}
+            />
+          ) : (
+            /* Waiting UI inside the player */
+            <div className="flex flex-col items-center gap-4 p-8 text-center animate-pulse">
+              <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center text-accent-purple">
+                <CloudUpload className="w-9 h-9" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-text-primary mb-1">Connecting to Feed…</h3>
+                <p className="text-text-secondary text-sm font-medium">{currentVideo?.title || 'Waiting for host…'}</p>
+                <div className="flex items-center justify-center gap-2 mt-3 mb-2">
+                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
+                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-black tracking-widest uppercase">Live Link Active</span>
+                  </div>
+                </div>
+                <p className="text-text-muted text-xs flex items-center justify-center gap-1.5">
+                   <Clock className="w-3.5 h-3.5" /> High-quality broadcast starting soon
+                </p>
+              </div>
+            </div>
+          )
+        ) : activeSrc ? (
+          /* Normal Playback (Host, or Guest with file sync) */
+          <video
+            ref={setVideoRef}
+            key={activeSrc}
+            className="w-full h-full object-contain"
+            src={activeSrc}
+            playsInline
+            preload="auto"
+            onCanPlay={() => setIsLoading(false)}
+          />
+        ) : (
+          /* Landing / Empty State */
+          <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
             <div className="flex flex-col items-center max-w-md w-full gap-6">
-              
               <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
                 <Play className="w-10 h-10 text-accent-red ml-1" />
               </div>
-              
               <div>
                 <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
                 <p className="text-gray-300 text-sm font-medium">
-                  {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video, or start a streaming party.'}
+                  {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video.'}
                 </p>
               </div>
-
               {isHost && (
                 <button className="btn-primary mt-3" onClick={() => setShowSourcePicker(true)}>
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
               )}
-
-              <div className="hidden sm:block w-full mt-4 bg-bg-hover/50 rounded-2xl p-6 border border-border-light text-left relative overflow-hidden group">
-                <div className="absolute -right-4 -top-4 w-24 h-24 bg-accent-purple/10 rounded-full blur-2xl group-hover:bg-accent-purple/20 transition-colors" />
-                
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-accent-purple/20 rounded-lg">
-                    <Puzzle className="w-5 h-5 text-accent-purple" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-text-primary text-base">Watch Netflix, Prime & more</h4>
-                    <p className="text-xs text-text-muted mt-0.5">Sync playback across premium streaming platforms</p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2 mb-5">
-                  {['Netflix', 'Prime', 'Hotstar', 'JioCinema', 'Disney+', 'Max', 'MX Player', 'MiniTV'].map(p => (
-                    <span key={p} className="text-[10px] font-semibold tracking-wide px-2 py-1 rounded-md bg-bg-primary/50 text-text-muted border border-border-dark">{p}</span>
-                  ))}
-                </div>
-
-                <a 
-                  href="https://github.com/amitdubey88/VibeSync/tree/main/extension" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="btn-secondary w-full justify-center text-sm py-2.5"
-                >
-                  Install Browser Extension
-                </a>
-              </div>
-
             </div>
           </div>
-      )}
+        )}
+      </div>
 
-      {/* Buffering / Decrypting spinner */}
-      {(isLoading || isDecrypting) && activeSrc && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none gap-3">
+      {/* Reaction Overlays Layer */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+        {reactions.map((r) => (
+          <ReactionAnimation key={r.id} emoji={r.emoji} />
+        ))}
+      </div>
+
+      {/* Buffering/Loading Indicator */}
+      {(isLoading || isDecrypting) && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none z-10 gap-3">
           <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
-          {isDecrypting && <span className="text-white text-xs font-bold animate-pulse">Decrypting secure media…</span>}
         </div>
       )}
 
-      {/* 
-        Interaction & Blocking Layer (Non-host):
-        An invisible layer that captures taps to show controls,
-        preventing browsers from showing native video menus.
-      */}
-      {/* 
-        Interaction & Blocking Layer:
-        - For Hosts: Only covers the top 25% for UI toggle.
-        - For Guests: Covers 100% to block direct video control.
-      */}
-      {activeSrc && (
-        <div 
-          className={`absolute inset-x-0 top-0 z-30 cursor-pointer bg-white/0 touch-manipulation select-none
-            ${isHost ? 'h-1/4' : 'h-full'}`} 
-          onClick={(e) => {
-            if (!isHost) {
-              e.preventDefault();
-              e.stopPropagation();
-            }
-            handleMouseMove();
-          }}
-          onTouchStart={(e) => {
-            if (!isHost) {
-              e.stopPropagation();
-            }
-            handleMouseMove();
-          }}
-          onTouchEnd={(e) => {
-            if (!isHost) {
-              e.stopPropagation();
-            }
-          }}
-          onContextMenu={(e) => {
-            if (!isHost) e.preventDefault();
-          }}
+      {/* Controls Overlay */}
+      <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+        <VideoControls
+          videoRef={videoRef}
+          currentTime={currentTime}
+          duration={duration}
+          isHost={isHost}
+          onLoadClick={() => setShowSourcePicker(true)}
         />
-      )}
-
-      {/* Controls overlay */}
-      {activeSrc && (
-        <div className={`absolute inset-0 transition-opacity duration-300 z-20 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-          <VideoControls
-            videoRef={videoRef}
-            currentTime={currentTime}
-            duration={duration}
-            isHost={isHost}
-            onLoadClick={isHost ? () => setShowSourcePicker(true) : undefined}
-          />
-        </div>
-      )}
-
-      {/* Teams-style floating reaction bar — animations visible everywhere, bar hidden on mobile */}
-      {activeSrc && (
-        <VideoReactionBar visible={showControls} />
-      )}
+        <VideoReactionBar onReact={sendReaction} />
+      </div>
 
       {sourcePicker}
     </div>
