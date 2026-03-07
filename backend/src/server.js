@@ -8,7 +8,7 @@ const morgan = require('morgan');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { uploadToCloudinary, isConfigured: isCloudinaryConfigured, generateUploadSignature } = require('./config/cloudinary');
+const { uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
@@ -60,49 +60,31 @@ if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
 }
 
-// ── File Upload Setup ─────────────────────────────────────────────────────────
-// PRODUCTION  → Cloudinary memoryStorage (no disk needed on Render free tier)
-// DEVELOPMENT → Local disk uploads/ folder (no credentials required)
-const useCloudinary = isCloudinaryConfigured();
+// File Upload Setup
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
+if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
-let upload;
-if (useCloudinary) {
-    upload = multer({
-        storage: multer.memoryStorage(),
-        limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB — Cloudinary free cap
-        fileFilter: (_req, file, cb) => {
-            const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-            if (allowed.includes(file.mimetype)) cb(null, true);
-            else cb(new Error('Only video files are allowed'));
-        },
-    });
-    console.log('📦 Upload mode: Cloudinary');
-} else {
-    // Fallback: local disk (dev)
-    const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
-    if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-    const diskStorage = multer.diskStorage({
-        destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
-        filename: (_req, file, cb) => {
-            const ext = path.extname(file.originalname);
-            cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
-        },
-    });
-    upload = multer({
-        storage: diskStorage,
-        limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE_MB || '500') * 1024 * 1024 },
-        fileFilter: (_req, file, cb) => {
-            const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-            if (allowed.includes(file.mimetype)) cb(null, true);
-            else cb(new Error('Only video files are allowed'));
-        },
-    });
-    // Serve local uploads with range-request support (for video seeking)
-    app.use('/uploads', express.static(UPLOAD_DIR, {
-        setHeaders: (res) => res.setHeader('Accept-Ranges', 'bytes'),
-    }));
-    console.log('📦 Upload mode: Local disk (dev)');
-}
+const diskStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
+    filename: (_req, file, cb) => {
+        const ext = path.extname(file.originalname);
+        cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 8)}${ext}`);
+    },
+});
+
+const upload = multer({
+    storage: diskStorage,
+    limits: { fileSize: 500 * 1024 * 1024 }, // Supports up to 500MB
+    fileFilter: (_req, file, cb) => {
+        const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
+        if (allowed.includes(file.mimetype)) cb(null, true);
+        else cb(new Error('Only video files are allowed'));
+    },
+});
+
+const useCloudinary = isCloudinaryConfigured();
+if (useCloudinary) console.log('📦 Upload mode: Cloudinary (Streaming Proxy)');
+else console.log('📦 Upload mode: Local disk (dev)');
 
 // ── Routes ────────────────────────────────────────────────────────────────────
 const extRoutes = require('./routes/ext');
@@ -114,6 +96,9 @@ app.use('/api/ext', extRoutes);   // Browser extension sync (no JWT)
 app.post('/api/upload', (req, res) => {
     const { authenticate } = require('./middleware/auth');
     authenticate(req, res, () => {
+        // ALWAYS use the disk-based upload to accommodate large files reliably.
+        // Even for Cloudinary, we save to temp disk first, then pipe to cloud.
+        // This is much better than memoryStorage which causes crashes/timeouts.
         upload.single('video')(req, res, async (err) => {
             if (err) return res.status(400).json({ success: false, message: err.message });
             if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
@@ -121,38 +106,43 @@ app.post('/api/upload', (req, res) => {
             try {
                 let fileUrl;
                 if (useCloudinary) {
-                    // Stream buffer → Cloudinary → get permanent CDN URL
-                    const result = await uploadToCloudinary(req.file.buffer, req.file.originalname);
-                    fileUrl = result.secure_url; // https://res.cloudinary.com/...
+                    // Create a stream from the temporary file on disk
+                    const fileStream = fs.createReadStream(req.file.path);
+
+                    // Pipe the file stream to Cloudinary
+                    const result = await new Promise((resolve, reject) => {
+                        const cloudStream = cloudinary.uploader.upload_stream(
+                            {
+                                resource_type: 'video',
+                                folder: 'vibesync',
+                                chunk_size: 6000000,
+                            },
+                            (cloudErr, cloudResult) => {
+                                if (cloudErr) reject(cloudErr);
+                                else resolve(cloudResult);
+                            }
+                        );
+                        fileStream.pipe(cloudStream);
+                    });
+
+                    fileUrl = result.secure_url;
+
+                    // Cleanup the temporary file from disk
+                    fs.unlink(req.file.path, () => { });
                 } else {
-                    // Local dev: relative URL, Vite proxy handles /uploads
+                    // Local dev: relative URL
                     fileUrl = `/uploads/${req.file.filename}`;
                 }
                 return res.json({ success: true, url: fileUrl, filename: req.file.originalname, size: req.file.size });
             } catch (uploadErr) {
-                console.error('[upload] Cloudinary error:', uploadErr.message);
+                console.error('[upload] Cloud error:', uploadErr.message);
+                if (req.file?.path) fs.unlink(req.file.path, () => { });
                 return res.status(500).json({ success: false, message: 'Cloud upload failed: ' + uploadErr.message });
             }
         });
     });
 });
 
-// GET Signature for direct Cloudinary upload (faster, bypasses server)
-app.get('/api/upload/sign', (req, res) => {
-    const { authenticate } = require('./middleware/auth');
-    authenticate(req, res, () => {
-        if (!useCloudinary) {
-            return res.status(400).json({ success: false, message: 'Cloudinary not configured' });
-        }
-        // ONLY include parameters that Cloudinary expects in the signature string.
-        // resource_type is NOT one of them for the upload endpoint.
-        const params = {
-            folder: 'vibesync',
-        };
-        const signData = generateUploadSignature(params);
-        return res.json({ success: true, ...signData, folder: params.folder });
-    });
-});
 
 // Health check
 app.get('/api/health', (_req, res) => {
