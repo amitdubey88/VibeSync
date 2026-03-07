@@ -503,7 +503,7 @@ const VideoPlayer = () => {
           />
         ) : (
           /* Landing / Empty State */
-          <div className="flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
+          <div className="relative z-40 flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
             <div className="flex flex-col items-center max-w-md w-full gap-6">
               <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
                 <Play className="w-10 h-10 text-accent-red ml-1" />
@@ -532,8 +532,8 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls Overlay - container itself is now pointer-events-none to avoid blocking the center */}
-      <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+      {/* Controls Overlay - container itself is ALWAYS pointer-events-none to avoid blocking the center */}
+      <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
         <VideoControls
           videoRef={videoRef}
           currentTime={currentTime}
