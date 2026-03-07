@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import MessageBubble from './MessageBubble';
-import { Send, Smile, Bell, BellOff, X, Reply } from 'lucide-react';
+import { Send, Smile, Bell, BellOff, X, Reply, ShieldCheck } from 'lucide-react';
 
 // Quick emoji sets — no external library needed
 const EMOJI_SETS = [

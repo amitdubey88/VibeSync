@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
-import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puzzle } from 'lucide-react';
+import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puzzle, ShieldCheck } from 'lucide-react';
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
