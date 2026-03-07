@@ -15,7 +15,7 @@ const EMOJI_SETS = [
 const QUICK_REACTIONS = ['👍','❤️','😂','✋','🔥', '🎉', '🤯', '💀'];
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
-  const { messages, sendMessage, sendReaction, room } = useRoom();
+  const { messages, sendMessage, sendReaction, room, currentVideo } = useRoom();
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
