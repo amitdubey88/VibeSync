@@ -91,3 +91,45 @@ export async function decryptData(encryptedBase64, key) {
         return '[Encrypted Message]';
     }
 }
+
+/**
+ * Encrypts a File or Blob.
+ * Returns a new Blob containing [IV(12 bytes) + Ciphertext].
+ */
+export async function encryptFile(file, key) {
+    if (!key) return file;
+    const iv = window.crypto.getRandomValues(new Uint8Array(12));
+    const arrayBuffer = await file.arrayBuffer();
+
+    const ciphertext = await window.crypto.subtle.encrypt(
+        { name: ENCRYPTION_ALGORITHM, iv },
+        key,
+        arrayBuffer
+    );
+
+    const combined = new Uint8Array(iv.length + ciphertext.byteLength);
+    combined.set(iv);
+    combined.set(new Uint8Array(ciphertext), iv.length);
+
+    return new Blob([combined], { type: 'application/octet-stream' });
+}
+
+/**
+ * Decrypts an encrypted Blob.
+ * Returns a new Blob with the original media type.
+ */
+export async function decryptFile(encryptedBlob, key, originalType = 'video/mp4') {
+    if (!key) return encryptedBlob;
+    const combined = new Uint8Array(await encryptedBlob.arrayBuffer());
+
+    const iv = combined.slice(0, 12);
+    const ciphertext = combined.slice(12);
+
+    const decrypted = await window.crypto.subtle.decrypt(
+        { name: ENCRYPTION_ALGORITHM, iv },
+        key,
+        ciphertext
+    );
+
+    return new Blob([decrypted], { type: originalType });
+}

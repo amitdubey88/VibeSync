@@ -46,6 +46,20 @@ module.exports = (io, socket, roomStore) => {
         const playing = isPlaying ?? false;
         room.videoState = { currentTime: t, isPlaying: playing, lastUpdated: Date.now() };
 
+        // Record video history for cleanup on room deletion
+        if (video && video.url && (video.type === 'file' || video.type === 'url')) {
+            const systemMsg = {
+                id: `vsys_${Date.now()}`,
+                userId: 'system', username: 'System', avatar: null,
+                content: `Video set to: ${video.title || 'Untitled'}`,
+                type: 'system',
+                videoUrl: video.url, // Hidden field used for deep cleanup
+                createdAt: new Date().toISOString(),
+            };
+            room.messages = room.messages || [];
+            room.messages.push(systemMsg);
+        }
+
         const hashedCode = hashRoomCode(roomCode);
         io.to(hashedCode).emit('video:source-changed', { video, videoState: room.videoState });
         console.log(`[sync] Source changed in ${roomCode}: ${video?.title} @${t.toFixed(2)}s`);

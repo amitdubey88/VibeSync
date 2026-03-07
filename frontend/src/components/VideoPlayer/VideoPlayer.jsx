@@ -11,6 +11,7 @@ import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import useWebRTC from '../../hooks/useWebRTC';
+import { encryptFile, decryptFile } from '../../utils/crypto';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
 const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, isUploading, uploadProgress }) =>
@@ -98,6 +99,11 @@ const VideoPlayer = () => {
   const [blobUrl, setBlobUrl] = useState(null);
   const blobUrlRef = useRef(null);
 
+  // Decrypted video blob URL
+  const [decryptedUrl, setDecryptedUrl] = useState(null);
+  const decryptedUrlRef = useRef(null);
+  const [isDecrypting, setIsDecrypting] = useState(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
@@ -150,9 +156,10 @@ const VideoPlayer = () => {
     };
   }, [videoEl]);
 
-  // Cleanup blob URL on unmount
+  // Cleanup blob URLs on unmount
   useEffect(() => () => {
     if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
+    if (decryptedUrlRef.current) { URL.revokeObjectURL(decryptedUrlRef.current); decryptedUrlRef.current = null; }
   }, []);
 
   // When Cloudinary URL replaces blob URL: seek to saved position once metadata loads
@@ -174,6 +181,45 @@ const VideoPlayer = () => {
       return () => videoEl.removeEventListener('loadedmetadata', handler);
     }
   }, [videoEl, currentVideo]);  // re-runs when currentVideo changes (blob → cloudinary swap)
+
+  // ── Handle Encrypted Video Fetching & Decryption ───────────────────────────
+  const { roomKey } = useRoom();
+  useEffect(() => {
+    // Only fetch/decrypt if it's an encrypted file and we aren't the host who already has a blobUrl
+    if (!currentVideo || currentVideo.type === 'youtube' || !currentVideo.e2ee || blobUrl || !roomKey) {
+      setDecryptedUrl(null);
+      return;
+    }
+
+    let active = true;
+    const fetchAndDecrypt = async () => {
+      setIsDecrypting(true);
+      try {
+        const response = await fetch(currentVideo.url);
+        const encryptedBlob = await response.blob();
+        if (!active) return;
+
+        const originalType = currentVideo.url.toLowerCase().split('.').pop();
+        const mimeType = originalType === 'mkv' ? 'video/x-matroska' : `video/${originalType || 'mp4'}`;
+        
+        const decryptedBlob = await decryptFile(encryptedBlob, roomKey, mimeType);
+        if (!active) return;
+
+        const url = URL.createObjectURL(decryptedBlob);
+        if (decryptedUrlRef.current) URL.revokeObjectURL(decryptedUrlRef.current);
+        decryptedUrlRef.current = url;
+        setDecryptedUrl(url);
+      } catch (err) {
+        console.error('Decryption failed:', err);
+        // toast.error('Failed to decrypt video');
+      } finally {
+        if (active) setIsDecrypting(false);
+      }
+    };
+
+    fetchAndDecrypt();
+    return () => { active = false; };
+  }, [currentVideo?.url, currentVideo?.e2ee, roomKey, blobUrl]);
 
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
@@ -202,7 +248,15 @@ const VideoPlayer = () => {
     setIsUploading(true);
     setUploadProgress(0);
     try {
-      const data = await uploadVideo(file, setUploadProgress);
+      // 3.5 Encrypt file if roomKey exists
+      let fileToUpload = file;
+      if (roomKey) {
+        toast.loading('Encrypting video for security...', { id: 'encrypting' });
+        fileToUpload = await encryptFile(file, roomKey);
+        toast.success('Video encrypted!', { id: 'encrypting' });
+      }
+
+      const data = await uploadVideo(fileToUpload, setUploadProgress);
 
       // 4. Capture current playback position BEFORE swapping src
       const ct = currentTimeRef.current;
@@ -213,16 +267,16 @@ const VideoPlayer = () => {
 
       // 6. Broadcast final URL to all participants with current position
       setVideoSource(
-        { url: data.url, type: 'file', title: file.name },
+        { url: data.url, type: 'file', title: file.name, e2ee: !!roomKey },
         { currentTime: ct, isPlaying: wasPlaying, preserveState: true }
       );
 
-      // 7. Swap host from blob → Cloudinary (triggers re-render → video src changes → pendingSeek fires)
-      URL.revokeObjectURL(localUrl);
-      blobUrlRef.current = null;
-      setBlobUrl(null);
-
-      toast.success('☁ Uploaded! Guests are now syncing.', { duration: 3000 });
+      // 7. Swap host from blob → Decrypted (triggers re-render)
+      // Actually host can keep using blobUrl for a while, but we want to sync with others.
+      // After upload, we set setBlobUrl(null) and let the decryption effect handle it or just keep blobUrl.
+      // Let's keep blobUrl as long as it's the same video to save bandwidth/CPU for host.
+      
+      toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 3000 });
     } catch (err) {
       toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
       // Host keeps watching from blob — they can retry later
@@ -270,8 +324,9 @@ const VideoPlayer = () => {
 
   // Determine what src the <video> element actually plays:
   //   - blobUrl while host is uploading (instant playback)
+  //   - decryptedUrl after decryption finishes (for encrypted files)
   //   - currentVideo.url after upload completes or for direct URLs
-  const activeSrc = blobUrl || (
+  const activeSrc = blobUrl || decryptedUrl || (
     currentVideo && currentVideo.type !== 'youtube' && currentVideo.type !== 'uploading'
       ? currentVideo.url
       : null
@@ -448,10 +503,11 @@ const VideoPlayer = () => {
           </div>
       )}
 
-      {/* Buffering spinner */}
-      {isLoading && activeSrc && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/40 pointer-events-none">
+      {/* Buffering / Decrypting spinner */}
+      {(isLoading || isDecrypting) && activeSrc && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none gap-3">
           <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
+          {isDecrypting && <span className="text-white text-xs font-bold animate-pulse">Decrypting secure media…</span>}
         </div>
       )}
 

@@ -39,29 +39,48 @@ module.exports = (io, socket, roomStore) => {
         if (!room) return socket.emit('error', { message: 'Room not found' });
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can delete the room' });
 
-        const videoUrl = room.currentVideo?.url;
+        // 1. Collect all video URLs from current state + chat history for cleanup
+        const urlsToCleanup = new Set();
+        if (room.currentVideo?.url) urlsToCleanup.add(room.currentVideo.url);
 
-        // 1. Cleanup Cloudinary video
-        if (videoUrl && isConfigured() && videoUrl.includes('res.cloudinary.com')) {
-            const publicId = extractPublicId(videoUrl);
-            if (publicId) {
-                cloudinary.uploader.destroy(publicId, { resource_type: 'video' }, (err) => {
-                    if (err) console.error('[cloudinary] delete error:', err.message);
-                    else console.log(`[cloudinary] deleted video: ${publicId}`);
-                });
+        (room.messages || []).forEach(msg => {
+            if (msg.videoUrl) urlsToCleanup.add(msg.videoUrl);
+            // Search for URLs in text content if they were pasted? 
+            // Actually only handles direct uploads for now.
+        });
+
+        const deleteMedia = async (url) => {
+            if (!url) return;
+            // Cleanup Cloudinary
+            if (url.includes('res.cloudinary.com')) {
+                const publicId = extractPublicId(url);
+                if (publicId) {
+                    return new Promise((resolve) => {
+                        cloudinary.uploader.destroy(publicId, { resource_type: 'video' }, (err) => {
+                            if (err) console.error(`[cloudinary] delete error (${publicId}):`, err.message);
+                            else console.log(`[cloudinary] deleted media: ${publicId}`);
+                            resolve();
+                        });
+                    });
+                }
             }
-        }
-        // 2. Cleanup Local disk video
-        else if (videoUrl && videoUrl.startsWith('/uploads/')) {
-            const fileName = videoUrl.replace('/uploads/', '');
-            const filePath = path.join(__dirname, '..', '..', 'uploads', fileName);
-            if (fs.existsSync(filePath)) {
-                fs.unlink(filePath, (err) => {
-                    if (err) console.error('[fs] local delete error:', err.message);
-                    else console.log(`[fs] deleted local video: ${fileName}`);
-                });
+            // Cleanup Local disk
+            else if (url.startsWith('/uploads/')) {
+                const fileName = url.replace('/uploads/', '');
+                const filePath = path.join(__dirname, '..', '..', 'uploads', fileName);
+                if (fs.existsSync(filePath)) {
+                    try {
+                        fs.unlinkSync(filePath);
+                        console.log(`[fs] deleted local video: ${fileName}`);
+                    } catch (err) {
+                        console.error(`[fs] local delete error (${fileName}):`, err.message);
+                    }
+                }
             }
-        }
+        };
+
+        // Execute all deletions
+        await Promise.allSettled([...urlsToCleanup].map(deleteMedia));
 
         // Notify everyone BEFORE destroying
         const hashedCode = hashRoomCode(code);
