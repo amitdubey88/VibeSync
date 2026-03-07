@@ -10,7 +10,7 @@ import {
 
 const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, visible }) => {
   const { videoState } = useRoom();
-  const { isInVoice, isMuted, toggleMute, joinVoice } = useWebRTCContext();
+  const { isInVoice, isMuted, toggleMute, joinVoice, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
   const [isMutedLocal, setIsMutedLocal] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
