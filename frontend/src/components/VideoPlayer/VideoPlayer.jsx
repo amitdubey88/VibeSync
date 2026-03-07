@@ -266,7 +266,9 @@ const VideoPlayer = () => {
       let fileToUpload = file;
       if (roomKey) {
         toast.loading('Encrypting video for security...', { id: 'encrypting' });
-        fileToUpload = await encryptFile(file, roomKey);
+        const encryptedBlob = await encryptFile(file, roomKey);
+        // Wrap in File to preserve the filename for the backend's extension check
+        fileToUpload = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
         toast.success('Video encrypted!', { id: 'encrypting' });
       }
 

@@ -74,11 +74,19 @@ const diskStorage = multer.diskStorage({
 
 const upload = multer({
     storage: diskStorage,
-    limits: { fileSize: 500 * 1024 * 1024 }, // Supports up to 500MB
+    limits: { fileSize: 1024 * 1024 * 1024 }, // Supports up to 1GB for movies
     fileFilter: (_req, file, cb) => {
-        const allowed = ['video/mp4', 'video/webm', 'video/ogg', 'video/quicktime'];
-        if (allowed.includes(file.mimetype)) cb(null, true);
-        else cb(new Error('Only video files are allowed'));
+        const allowed = [
+            'video/mp4', 'video/webm', 'video/ogg', 'video/quicktime',
+            'video/x-matroska', 'video/x-msvideo', 'video/x-flv', 'video/mpeg',
+            'application/octet-stream'
+        ];
+        if (allowed.includes(file.mimetype) || file.originalname.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|flv)$/)) {
+            cb(null, true);
+        } else {
+            console.warn(`[upload] Rejected file type: ${file.mimetype} (${file.originalname})`);
+            cb(new Error(`File type ${file.mimetype} not allowed. Please use MP4, MKV, or WebM.`));
+        }
     },
 });
 
@@ -100,8 +108,14 @@ app.post('/api/upload', (req, res) => {
         // Even for Cloudinary, we save to temp disk first, then pipe to cloud.
         // This is much better than memoryStorage which causes crashes/timeouts.
         upload.single('video')(req, res, async (err) => {
-            if (err) return res.status(400).json({ success: false, message: err.message });
-            if (!req.file) return res.status(400).json({ success: false, message: 'No file uploaded' });
+            if (err) {
+                console.warn('[upload] Multer error:', err.message);
+                return res.status(400).json({ success: false, message: err.message });
+            }
+            if (!req.file) {
+                console.warn('[upload] Missing file field "video"');
+                return res.status(400).json({ success: false, message: 'No file uploaded or wrong field name' });
+            }
 
             try {
                 let fileUrl;
@@ -111,14 +125,20 @@ app.post('/api/upload', (req, res) => {
 
                     // Pipe the file stream to Cloudinary
                     const result = await new Promise((resolve, reject) => {
+                        // Use 'raw' for encrypted blobs, 'video' for standard media
+                        const resourceType = req.file.mimetype === 'application/octet-stream' ? 'raw' : 'video';
+
                         const cloudStream = cloudinary.uploader.upload_stream(
                             {
-                                resource_type: 'video',
+                                resource_type: resourceType,
                                 folder: 'vibesync',
                                 chunk_size: 6000000,
                             },
                             (cloudErr, cloudResult) => {
-                                if (cloudErr) reject(cloudErr);
+                                if (cloudErr) {
+                                    console.error('[upload] Cloudinary direct error:', cloudErr);
+                                    reject(cloudErr);
+                                }
                                 else resolve(cloudResult);
                             }
                         );
