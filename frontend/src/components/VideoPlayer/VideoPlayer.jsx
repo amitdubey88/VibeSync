@@ -237,15 +237,35 @@ const VideoPlayer = () => {
     e.preventDefault();
     const url = urlInput.trim();
     if (!url) return;
-    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([a-zA-Z0-9_-]{11})/);
+
+    // 1. YouTube Validation
+    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([a-zA-Z0-9_-]{11})/);
+    
     if (ytMatch) {
       setVideoSource({ url: ytMatch[1], type: 'youtube', title: 'YouTube Video' });
-    } else {
-      setVideoSource({ url, type: 'url', title: url.split('/').pop() || 'Video' });
+      setShowSourcePicker(false);
+      setUrlInput('');
+      toast.success('YouTube video loaded!');
+      return;
     }
-    setShowSourcePicker(false);
-    setUrlInput('');
-    toast.success('Video source set!');
+
+    // 2. Direct Video Link Validation (Extensions)
+    const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url);
+    if (isDirectVideo) {
+      const fileName = url.split('/').pop().split('?')[0] || 'Video';
+      setVideoSource({ url, type: 'url', title: fileName });
+      setShowSourcePicker(false);
+      setUrlInput('');
+      toast.success('Direct video loaded!');
+      return;
+    }
+
+    // 3. Fallback Error
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      toast.error('Invalid video link. Use YouTube or a direct video file (.mp4, .webm, etc.)');
+    } else {
+      toast.error('Please enter a valid URL starting with http/https');
+    }
   };
 
   // Determine what src the <video> element actually plays:
