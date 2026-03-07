@@ -61,21 +61,27 @@ export const WebRTCProvider = ({ children }) => {
                     oldAudio.remove();
                 }
             } else if (event.track.kind === 'audio') {
-                // If this audio track belongs to the premier stream, don't create a voice chat audio tag!
-                // The <video> element in VideoPlayer will play it.
-                if (stream.getVideoTracks().length > 0) return;
+                // Tracks for the same stream arrive asynchronously. Delay slightly to see if a video track arrives.
+                setTimeout(() => {
+                    // If this audio track belongs to the premier stream, don't create a voice chat audio tag!
+                    // The <video> element in VideoPlayer will play it.
+                    if (stream.getVideoTracks().length > 0) return;
 
-                let audio = document.getElementById(`audio-${remoteSocketId}`);
-                if (!audio) {
-                    audio = document.createElement('audio');
-                    audio.id = `audio-${remoteSocketId}`;
-                    audio.autoplay = true;
-                    audio.playsInline = true;
-                    document.body.appendChild(audio);
-                }
-                audio.srcObject = stream;
-                // Mute remote audio if we are in passive mode
-                audio.muted = !isInVoice;
+                    let audio = document.getElementById(`audio-${remoteSocketId}`); // unique to the track/stream?
+                    // Actually, if a user has multiple audio streams, we need unique IDs per stream to avoid overriding
+                    const audioId = `audio-${remoteSocketId}-${stream.id}`;
+                    if (!audio) {
+                        audio = document.createElement('audio');
+                        audio.id = audioId;
+                        audio.autoplay = true;
+                        audio.playsInline = true;
+                        audio.dataset.socketId = remoteSocketId; // save for cleanup
+                        document.body.appendChild(audio);
+                    }
+                    audio.srcObject = stream;
+                    // Mute remote voice chat if we are in passive mode
+                    audio.muted = !isInVoice;
+                }, 100);
             }
         };
 

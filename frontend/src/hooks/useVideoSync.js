@@ -18,7 +18,7 @@ const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
  */
 const useVideoSync = (videoEl) => {
     const { socket } = useSocket();
-    const { room, isHost, setVideoState } = useRoom();
+    const { room, isHost, setVideoState, currentVideo } = useRoom();
     const isSyncingRef = useRef(false);
     const roomCode = room?.code;
 
@@ -91,7 +91,9 @@ const useVideoSync = (videoEl) => {
 
         const onPlay = ({ currentTime }) => {
             if (!videoEl || isHost) return;
-            applyTimeIfNeeded(currentTime);
+            if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
+                applyTimeIfNeeded(currentTime);
+            }
             videoEl.play().catch(() => { });
             setVideoState((prev) => ({ ...prev, isPlaying: true, currentTime }));
         };
@@ -99,23 +101,28 @@ const useVideoSync = (videoEl) => {
         const onPause = ({ currentTime }) => {
             if (!videoEl || isHost) return;
             videoEl.pause();
-            applyTimeIfNeeded(currentTime);
+            if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
+                applyTimeIfNeeded(currentTime);
+            }
             setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
         };
 
         const onSeek = ({ currentTime }) => {
             if (!videoEl || isHost) return;
-            isSyncingRef.current = true;
-            videoEl.currentTime = currentTime;
-            setTimeout(() => { isSyncingRef.current = false; }, 300);
+            if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
+                isSyncingRef.current = true;
+                videoEl.currentTime = currentTime;
+                setTimeout(() => { isSyncingRef.current = false; }, 300);
+            }
             setVideoState((prev) => ({ ...prev, currentTime }));
         };
 
-        const onSyncState = ({ videoState: vs, currentVideo }) => {
+        const onSyncState = ({ videoState: vs, currentVideo: remoteVideo }) => {
             if (!videoEl || isHost) return;
 
             // Bypass drift correction for Live Streams (WebRTC) to prevent flickering
-            if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
+            const videoType = remoteVideo?.type || currentVideo?.type;
+            if (videoType === 'live' || videoType === 'uploading') {
                 return;
             }
 
@@ -143,7 +150,7 @@ const useVideoSync = (videoEl) => {
             socket.off('video:seek', onSeek);
             socket.off('video:sync-state', onSyncState);
         };
-    }, [socket, videoEl, isHost, setVideoState]);
+    }, [socket, videoEl, isHost, setVideoState, currentVideo]);
 
     // ── Request sync on mount (for late joiners) ──────────────────────────────
     useEffect(() => {

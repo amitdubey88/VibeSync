@@ -171,8 +171,8 @@ const VideoPlayer = () => {
     
     if (shouldBroadcast && videoEl.captureStream) {
       try {
-        // Boost to 60fps for premium motion quality during live premier
-        const stream = videoEl.captureStream(60);
+        // Boost to 40fps for premium motion quality during live premier
+        const stream = videoEl.captureStream(40);
         setPremierStream(stream);
       } catch (err) {
         console.error('Failed to capture premier stream:', err);
@@ -475,7 +475,9 @@ const VideoPlayer = () => {
               className="w-full h-full object-contain"
               ref={(el) => {
                 setVideoRef(el);
-                if (el) el.srcObject = remotePremierStream;
+                if (el && el.srcObject !== remotePremierStream) {
+                    el.srcObject = remotePremierStream;
+                }
               }}
               onCanPlay={() => setIsLoading(false)}
             />
