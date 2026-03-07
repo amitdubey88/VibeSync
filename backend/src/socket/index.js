@@ -9,6 +9,7 @@ const syncHandler = require('./syncHandler');
 const chatHandler = require('./chatHandler');
 const voiceHandler = require('./voiceHandler');
 const roomActionsHandler = require('./roomActionsHandler');
+const { hashRoomCode } = require('../utils/hash');
 
 module.exports = (io, roomStore) => {
     // ── Auth Middleware ────────────────────────────────────────────────────────
@@ -51,7 +52,8 @@ module.exports = (io, roomStore) => {
             const room = roomStore.get(code);
             if (!room || room.hostId !== socket.user.id) return;
             room.requiresApproval = !!requiresApproval;
-            io.to(code).emit('room:approval-changed', { requiresApproval: room.requiresApproval });
+            const hashedCode = hashRoomCode(code);
+            io.to(hashedCode).emit('room:approval-changed', { requiresApproval: room.requiresApproval });
         });
 
         // ── room:approve-join ──────────────────────────────────────────────────
@@ -93,8 +95,9 @@ module.exports = (io, roomStore) => {
                 },
             });
 
+            const hashedCode = hashRoomCode(code);
             // Broadcast updated participant list
-            io.to(code).emit('room:participant-update', { participants: room.participants });
+            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
 
             const msg = {
                 id: `sys_${Date.now()}`, userId: 'system', username: 'System',
@@ -103,7 +106,7 @@ module.exports = (io, roomStore) => {
             };
             room.messages = room.messages || [];
             room.messages.push(msg);
-            io.to(code).emit('chat:message', msg);
+            io.to(hashedCode).emit('chat:message', msg);
 
             console.log(`✅ ${pending.username} approved into room ${code}`);
         });
@@ -139,7 +142,8 @@ module.exports = (io, roomStore) => {
             }
 
             currentRoomCode = code;
-            socket.join(code);
+            const hashedCode = hashRoomCode(code);
+            socket.join(hashedCode);
 
             // Add participant if not already present
             const existing = room.participants.find((p) => p.userId === socket.user.id);
@@ -152,7 +156,7 @@ module.exports = (io, roomStore) => {
                     (p) => p.username.toLowerCase() === socket.user.username.toLowerCase() && p.isOnline !== false
                 );
                 if (nameTaken) {
-                    socket.leave(code);
+                    socket.leave(hashedCode);
                     currentRoomCode = null;
                     return socket.emit('room:join-error', {
                         message: `Username "${socket.user.username}" is already taken in this room. Please choose a different name.`,
@@ -222,7 +226,7 @@ module.exports = (io, roomStore) => {
             });
 
             // Notify everyone about updated participant list
-            io.to(code).emit('room:participant-update', { participants: room.participants });
+            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
 
             // Send join system message
             const systemMsg = {
@@ -236,7 +240,7 @@ module.exports = (io, roomStore) => {
             };
             room.messages = room.messages || [];
             room.messages.push(systemMsg);
-            io.to(code).emit('chat:message', systemMsg);
+            io.to(hashedCode).emit('chat:message', systemMsg);
 
             console.log(`👥 ${socket.user.username} joined room ${code} (${room.participants.length} participants)`);
         });
@@ -250,7 +254,8 @@ module.exports = (io, roomStore) => {
             const participant = room.participants.find((p) => p.userId === socket.user.id);
             if (participant) {
                 participant.status = status; // e.g., 'online', 'away'
-                io.to(code).emit('room:participant-update', { participants: room.participants });
+                const hashedCode = hashRoomCode(code);
+                io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
             }
         });
 
@@ -271,7 +276,8 @@ module.exports = (io, roomStore) => {
             const room = roomStore.get(code);
             if (!room) return;
 
-            socket.leave(code);
+            const hashedCode = hashRoomCode(code);
+            socket.leave(hashedCode);
 
             // Clean up voice connections
             if (typeof socket.cleanupVoice === 'function') {
@@ -290,7 +296,7 @@ module.exports = (io, roomStore) => {
                         );
                         if (stillOffline) {
                             room.participants = room.participants.filter((p) => p.userId !== socket.user.id);
-                            io.to(code).emit('room:participant-update', { participants: room.participants });
+                            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
                         }
                     }, 30000);
                 } else {
@@ -303,7 +309,7 @@ module.exports = (io, roomStore) => {
                 const nextParticipant = room.participants.find((p) => p.isOnline);
                 if (nextParticipant) {
                     room.hostId = nextParticipant.userId;
-                    io.to(code).emit('room:host-changed', {
+                    io.to(hashedCode).emit('room:host-changed', {
                         newHostId: room.hostId,
                         newHostUsername: nextParticipant.username,
                     });
@@ -315,7 +321,7 @@ module.exports = (io, roomStore) => {
                         createdAt: new Date().toISOString(),
                     };
                     room.messages.push(msg);
-                    io.to(code).emit('chat:message', msg);
+                    io.to(hashedCode).emit('chat:message', msg);
                 }
             }
 
@@ -328,8 +334,8 @@ module.exports = (io, roomStore) => {
                 createdAt: new Date().toISOString(),
             };
             room.messages.push(leaveMsg);
-            io.to(code).emit('chat:message', leaveMsg);
-            io.to(code).emit('room:participant-update', { participants: room.participants });
+            io.to(hashedCode).emit('chat:message', leaveMsg);
+            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
 
             currentRoomCode = null;
             console.log(`👋 ${socket.user.username} left room ${code}`);

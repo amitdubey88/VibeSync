@@ -7,6 +7,8 @@ const { cloudinary, isConfigured } = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
 
+const { hashRoomCode } = require('../utils/hash');
+
 // Try to use MongoDB models gracefully
 let Room, Message;
 try {
@@ -62,7 +64,8 @@ module.exports = (io, socket, roomStore) => {
         }
 
         // Notify everyone BEFORE destroying
-        io.to(code).emit('room:deleted', {
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('room:deleted', {
             message: 'The host has ended the room and wiped all session data.',
             deletedBy: socket.user.username,
         });
@@ -74,9 +77,9 @@ module.exports = (io, socket, roomStore) => {
         if (Room && Message) {
             try {
                 // Delete the room record
-                await Room.deleteOne({ code });
+                await Room.deleteOne({ code: hashedCode });
                 // Delete all messages associated with this room code
-                await Message.deleteMany({ roomId: code });
+                await Message.deleteMany({ roomId: hashedCode });
                 console.log(`[db] Wiped all data for room ${code}`);
             } catch (e) {
                 console.error('[rooms/delete] DB wipe failed:', e.message);
@@ -94,7 +97,8 @@ module.exports = (io, socket, roomStore) => {
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can lock the room' });
 
         room.isLocked = !!isLocked;
-        io.to(code).emit('room:lock-changed', { isLocked: room.isLocked });
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('room:lock-changed', { isLocked: room.isLocked });
 
         console.log(`🔒 Room ${code} is now ${room.isLocked ? 'locked' : 'unlocked'}`);
     });
@@ -111,7 +115,8 @@ module.exports = (io, socket, roomStore) => {
 
         room.hostId = targetUserId;
 
-        io.to(code).emit('room:host-changed', {
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('room:host-changed', {
             newHostId: targetUserId,
             newHostUsername: target.username,
         });
@@ -125,7 +130,7 @@ module.exports = (io, socket, roomStore) => {
         };
         room.messages = room.messages || [];
         room.messages.push(msg);
-        io.to(code).emit('chat:message', msg);
+        io.to(hashedCode).emit('chat:message', msg);
 
         console.log(`👑 Host transferred to ${target.username} in room ${code}`);
     });
@@ -150,7 +155,8 @@ module.exports = (io, socket, roomStore) => {
 
         // Remove from participants list
         room.participants = room.participants.filter((p) => p.userId !== targetUserId);
-        io.to(code).emit('room:participant-update', { participants: room.participants });
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
 
         const msg = {
             id: `sys_${Date.now()}`,
@@ -160,7 +166,7 @@ module.exports = (io, socket, roomStore) => {
             createdAt: new Date().toISOString(),
         };
         room.messages.push(msg);
-        io.to(code).emit('chat:message', msg);
+        io.to(hashedCode).emit('chat:message', msg);
 
         console.log(`🚪 ${target.username} kicked from room ${code}`);
     });
@@ -184,7 +190,8 @@ module.exports = (io, socket, roomStore) => {
         const voiceP = (room.voiceParticipants || []).find(p => p.userId === targetUserId);
         if (voiceP) {
             voiceP.isMuted = true;
-            io.to(code).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+            const hashedCode = hashRoomCode(code);
+            io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
         }
 
         console.log(`🔇 ${target.username} muted in room ${code} by ${socket.user.username}`);
@@ -215,7 +222,8 @@ module.exports = (io, socket, roomStore) => {
         });
 
         if (updatedVoice) {
-            io.to(code).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+            const hashedCode = hashRoomCode(code);
+            io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
         }
 
         console.log(`🔇 All participants muted in room ${code} by ${socket.user.username}`);
@@ -234,7 +242,8 @@ module.exports = (io, socket, roomStore) => {
         target.canShareScreen = !!canShare;
 
         // Broadcast the updated participant list to everyone so the UI updates
-        io.to(code).emit('room:participant-update', { participants: room.participants });
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         console.log(`🛡️ Screen share permission for ${target.username} set to ${canShare} by ${socket.user.username}`);
     });
 };

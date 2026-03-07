@@ -3,6 +3,8 @@
  * Handles real-time text messages, emoji reactions, and system notifications.
  */
 
+const { hashRoomCode } = require('../utils/hash');
+
 let Message;
 try { Message = require('../models/Message'); } catch (_) { }
 
@@ -38,9 +40,10 @@ module.exports = (io, socket, roomStore) => {
         if (room.messages.length > 500) room.messages.shift();
 
         // Persist to MongoDB asynchronously (non-blocking)
+        const hashedCode = hashRoomCode(code);
         if (Message) {
             Message.create({
-                roomId: code,
+                roomId: hashedCode,
                 userId,
                 username,
                 avatar,
@@ -51,7 +54,7 @@ module.exports = (io, socket, roomStore) => {
         }
 
         // Broadcast to all in room including sender
-        io.to(code).emit('chat:message', message);
+        io.to(hashedCode).emit('chat:message', message);
     });
 
     // ── chat:reaction ─────────────────────────────────────────────────────────
@@ -60,7 +63,8 @@ module.exports = (io, socket, roomStore) => {
         const code = roomCode?.toUpperCase();
         if (!roomStore.has(code)) return;
         const { username, avatar } = socket.user;
-        io.to(code).emit('chat:reaction', {
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('chat:reaction', {
             id: `rxn_${Date.now()}`,
             username,
             avatar,
@@ -93,11 +97,12 @@ module.exports = (io, socket, roomStore) => {
         room.messages = room.messages || [];
         room.messages.push(message);
 
+        const hashedCode = hashRoomCode(code);
         if (Message) {
-            Message.create({ roomId: code, userId: 'system', username: 'System', content, type: 'system' })
+            Message.create({ roomId: hashedCode, userId: 'system', username: 'System', content, type: 'system' })
                 .catch(() => { });
         }
 
-        io.to(code).emit('chat:message', message);
+        io.to(hashedCode).emit('chat:message', message);
     };
 };

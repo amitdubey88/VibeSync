@@ -7,6 +7,8 @@
  * - Drift correction is handled on the client side (>1.5s = hard seek).
  */
 
+const { hashRoomCode } = require('../utils/hash');
+
 let Message;
 try { Message = require('../models/Message'); } catch (_) { }
 
@@ -26,7 +28,8 @@ module.exports = (io, socket, roomStore) => {
 
         room.currentVideo = { type: 'uploading', title, url: null };
         // Keep videoState running (host is playing locally)
-        socket.to(roomCode).emit('video:uploading', { title });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video:uploading', { title });
         console.log(`[sync] Upload started in ${roomCode}: ${title}`);
     });
 
@@ -43,7 +46,8 @@ module.exports = (io, socket, roomStore) => {
         const playing = isPlaying ?? false;
         room.videoState = { currentTime: t, isPlaying: playing, lastUpdated: Date.now() };
 
-        io.to(roomCode).emit('video:source-changed', { video, videoState: room.videoState });
+        const hashedCode = hashRoomCode(roomCode);
+        io.to(hashedCode).emit('video:source-changed', { video, videoState: room.videoState });
         console.log(`[sync] Source changed in ${roomCode}: ${video?.title} @${t.toFixed(2)}s`);
     });
 
@@ -55,7 +59,8 @@ module.exports = (io, socket, roomStore) => {
         room.videoState = { currentTime, isPlaying: true, lastUpdated: Date.now() };
 
         // Broadcast to all OTHER clients (host already played locally)
-        socket.to(roomCode).emit('video:play', { currentTime, timestamp: Date.now() });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video:play', { currentTime, timestamp: Date.now() });
         console.log(`[sync] PLAY @${currentTime.toFixed(2)}s in room ${roomCode}`);
     });
 
@@ -66,7 +71,8 @@ module.exports = (io, socket, roomStore) => {
 
         room.videoState = { currentTime, isPlaying: false, lastUpdated: Date.now() };
 
-        socket.to(roomCode).emit('video:pause', { currentTime });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video:pause', { currentTime });
         console.log(`[sync] PAUSE @${currentTime.toFixed(2)}s in room ${roomCode}`);
     });
 
@@ -78,7 +84,8 @@ module.exports = (io, socket, roomStore) => {
         room.videoState.currentTime = currentTime;
         room.videoState.lastUpdated = Date.now();
 
-        socket.to(roomCode).emit('video:seek', { currentTime });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video:seek', { currentTime });
         console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${roomCode}`);
     });
 
@@ -115,7 +122,8 @@ module.exports = (io, socket, roomStore) => {
         const participant = room.participants.find((p) => p.socketId === socket.id);
         if (participant) {
             participant.isBuffering = true;
-            io.to(roomCode).emit('room:participant-update', { participants: room.participants });
+            const hashedCode = hashRoomCode(roomCode);
+            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         }
     });
 
@@ -126,7 +134,8 @@ module.exports = (io, socket, roomStore) => {
         const participant = room.participants.find((p) => p.socketId === socket.id);
         if (participant) {
             participant.isBuffering = false;
-            io.to(roomCode).emit('room:participant-update', { participants: room.participants });
+            const hashedCode = hashRoomCode(roomCode);
+            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         }
     });
 };

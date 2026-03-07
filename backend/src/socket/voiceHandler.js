@@ -8,6 +8,8 @@
  *   Peer A joins → server notifies all others → others send offers to A
  *   → A answers → ICE candidates exchanged → direct P2P audio established
  */
+const { hashRoomCode } = require('../utils/hash');
+
 module.exports = (io, socket, roomStore) => {
     // ── voice:join ────────────────────────────────────────────────────────────
     // Client announces they want to join the voice channel.
@@ -28,9 +30,10 @@ module.exports = (io, socket, roomStore) => {
             });
         }
 
+        const hashedCode = hashRoomCode(roomCode);
         // Notify all OTHER voice participants that a new peer arrived.
         // They will initiate WebRTC offers toward the newcomer.
-        socket.to(roomCode).emit('voice:user-joined', {
+        socket.to(hashedCode).emit('voice:user-joined', {
             socketId: socket.id,
             userId: socket.user.id,
             username: socket.user.username,
@@ -44,7 +47,7 @@ module.exports = (io, socket, roomStore) => {
         });
 
         // Broadcast updated voice list to whole room
-        io.to(roomCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+        io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
     });
 
     // ── voice:offer ───────────────────────────────────────────────────────────
@@ -86,7 +89,8 @@ module.exports = (io, socket, roomStore) => {
         const participant = (room.voiceParticipants || []).find((p) => p.socketId === socket.id);
         if (participant) {
             participant.isMuted = isMuted;
-            io.to(roomCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+            const hashedCode = hashRoomCode(roomCode);
+            io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
         }
     });
 
@@ -100,8 +104,9 @@ module.exports = (io, socket, roomStore) => {
         );
 
         // Notify peers to close connection with this socket
-        socket.to(roomCode).emit('voice:user-left', { socketId: socket.id });
-        io.to(roomCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('voice:user-left', { socketId: socket.id });
+        io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
     });
 
     // Exported cleanup called on socket disconnect
@@ -111,7 +116,8 @@ module.exports = (io, socket, roomStore) => {
         room.voiceParticipants = (room.voiceParticipants || []).filter(
             (p) => p.socketId !== socket.id
         );
-        socket.to(roomCode).emit('voice:user-left', { socketId: socket.id });
-        io.to(roomCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('voice:user-left', { socketId: socket.id });
+        io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
     };
 };

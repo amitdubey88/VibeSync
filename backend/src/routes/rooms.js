@@ -1,8 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { ROOM_TYPE } = require('../config/constants');
+const { hashRoomCode } = require('../utils/hash');
 
 // Try to use MongoDB models; fall back gracefully
 let Room, Message;
@@ -38,7 +40,8 @@ async function hydrateRoom(req, code) {
     if (store.has(code)) return store.get(code);
     if (!Room || !isDbReady()) return null;
     try {
-        const dbRoom = await Room.findOne({ code, isActive: true }).lean();
+        const hashedCode = hashRoomCode(code);
+        const dbRoom = await Room.findOne({ code: hashedCode, isActive: true }).lean();
         if (!dbRoom) return null;
         const roomData = {
             code: dbRoom.code,
@@ -100,9 +103,16 @@ router.post('/', authenticate, async (req, res) => {
 
         // Persist to MongoDB if available and connected
         if (Room && isDbReady()) {
+            const hashedCode = hashRoomCode(code);
+            const hashedPassword = roomData.password ? await bcrypt.hash(roomData.password, 10) : null;
+
             Room.create({
-                code, name: roomData.name, hostId: roomData.hostId,
-                type, participantLimit: roomData.participantLimit, password: roomData.password,
+                code: hashedCode,
+                name: roomData.name,
+                hostId: roomData.hostId,
+                type,
+                participantLimit: roomData.participantLimit,
+                password: hashedPassword,
             }).catch((e) => console.warn('[rooms/create] DB persist failed:', e.message));
         }
 
@@ -151,8 +161,19 @@ router.post('/:code/join', authenticate, async (req, res) => {
     if (onlineCount >= room.participantLimit) {
         return res.status(403).json({ success: false, message: 'Room is full' });
     }
-    if (room.password && room.password !== password) {
-        return res.status(403).json({ success: false, message: 'Incorrect password' });
+
+    // In-memory room might have plain password or hashed if rehydrated
+    // But hydrateRoom ensures we get a consistent object.
+    // If room has a password, we need to verify it.
+    if (room.password) {
+        // If the stored password doesn't match the input, try bcrypt comparison 
+        // (handles cases where password in memory is the hash from DB)
+        if (room.password !== password) {
+            const isMatch = await bcrypt.compare(password, room.password).catch(() => false);
+            if (!isMatch) {
+                return res.status(403).json({ success: false, message: 'Incorrect password' });
+            }
+        }
     }
 
     return res.json({
@@ -178,7 +199,8 @@ router.get('/:code/messages', authenticate, async (req, res) => {
 
     try {
         if (Message && isDbReady()) {
-            const messages = await Message.find({ roomId: code.toUpperCase() })
+            const hashedCode = hashRoomCode(code);
+            const messages = await Message.find({ roomId: hashedCode })
                 .sort({ createdAt: -1 }).limit(100).lean();
             return res.json({ success: true, messages: messages.reverse() });
         }
