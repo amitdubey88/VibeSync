@@ -198,7 +198,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         )}
 
         {/* Quick-access video reactions row — above the input (hidden if no video) */}
-        {room?.currentVideo && (
+        {currentVideo && (
           <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-dark/50">
             <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider mr-1">React</span>
             {QUICK_REACTIONS.map(e => (

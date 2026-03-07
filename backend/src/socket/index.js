@@ -296,6 +296,28 @@ module.exports = (io, roomStore) => {
                         );
                         if (stillOffline) {
                             room.participants = room.participants.filter((p) => p.userId !== socket.user.id);
+
+                            // If the disconnected user was the host, migrate now
+                            if (room.hostId === socket.user.id) {
+                                const nextParticipant = room.participants.find((p) => p.isOnline);
+                                if (nextParticipant) {
+                                    room.hostId = nextParticipant.userId;
+                                    io.to(hashedCode).emit('room:host-changed', {
+                                        newHostId: room.hostId,
+                                        newHostUsername: nextParticipant.username,
+                                    });
+                                    const msg = {
+                                        id: `sys_${Date.now()}`,
+                                        userId: 'system', username: 'System', avatar: null,
+                                        content: `${nextParticipant.username} is now the host (automatic migration)`,
+                                        type: 'system',
+                                        createdAt: new Date().toISOString(),
+                                    };
+                                    room.messages.push(msg);
+                                    io.to(hashedCode).emit('chat:message', msg);
+                                }
+                            }
+
                             io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
                         }
                     }, 30000);

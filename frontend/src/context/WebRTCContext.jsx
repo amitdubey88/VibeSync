@@ -110,13 +110,21 @@ export const WebRTCProvider = ({ children }) => {
         socket.emit('voice:leave', { roomCode });
     }, [socket, roomCode, closePeer]);
 
-    const toggleMute = useCallback(() => {
-        if (!localStreamRef.current) return;
+    const toggleMute = useCallback(async () => {
+        if (!isInVoice) return;
+
+        // If in passive mode (listening but no mic), "unmuting" means joining for real
+        if (!localStreamRef.current) {
+            await joinVoice(false);
+            setIsMuted(false);
+            return;
+        }
+
         const newMuted = !isMuted;
         localStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = !newMuted; });
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
-    }, [isMuted, socket, roomCode]);
+    }, [isMuted, isInVoice, joinVoice, socket, roomCode]);
 
     const setPremierStream = useCallback(async (stream) => {
         premierStreamRef.current = stream;
@@ -153,8 +161,9 @@ export const WebRTCProvider = ({ children }) => {
         if (!socket) return;
         
         const onUserJoined = async ({ socketId }) => {
-            // Signal if either a microphone stream OR a premier video stream exists
-            if ((!localStreamRef.current && !premierStreamRef.current) || !roomKey) return;
+            // All users should initiate a peer connection to newcomers,
+            // even if they don't have a local stream yet (passive listening).
+            if (!roomKey) return;
             const pc = createPeerConnection(socketId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
@@ -219,9 +228,7 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('room:muted', onMutedByHost);
 
         // Passive registration: join voice signaling pool automatically
-        if (roomCode) {
-            joinVoice(true);
-        }
+        // REMOVED: joinVoice(true); // Don't automatically join, wait for user action
 
         return () => {
             socket.off('voice:user-joined', onUserJoined);

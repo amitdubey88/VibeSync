@@ -261,6 +261,12 @@ const VideoPlayer = () => {
     controlsTimer.current = setTimeout(() => setShowControls(false), 3500);
   }, []);
 
+  // Initial auto-hide timer on mount
+  useEffect(() => {
+    controlsTimer.current = setTimeout(() => setShowControls(false), 3500);
+    return () => clearTimeout(controlsTimer.current);
+  }, []);
+
   // ── File upload / Direct Stream handler ────────────────────────────────────
   const handleFileUpload = async (e, mode = 'upload') => {
     const file = e.target.files?.[0];
