@@ -125,16 +125,13 @@ app.post('/api/upload', (req, res) => {
 
                     // Pipe the file stream to Cloudinary
                     const result = await new Promise((resolve, reject) => {
-                        // Use 'video' for anything with a video extension to get the 100MB limit
-                        // even if it's an encrypted octet-stream.
-                        const isVideoExt = req.file.originalname.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|flv)$/);
-                        const resourceType = isVideoExt ? 'video' : 'raw';
-
+                        // Use 'auto' to let Cloudinary decide - this is more robust
+                        // but we still include explicit chunking to handle larger files.
                         const cloudStream = cloudinary.uploader.upload_stream(
                             {
-                                resource_type: resourceType,
+                                resource_type: 'auto',
                                 folder: 'vibesync',
-                                chunk_size: 6000000,
+                                chunk_size: 10000000, // 10MB chunks
                             },
                             (cloudErr, cloudResult) => {
                                 if (cloudErr) {

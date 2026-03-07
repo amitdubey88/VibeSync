@@ -267,8 +267,8 @@ const VideoPlayer = () => {
       if (roomKey) {
         toast.loading('Encrypting video for security...', { id: 'encrypting' });
         const encryptedBlob = await encryptFile(file, roomKey);
-        // Workaround: Use video/mp4 type even for encrypted blobs to bypass Cloudinary's 10MB 'raw' limit
-        fileToUpload = new File([encryptedBlob], file.name, { type: 'video/mp4' });
+        // Revert spoofing: use the actual octet-stream type to avoid 'format not supported' errors
+        fileToUpload = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
         toast.success('Video encrypted!', { id: 'encrypting' });
       }
 
@@ -292,7 +292,7 @@ const VideoPlayer = () => {
       // After upload, we set setBlobUrl(null) and let the decryption effect handle it or just keep blobUrl.
       // Let's keep blobUrl as long as it's the same video to save bandwidth/CPU for host.
       
-      toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 3000 });
+      toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 4000 });
     } catch (err) {
       toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
       // Host keeps watching from blob — they can retry later
