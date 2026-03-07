@@ -157,6 +157,13 @@ module.exports = (io, socket, roomStore) => {
             targetSocket.emit('room:muted', { mutedBy: socket.user.username });
         }
 
+        // Sync muted status with voice participants list
+        const voiceP = (room.voiceParticipants || []).find(p => p.userId === targetUserId);
+        if (voiceP) {
+            voiceP.isMuted = true;
+            io.to(code).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+        }
+
         console.log(`🔇 ${target.username} muted in room ${code} by ${socket.user.username}`);
     });
 
@@ -167,14 +174,26 @@ module.exports = (io, socket, roomStore) => {
         if (!room) return socket.emit('error', { message: 'Room not found' });
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can mute participants' });
 
+        let updatedVoice = false;
         room.participants.forEach((p) => {
             if (p.userId !== socket.user.id) {
                 const targetSocket = io.sockets.sockets.get(p.socketId);
                 if (targetSocket) {
                     targetSocket.emit('room:muted', { mutedBy: socket.user.username });
                 }
+
+                // Sync with voice list
+                const voiceP = (room.voiceParticipants || []).find(vp => vp.userId === p.userId);
+                if (voiceP && !voiceP.isMuted) {
+                    voiceP.isMuted = true;
+                    updatedVoice = true;
+                }
             }
         });
+
+        if (updatedVoice) {
+            io.to(code).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
+        }
 
         console.log(`🔇 All participants muted in room ${code} by ${socket.user.username}`);
     });

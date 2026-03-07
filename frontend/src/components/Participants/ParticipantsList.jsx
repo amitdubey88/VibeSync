@@ -63,8 +63,8 @@ const ParticipantsList = () => {
         {participants.map((p) => {
           const isMe = p.userId === user?.id || p.username === user?.username;
           const isRoomHost = p.userId === room?.hostId;
-          const isInVoice = voiceParticipants.some((vp) => vp.userId === p.userId);
-          const voiceData = voiceParticipants.find((vp) => vp.userId === p.userId);
+          const isInVoice = voiceParticipants.some((vp) => String(vp.userId) === String(p.userId));
+          const voiceData = voiceParticipants.find((vp) => String(vp.userId) === String(p.userId));
           const avatarBg = p.avatar || getAvatarColor(p.username);
           const isOnline = p.isOnline !== false;
           const canControl = isHost && !isMe && !isRoomHost;
@@ -104,7 +104,7 @@ const ParticipantsList = () => {
               {isInVoice && (
                 <div className="shrink-0 mr-1">
                   {voiceData?.isMuted
-                    ? <MicOff className="w-3.5 h-3.5 text-text-muted" />
+                    ? <MicOff className="w-3.5 h-3.5 text-red-500" />
                     : <Mic className="w-3.5 h-3.5 text-accent-green animate-pulse" />}
                 </div>
               )}
