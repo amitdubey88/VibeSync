@@ -64,6 +64,9 @@ if (process.env.NODE_ENV !== 'test') {
 const UPLOAD_DIR = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(UPLOAD_DIR)) fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 
+// Serve uploads folder statically so we can fallback if Cloudinary fails
+app.use('/uploads', express.static(UPLOAD_DIR));
+
 const diskStorage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, UPLOAD_DIR),
     filename: (_req, file, cb) => {
@@ -165,6 +168,26 @@ app.post('/api/upload', (req, res) => {
                 }
                 return res.json({ success: true, url: fileUrl, filename: req.file.originalname, size: req.file.size });
             } catch (uploadErr) {
+                // FALLBACK: If Cloudinary fails due to size limit or format (E2EE files), use local server storage
+                const errLower = (uploadErr.message || '').toLowerCase();
+                const isLimit = errLower.includes('size too large') || errLower.includes('maximum is') || errLower.includes('limit');
+                const isFormat = errLower.includes('format not supported') || errLower.includes('invalid file') || errLower.includes('invalid image');
+
+                if (isLimit || isFormat) {
+                    console.log(`[upload] Cloudinary fallback triggered (${isLimit ? 'Limit' : 'Format'}). Local serving: ${req.file.originalname}`);
+                    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+                    const host = req.get('host');
+                    const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
+
+                    return res.json({
+                        success: true,
+                        url: fileUrl,
+                        filename: req.file.originalname,
+                        size: req.file.size,
+                        note: 'Served from local server due to cloud size limits'
+                    });
+                }
+
                 console.error('[upload] Cloud error:', uploadErr.message);
                 if (req.file?.path) fs.unlink(req.file.path, () => { });
                 return res.status(500).json({ success: false, message: 'Cloud upload failed: ' + uploadErr.message });
