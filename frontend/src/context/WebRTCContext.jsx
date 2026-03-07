@@ -113,26 +113,33 @@ export const WebRTCProvider = ({ children }) => {
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, socket, roomCode]);
 
-    const setPremierStream = useCallback((stream) => {
+    const setPremierStream = useCallback(async (stream) => {
         premierStreamRef.current = stream;
-        // If we're already in voice/connected to peers, we need to add the track to existing connections
-        if (stream) {
+        
+        // If we're already connected to peers, we need to add/update tracks
+        if (stream && socket) {
             const videoTrack = stream.getVideoTracks()[0];
-            if (videoTrack) {
-                Object.values(peersRef.current).forEach(pc => {
-                    const senders = pc.getSenders();
-                    const alreadyHasVideo = senders.some(s => s.track?.kind === 'video');
-                    if (!alreadyHasVideo) {
-                        pc.addTrack(videoTrack, stream);
-                        // Renegotiation might be needed here, but usually the other side handles ontrack fine
-                        // if they are already connected. For simplicity, we assume new joiners pick it up.
-                        // For existing ones, they might need a new offer.
-                        pc.createOffer().then(offer => {
-                            pc.setLocalDescription(offer);
-                            socket.emit('voice:offer', { targetSocketId: Object.keys(peersRef.current).find(id => peersRef.current[id] === pc), offer, roomCode, e2ee: !!roomKey });
-                        });
-                    }
-                });
+            if (!videoTrack) return;
+
+            // Update all existing peer connections
+            const peers = Object.entries(peersRef.current);
+            for (const [targetSocketId, pc] of peers) {
+                const senders = pc.getSenders();
+                const videoSender = senders.find(s => s.track?.kind === 'video');
+                
+                if (videoSender) {
+                    // Replace existing track
+                    videoSender.replaceTrack(videoTrack);
+                } else {
+                    // Add new track
+                    pc.addTrack(videoTrack, stream);
+                    
+                    // Trigger renegotiation
+                    const offer = await pc.createOffer();
+                    await pc.setLocalDescription(offer);
+                    const encryptedOffer = await encryptData(offer, roomKey);
+                    socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
+                }
             }
         }
     }, [roomCode, roomKey, socket]);
