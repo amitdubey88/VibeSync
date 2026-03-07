@@ -52,7 +52,7 @@ export const extractYouTubeId = (url) => {
 export const detectVideoType = (url) => {
     if (!url) return null;
     if (extractYouTubeId(url)) return 'youtube';
-    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) return 'file';
+    if (/\.(mp4|webm|ogg|mov|m4v|mkv|avi|wmv|flv|3gp)(\?.*)?$/i.test(url)) return 'file';
     return 'url';
 };
 

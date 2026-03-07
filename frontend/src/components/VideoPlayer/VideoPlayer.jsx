@@ -33,7 +33,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
         {/* File upload */}
         <div className="mb-5">
           <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
-            Upload File (MP4, WebM)
+            Upload File (MP4, MKV, WebM)
           </label>
           <label className={`flex items-center justify-center gap-3 p-5 rounded-xl border-2 border-dashed cursor-pointer transition-all
             ${isUploading ? 'border-accent-purple bg-accent-purple/5 pointer-events-none' : 'border-border-light hover:border-accent-purple/60 hover:bg-accent-purple/5'}`}>
@@ -250,7 +250,7 @@ const VideoPlayer = () => {
     }
 
     // 2. Direct Video Link Validation (Extensions)
-    const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(url);
+    const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v|mkv|avi|wmv|flv|3gp)(\?.*)?$/i.test(url);
     if (isDirectVideo) {
       const fileName = url.split('/').pop().split('?')[0] || 'Video';
       setVideoSource({ url, type: 'url', title: fileName });
@@ -262,7 +262,7 @@ const VideoPlayer = () => {
 
     // 3. Fallback Error
     if (url.startsWith('http://') || url.startsWith('https://')) {
-      toast.error('Invalid video link. Use YouTube or a direct video file (.mp4, .webm, etc.)');
+      toast.error('Invalid video link. Use YouTube or a direct video file (.mp4, .mkv, .webm, etc.)');
     } else {
       toast.error('Please enter a valid URL starting with http/https');
     }
