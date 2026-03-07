@@ -518,12 +518,6 @@ const VideoPlayer = () => {
         )}
       </div>
 
-      {/* Reaction Overlays Layer */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
-        {reactions.map((r) => (
-          <ReactionAnimation key={r.id} emoji={r.emoji} />
-        ))}
-      </div>
 
       {/* Buffering/Loading Indicator */}
       {(isLoading || isDecrypting) && (
@@ -541,7 +535,7 @@ const VideoPlayer = () => {
           isHost={isHost}
           onLoadClick={() => setShowSourcePicker(true)}
         />
-        <VideoReactionBar onReact={sendReaction} />
+        <VideoReactionBar visible={showControls} />
       </div>
 
       {sourcePicker}
