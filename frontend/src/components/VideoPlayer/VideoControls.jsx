@@ -173,6 +173,24 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
           {formatTime(currentTime)} / {formatTime(duration)}
         </span>
 
+        {/* Mic toggle */}
+        <div className="flex items-center gap-1.5 ml-2">
+          {voiceError ? (
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse">
+              <MicOff className="w-3 h-3" />
+              <span>Mic Denied</span>
+            </div>
+          ) : (
+            <button
+              onClick={toggleMute}
+              className={`btn-icon rounded-full w-8 h-8 transition-all ${isMuted || !isInVoice ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}
+              title={!isInVoice ? 'Join Voice' : isMuted ? 'Unmute Mic' : 'Mute Mic'}
+            >
+              {isMuted || !isInVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </button>
+          )}
+        </div>
+
         <div className="flex-1" />
 
         {/* Load video button (host only) */}

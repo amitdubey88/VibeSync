@@ -12,7 +12,7 @@ export const WebRTCProvider = ({ children }) => {
     const { user } = useAuth();
 
     const [isInVoice, setIsInVoice] = useState(false);
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
     const [voiceError, setVoiceError] = useState(null);
 
     const localStreamRef = useRef(null);
@@ -104,7 +104,14 @@ export const WebRTCProvider = ({ children }) => {
             setVoiceError(null);
             socket.emit('voice:join', { roomCode, passive: isPassive });
         } catch (err) {
-            setVoiceError('Microphone access denied.');
+            console.error('[WebRTC] Mic access error:', err);
+            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                setVoiceError('Microphone permission denied. Please enable it in your browser settings.');
+            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                setVoiceError('No microphone found on your device.');
+            } else {
+                setVoiceError('Could not access microphone. It may be in use by another app.');
+            }
         }
     }, [socket, roomCode]);
 
@@ -119,12 +126,11 @@ export const WebRTCProvider = ({ children }) => {
     }, [socket, roomCode, closePeer]);
 
     const toggleMute = useCallback(async () => {
-        if (!isInVoice) return;
-
-        // If in passive mode (listening but no mic), "unmuting" means joining for real
+        // If in passive mode (listening but no mic), joining for real is what we want
         if (!localStreamRef.current) {
             await joinVoice(false);
-            setIsMuted(false);
+            // If join was successful, we are now unmuted (sending audio)
+            if (localStreamRef.current) setIsMuted(false);
             return;
         }
 
@@ -132,7 +138,7 @@ export const WebRTCProvider = ({ children }) => {
         localStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = !newMuted; });
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
-    }, [isMuted, isInVoice, joinVoice, socket, roomCode]);
+    }, [isMuted, joinVoice, socket, roomCode]);
 
     const setPremierStream = useCallback(async (stream) => {
         premierStreamRef.current = stream;
