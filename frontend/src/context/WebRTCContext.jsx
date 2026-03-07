@@ -2,12 +2,13 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { useSocket } from './SocketContext';
 import { useRoom } from './RoomContext';
 import { useAuth } from './AuthContext';
+import { encryptData, decryptData } from '../utils/crypto';
 
 const WebRTCContext = createContext();
 
 export const WebRTCProvider = ({ children }) => {
     const { socket } = useSocket();
-    const { room } = useRoom();
+    const { room, roomKey } = useRoom();
     const { user } = useAuth();
 
     const [isInVoice, setIsInVoice] = useState(false);
@@ -28,11 +29,13 @@ export const WebRTCProvider = ({ children }) => {
             ],
         });
 
-        pc.onicecandidate = (event) => {
-            if (event.candidate && socket) {
+        pc.onicecandidate = async (event) => {
+            if (event.candidate && socket && roomKey) {
+                const encryptedCandidate = await encryptData(event.candidate, roomKey);
                 socket.emit('voice:ice-candidate', {
                     targetSocketId: remoteSocketId,
-                    candidate: event.candidate,
+                    candidate: encryptedCandidate,
+                    e2ee: true
                 });
             }
         };
@@ -58,7 +61,7 @@ export const WebRTCProvider = ({ children }) => {
 
         peersRef.current[remoteSocketId] = pc;
         return pc;
-    }, [socket]);
+    }, [socket, roomKey]);
 
     const closePeer = useCallback((remoteSocketId) => {
         const pc = peersRef.current[remoteSocketId];
@@ -103,29 +106,56 @@ export const WebRTCProvider = ({ children }) => {
 
     useEffect(() => {
         if (!socket) return;
+        
         const onUserJoined = async ({ socketId }) => {
-            if (!localStreamRef.current) return;
+            if (!localStreamRef.current || !roomKey) return;
             const pc = createPeerConnection(socketId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            socket.emit('voice:offer', { targetSocketId: socketId, offer, roomCode });
+            
+            const encryptedOffer = await encryptData(offer, roomKey);
+            socket.emit('voice:offer', { targetSocketId: socketId, offer: encryptedOffer, roomCode, e2ee: true });
         };
-        const onOffer = async ({ fromSocketId, offer }) => {
-            if (!localStreamRef.current) return;
+
+        const onOffer = async ({ fromSocketId, offer, e2ee }) => {
+            if (!localStreamRef.current || !roomKey) return;
+            
+            let decryptedOffer = offer;
+            if (e2ee) {
+                decryptedOffer = await decryptData(offer, roomKey);
+            }
+
             let pc = peersRef.current[fromSocketId] || createPeerConnection(fromSocketId);
-            await pc.setRemoteDescription(new RTCSessionDescription(offer));
+            await pc.setRemoteDescription(new RTCSessionDescription(decryptedOffer));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            socket.emit('voice:answer', { targetSocketId: fromSocketId, answer });
+            
+            const encryptedAnswer = await encryptData(answer, roomKey);
+            socket.emit('voice:answer', { targetSocketId: fromSocketId, answer: encryptedAnswer, e2ee: true });
         };
-        const onAnswer = async ({ fromSocketId, answer }) => {
+
+        const onAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+            if (pc && roomKey) {
+                let decryptedAnswer = answer;
+                if (e2ee) {
+                    decryptedAnswer = await decryptData(answer, roomKey);
+                }
+                await pc.setRemoteDescription(new RTCSessionDescription(decryptedAnswer));
+            }
         };
-        const onIceCandidate = async ({ fromSocketId, candidate }) => {
+
+        const onIceCandidate = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate)).catch(() => {});
+            if (pc && candidate && roomKey) {
+                let decryptedCandidate = candidate;
+                if (e2ee) {
+                    decryptedCandidate = await decryptData(candidate, roomKey);
+                }
+                await pc.addIceCandidate(new RTCIceCandidate(decryptedCandidate)).catch(() => {});
+            }
         };
+
         const onUserLeft = ({ socketId }) => closePeer(socketId);
         const onMutedByHost = () => {
             if (localStreamRef.current) {
@@ -149,7 +179,7 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('voice:user-left', onUserLeft);
             socket.off('room:muted', onMutedByHost);
         };
-    }, [socket, roomCode, createPeerConnection, closePeer]);
+    }, [socket, roomCode, createPeerConnection, closePeer, roomKey]);
 
     return (
         <WebRTCContext.Provider value={{

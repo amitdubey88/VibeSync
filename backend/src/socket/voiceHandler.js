@@ -49,29 +49,32 @@ module.exports = (io, socket, roomStore) => {
 
     // ── voice:offer ───────────────────────────────────────────────────────────
     // Forward WebRTC offer to the target peer
-    socket.on('voice:offer', ({ targetSocketId, offer, roomCode }) => {
+    socket.on('voice:offer', ({ targetSocketId, offer, roomCode, e2ee }) => {
         io.to(targetSocketId).emit('voice:offer', {
             fromSocketId: socket.id,
             fromUserId: socket.user.id,
             fromUsername: socket.user.username,
             offer,
             roomCode,
+            e2ee: !!e2ee,
         });
     });
 
     // ── voice:answer ──────────────────────────────────────────────────────────
-    socket.on('voice:answer', ({ targetSocketId, answer }) => {
+    socket.on('voice:answer', ({ targetSocketId, answer, e2ee }) => {
         io.to(targetSocketId).emit('voice:answer', {
             fromSocketId: socket.id,
             answer,
+            e2ee: !!e2ee,
         });
     });
 
     // ── voice:ice-candidate ───────────────────────────────────────────────────
-    socket.on('voice:ice-candidate', ({ targetSocketId, candidate }) => {
+    socket.on('voice:ice-candidate', ({ targetSocketId, candidate, e2ee }) => {
         io.to(targetSocketId).emit('voice:ice-candidate', {
             fromSocketId: socket.id,
             candidate,
+            e2ee: !!e2ee,
         });
     });
 

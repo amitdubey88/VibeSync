@@ -3,6 +3,7 @@ import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
 import toast from 'react-hot-toast';
+import { deriveKey, encryptData, decryptData } from '../utils/crypto';
 
 // Simple beep generator for notifications without needing an external audio file
 const playNotifySound = () => {
@@ -37,6 +38,7 @@ export const RoomProvider = ({ children }) => {
   const { user } = useAuth();
 
   const [room, setRoom] = useState(null);
+  const [roomKey, setRoomKey] = useState(null);
   const [participants, setParticipants] = useState([]);
   const [voiceParticipants, setVoiceParticipants] = useState([]);
   const [messages, setMessages] = useState([]);
@@ -56,12 +58,34 @@ export const RoomProvider = ({ children }) => {
   const [chatMuted, setChatMuted] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
 
+  // Derive key when room code changes
+  useEffect(() => {
+    if (room?.code) {
+      deriveKey(room.code).then(setRoomKey);
+    } else {
+      setRoomKey(null);
+    }
+  }, [room?.code]);
+
   const joinRoom = useCallback(async (roomCode) => {
     if (!socket) return;
     socket.emit('room:join', { roomCode });
+    
+    // Derive key early for history decryption
+    const key = await deriveKey(roomCode);
+    setRoomKey(key);
+
     try {
       const { messages: history } = await getRoomMessages(roomCode);
-      setMessages(history || []);
+      // Decrypt history if encrypted (heuristic: content is an object or base64)
+      const decryptedHistory = await Promise.all((history || []).map(async (m) => {
+        if (m.type === 'text' && typeof m.content === 'string' && m.content.length > 20) {
+           const decrypted = await decryptData(m.content, key);
+           return { ...m, content: decrypted };
+        }
+        return m;
+      }));
+      setMessages(decryptedHistory);
     } catch (_) {}
   }, [socket]);
 
@@ -69,6 +93,7 @@ export const RoomProvider = ({ children }) => {
     if (!socket || !room) return;
     socket.emit('room:leave');
     setRoom(null);
+    setRoomKey(null);
     setParticipants([]);
     setMessages([]);
     setVideoState(null);
@@ -82,12 +107,22 @@ export const RoomProvider = ({ children }) => {
   useEffect(() => {
     if (!socket) return;
 
-    const onRoomState = ({ room: r }) => {
+    const onRoomState = async ({ room: r }) => {
       setRoom(r);
       setParticipants(r.participants || []);
       setVoiceParticipants(r.voiceParticipants || []);
       setVideoState(r.videoState);
-      setCurrentVideo(r.currentVideo);
+      
+      // Decrypt video source if needed
+      if (r.currentVideo && r.currentVideo.e2ee) {
+        const key = await deriveKey(r.code);
+        const decryptedUrl = await decryptData(r.currentVideo.url, key);
+        const decryptedTitle = await decryptData(r.currentVideo.title, key);
+        setCurrentVideo({ ...r.currentVideo, url: decryptedUrl, title: decryptedTitle });
+      } else {
+        setCurrentVideo(r.currentVideo);
+      }
+      
       setIsHost(r.hostId === user?.id);
       setRequiresApproval(r.requiresApproval || false);
       setIsLocked(r.isLocked || false);
@@ -103,33 +138,41 @@ export const RoomProvider = ({ children }) => {
       if (newHostId === user?.id) toast.success('👑 You are now the host!');
     };
 
-    const onChatMessage = (msg) => {
-      setMessages((prev) => [...prev, msg]);
+    const onChatMessage = async (msg) => {
+      let displayContent = msg.content;
+      if (msg.e2ee && roomKey) {
+        displayContent = await decryptData(msg.content, roomKey);
+      }
+      
+      const decryptedMsg = { ...msg, content: displayContent };
+      setMessages((prev) => [...prev, decryptedMsg]);
       
       // If it's not my message, check if we need to notify
       if (msg.userId !== user?.id && msg.username !== user?.username) {
-        // We use document.hidden or a heuristic (like not being in the chat tab) 
-        // We'll let the UI components handle resetting the unread count when viewed
         setUnreadChatCount((prev) => prev + 1);
         
-        // Use the functional state update to access the latest chatMuted value
         setChatMuted((isMuted) => {
           if (!isMuted) {
             playNotifySound();
-            // Show a brief toast for background awareness
-            toast(`💬 ${msg.username}: ${msg.content.length > 30 ? msg.content.substring(0, 30) + '...' : msg.content}`, {
+            toast(`💬 ${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
               duration: 2000,
               icon: '📩',
               id: `chat-${msg.id}`
             });
           }
-          return isMuted; // return unchanged state
+          return isMuted;
         });
       }
     };
 
-    const onSourceChanged = ({ video, videoState: vs }) => {
-      setCurrentVideo(video);
+    const onSourceChanged = async ({ video, videoState: vs }) => {
+      let displayVideo = video;
+      if (video?.e2ee && roomKey) {
+        const decryptedUrl = await decryptData(video.url, roomKey);
+        const decryptedTitle = await decryptData(video.title, roomKey);
+        displayVideo = { ...video, url: decryptedUrl, title: decryptedTitle };
+      }
+      setCurrentVideo(displayVideo);
       setVideoState(vs);
     };
 
@@ -138,20 +181,23 @@ export const RoomProvider = ({ children }) => {
       setCurrentVideo({ type: 'uploading', title, url: null });
     };
 
-    const onReaction = (reaction) => {
+    const onReaction = async (reaction) => {
+      let displayEmoji = reaction.emoji;
+      if (reaction.e2ee && roomKey) {
+        displayEmoji = await decryptData(reaction.emoji, roomKey);
+      }
+      
       const id = reaction.id;
-      setReactions((prev) => [...prev, { ...reaction, id }]);
+      setReactions((prev) => [...prev, { ...reaction, emoji: displayEmoji, id }]);
       setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3500);
     };
 
-    // ── room deleted → show persistent modal, participant clicks OK to go home ──
     const onRoomDeleted = ({ message }) => {
       setRoomEndedByHost({ message: message || 'The host has ended this session.' });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
     };
 
-    // ── kicked → hard redirect ─────────────────────────────────────────────
     const onKicked = ({ message }) => {
       toast.error(message || 'You were removed from the room.', { duration: 2000 });
       setRoom(null); setParticipants([]); setMessages([]);
@@ -167,26 +213,20 @@ export const RoomProvider = ({ children }) => {
       toast('🔇 You were muted by the host', { duration: 2000 });
     };
 
-    // ── Join approval events ────────────────────────────────────────────────────────
-    // Host receives a join request from pending user
     const onJoinRequest = (req) => {
       setJoinRequests((prev) => {
         if (prev.find((r) => r.userId === req.userId)) return prev;
         return [...prev, req];
       });
     };
-    // Joiner is placed in pending state
     const onJoinPending = () => setJoinStatus('pending');
-    // Joiner was denied
     const onJoinDenied = ({ message }) => {
       setJoinStatus('denied');
       toast.error(message || 'Your join request was declined.', { duration: 2000 });
       setTimeout(() => { window.location.href = '/'; }, 2000);
     };
-    // Approval requirement toggle
     const onApprovalChanged = ({ requiresApproval: ra }) => setRequiresApproval(ra);
     
-    // Lock status toggle
     const onLockChanged = ({ isLocked: locked }) => {
       setIsLocked(locked);
       if (locked) toast('The room has been locked by the host.', { icon: '🔒', duration: 2000 });
@@ -228,49 +268,67 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:approval-changed', onApprovalChanged);
       socket.off('room:lock-changed', onLockChanged);
     };
-  }, [socket, user]);
+  }, [socket, user, roomKey]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
-  const sendMessage = useCallback((content, replyTo = null) => {
-    if (!socket || !room) return;
-    socket.emit('chat:send', { roomCode: room.code, content, replyTo });
-  }, [socket, room]);
+  const sendMessage = useCallback(async (content, replyTo = null) => {
+    if (!socket || !room || !roomKey) return;
+    
+    const encryptedContent = await encryptData(content, roomKey);
+    socket.emit('chat:send', { 
+        roomCode: room.code, 
+        content: encryptedContent, 
+        replyTo,
+        e2ee: true 
+    });
+  }, [socket, room, roomKey]);
 
-  const sendReaction = useCallback((emoji) => {
-    if (!socket || !room) return;
-    socket.emit('chat:reaction', { roomCode: room.code, emoji });
-  }, [socket, room]);
+  const sendReaction = useCallback(async (emoji) => {
+    if (!socket || !room || !roomKey) return;
+    const encryptedEmoji = await encryptData(emoji, roomKey);
+    socket.emit('chat:reaction', { 
+        roomCode: room.code, 
+        emoji: encryptedEmoji,
+        e2ee: true
+    });
+  }, [socket, room, roomKey]);
 
-  // setVideoSource: emit to socket for YouTube/URL changes;
-  // for file uploads pass currentTime+isPlaying so participants sync to host position
-  const setVideoSource = useCallback((video, opts = {}) => {
-    if (!socket || !room) return;
+  const setVideoSource = useCallback(async (video, opts = {}) => {
+    if (!socket || !room || !roomKey) return;
+    
+    const encryptedUrl = await encryptData(video.url, roomKey);
+    const encryptedTitle = await encryptData(video.title, roomKey);
+    
+    const encryptedVideo = {
+        ...video,
+        url: encryptedUrl,
+        title: encryptedTitle,
+        e2ee: true
+    };
+
     socket.emit('video:set-source', {
       roomCode: room.code,
-      video,
+      video: encryptedVideo,
       currentTime: opts.currentTime,
       isPlaying: opts.isPlaying,
     });
-    setCurrentVideo(video);
+    
+    setCurrentVideo(video); // Update locally with plain text
     if (!opts.preserveState) {
       setVideoState({ currentTime: opts.currentTime ?? 0, isPlaying: opts.isPlaying ?? false, lastUpdated: Date.now() });
     }
-  }, [socket, room]);
+  }, [socket, room, roomKey]);
 
-  // notifyUploading: tell participants host is uploading a local file
   const notifyUploading = useCallback((title) => {
     if (!socket || !room) return;
     socket.emit('video:set-uploading', { roomCode: room.code, title });
   }, [socket, room]);
 
-  // refreshParticipants: ask server for the latest list right now
-  // This fixes the race-condition where host misses room:participant-update
   const refreshParticipants = useCallback(() => {
     if (!socket || !room) return;
     socket.emit('room:get-participants', { roomCode: room.code });
   }, [socket, room]);
 
-  // ── Host approval actions ────────────────────────────────────────────────────────
   const approveJoin = useCallback((userId) => {
     if (!socket || !room) return;
     socket.emit('room:approve-join', { roomCode: room.code, userId });
@@ -295,7 +353,6 @@ export const RoomProvider = ({ children }) => {
     setIsLocked(locked);
   }, [socket, room]);
 
-  // ── Host control actions ──────────────────────────────────────────────────
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
     socket.emit('room:delete', { roomCode: room.code });
@@ -328,21 +385,17 @@ export const RoomProvider = ({ children }) => {
 
   return (
     <RoomContext.Provider value={{
-      room, participants, voiceParticipants, messages,
+      room, roomKey, participants, voiceParticipants, messages,
       videoState, setVideoState, currentVideo, isHost, isMutedByHost,
       reactions, joinRoom, leaveRoom, sendMessage,
       sendReaction, setVideoSource, notifyUploading,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
-      // Join approval & locking
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
-      // Host controls
       muteAllParticipants, roomEndedByHost,
       dismissRoomEnded: () => setRoomEndedByHost(null),
-      // Chat notifications
       unreadChatCount, setUnreadChatCount,
       chatMuted, setChatMuted,
-      // Status
       setUserStatus
     }}>
       {children}

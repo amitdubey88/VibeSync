@@ -8,7 +8,7 @@ try { Message = require('../models/Message'); } catch (_) { }
 
 module.exports = (io, socket, roomStore) => {
     // ── chat:send ─────────────────────────────────────────────────────────────
-    socket.on('chat:send', async ({ roomCode, content, replyTo }) => {
+    socket.on('chat:send', async ({ roomCode, content, replyTo, e2ee }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room) return;
@@ -28,6 +28,7 @@ module.exports = (io, socket, roomStore) => {
             content: trimmed,
             type: 'text',
             replyTo: replyTo || null,
+            e2ee: !!e2ee,
             createdAt: new Date().toISOString(),
         };
 
@@ -55,7 +56,7 @@ module.exports = (io, socket, roomStore) => {
 
     // ── chat:reaction ─────────────────────────────────────────────────────────
     // Floating emoji reaction on video (not persisted)
-    socket.on('chat:reaction', ({ roomCode, emoji }) => {
+    socket.on('chat:reaction', ({ roomCode, emoji, e2ee }) => {
         const code = roomCode?.toUpperCase();
         if (!roomStore.has(code)) return;
         const { username, avatar } = socket.user;
@@ -64,6 +65,7 @@ module.exports = (io, socket, roomStore) => {
             username,
             avatar,
             emoji,
+            e2ee: !!e2ee,
             timestamp: Date.now(),
         });
     });

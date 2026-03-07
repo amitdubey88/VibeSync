@@ -107,9 +107,15 @@ const LandingPage = () => {
           <img src="/favicon.svg" alt="VibeSync Logo" className="w-8 h-8 rounded-lg shadow-[0_0_15px_rgba(229,9,20,0.4)]" />
           <span className="text-xl font-black tracking-tight text-gradient-red">VibeSync</span>
         </div>
-        <div className="hidden sm:flex items-center gap-2 text-text-muted text-sm">
-          <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-          Real-time sync
+        <div className="hidden sm:flex items-center gap-4 text-text-muted text-sm">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-green/10 text-accent-green border border-accent-green/20">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+            Real-time sync
+          </div>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20">
+            <ShieldCheck className="w-3.5 h-3.5" />
+            End-to-End Encrypted
+          </div>
         </div>
       </header>
 
@@ -159,6 +165,7 @@ const LandingPage = () => {
               { icon: Play, label: 'Instant Sync' },
               { icon: MessageSquare, label: 'Live Chat' },
               { icon: Mic, label: 'Voice Call' },
+              { icon: ShieldCheck, label: 'E2EE' },
               { icon: Users, label: 'Multi-user' },
             ].map(({ icon: Icon, label }) => (
               <div key={label} className="flex items-center gap-2 glass rounded-full px-4 py-2 text-sm text-text-secondary">

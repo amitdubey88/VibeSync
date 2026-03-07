@@ -229,6 +229,10 @@ const RoomPage = () => {
           </button>
           <div className="w-px h-5 bg-border-dark" />
           <h1 className="text-sm font-bold text-text-primary truncate">{room?.name || code}</h1>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider">
+            <ShieldCheck className="w-3 h-3" />
+            E2EE
+          </div>
           {isHost && (
             <span className="badge bg-accent-yellow/10 text-accent-yellow hidden md:flex">
               <Crown className="w-3 h-3" /> Host
