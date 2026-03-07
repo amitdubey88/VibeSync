@@ -107,7 +107,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
+  const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading } = useRoom();
   const { setPremierStream, remotePremierStream } = useWebRTC();
   const { user } = useAuth();
   const { socket } = useSocket();
