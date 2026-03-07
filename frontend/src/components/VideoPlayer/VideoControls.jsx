@@ -115,8 +115,9 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   return (
     <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5">
       {/* ── Contextual Action Layer (Join Audio) ── */}
+      {/* ── Contextual Action Layer (Join Audio) ── */}
       {!isInVoice && (
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 animate-bounce-subtle flex justify-center w-full max-w-[200px] pointer-events-none">
+        <div className="absolute -top-16 left-1/2 -translate-x-1/2 animate-bounce-subtle z-50 pointer-events-none">
            <button
              onClick={() => joinVoice(true)}
              className="pointer-events-auto flex items-center gap-2 px-6 py-2.5 rounded-full bg-accent-purple/90 hover:bg-accent-purple backdrop-blur-md border border-white/30 text-white text-[10px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_30px_rgba(168,85,247,0.5)] whitespace-nowrap"

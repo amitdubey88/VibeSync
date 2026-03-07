@@ -132,7 +132,7 @@ const VideoReactionBar = ({ visible: visibleProp }) => {
 
       {/* Reaction button bar - Teams style, auto-hides/shows on interaction */}
       <div
-        className={`absolute bottom-16 left-1/2 -translate-x-1/2 z-30 transition-all duration-300
+        className={`absolute bottom-28 left-1/2 -translate-x-1/2 z-30 transition-all duration-300
           ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2 pointer-events-none'}
           portrait:hidden`}
       >
