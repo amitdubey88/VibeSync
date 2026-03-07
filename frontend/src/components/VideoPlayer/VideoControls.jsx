@@ -113,7 +113,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5">
+    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 pointer-events-auto">
       {/* ── Contextual Action Layer (Join Audio) ── */}
       {/* ── Contextual Action Layer (Join Audio) ── */}
       {!isInVoice && (
