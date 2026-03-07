@@ -318,7 +318,7 @@ const VideoPlayer = () => {
 
       setVideoSource(
         { url: data.url, type: 'file', title: file.name, e2ee: !!roomKey },
-        { currentTime: ct, isPlaying: false, preserveState: true }
+        { currentTime: ct, isPlaying: false }
       );
       
       toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 4000 });

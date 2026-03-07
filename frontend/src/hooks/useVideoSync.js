@@ -112,7 +112,7 @@ const useVideoSync = (videoEl) => {
         };
 
         const onSyncState = ({ videoState: vs }) => {
-            if (!videoEl) return;
+            if (!videoEl || isHost) return;
             applyTimeIfNeeded(vs.currentTime);
             if (vs.isPlaying) {
                 if (videoEl.paused) videoEl.play().catch(() => { });
