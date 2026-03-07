@@ -8,7 +8,7 @@ import {
   Mic, MicOff, Phone
 } from 'lucide-react';
 
-const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick }) => {
+const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, visible }) => {
   const { videoState } = useRoom();
   const { isInVoice, isMuted, toggleMute, joinVoice } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
@@ -113,7 +113,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
-    <div className="absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 pointer-events-auto">
+    <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 transition-all duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
       {/* ── Contextual Action Layer (Join Audio) ── */}
       {/* ── Contextual Action Layer (Join Audio) ── */}
       {!isInVoice && (

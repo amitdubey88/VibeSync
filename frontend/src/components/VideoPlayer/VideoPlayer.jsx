@@ -534,16 +534,22 @@ const VideoPlayer = () => {
 
       {/* Controls Overlay - only render if a video is active/loaded */}
       {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming) && (
-        <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-          <VideoControls
-            videoRef={videoRef}
-            currentTime={currentTime}
-            duration={duration}
-            isHost={isHost}
-            onLoadClick={() => setShowSourcePicker(true)}
-          />
+        <>
+          {/* Reactions (floaters are always visible, bar follows showControls) */}
           <VideoReactionBar visible={showControls} />
-        </div>
+
+          {/* Fading Controls Group */}
+          <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+            <VideoControls
+              videoRef={videoRef}
+              currentTime={currentTime}
+              duration={duration}
+              isHost={isHost}
+              visible={showControls}
+              onLoadClick={() => setShowSourcePicker(true)}
+            />
+          </div>
+        </>
       )}
 
       {sourcePicker}

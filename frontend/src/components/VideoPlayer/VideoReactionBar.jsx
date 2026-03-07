@@ -118,7 +118,7 @@ const VideoReactionBar = ({ visible: visibleProp }) => {
   return (
     <>
       {/* Floating emojis rendered over the video */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden z-20">
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-40">
         {floaters.map(f => (
           <FloatingReaction
             key={f.id}
