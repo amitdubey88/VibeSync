@@ -527,7 +527,7 @@ const VideoPlayer = () => {
       )}
 
       {/* Controls Overlay */}
-      <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`absolute inset-0 z-30 transition-opacity duration-300 ${showControls ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
         <VideoControls
           videoRef={videoRef}
           currentTime={currentTime}

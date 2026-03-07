@@ -90,8 +90,8 @@ export const WebRTCProvider = ({ children }) => {
             if (!isPassive) {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
-                setIsInVoice(true);
             }
+            setIsInVoice(true);
             
             setVoiceError(null);
             socket.emit('voice:join', { roomCode, passive: isPassive });
