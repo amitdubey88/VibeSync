@@ -8,7 +8,7 @@ const morgan = require('morgan');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
+const { uploadToCloudinary, isConfigured: isCloudinaryConfigured, generateUploadSignature } = require('./config/cloudinary');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
@@ -134,6 +134,22 @@ app.post('/api/upload', (req, res) => {
                 return res.status(500).json({ success: false, message: 'Cloud upload failed: ' + uploadErr.message });
             }
         });
+    });
+});
+
+// GET Signature for direct Cloudinary upload (faster, bypasses server)
+app.get('/api/upload/sign', (req, res) => {
+    const { authenticate } = require('./middleware/auth');
+    authenticate(req, res, () => {
+        if (!useCloudinary) {
+            return res.status(400).json({ success: false, message: 'Cloudinary not configured' });
+        }
+        const params = {
+            resource_type: 'video',
+            folder: 'vibesync',
+        };
+        const signData = generateUploadSignature(params);
+        return res.json({ success: true, ...signData, ...params });
     });
 });
 

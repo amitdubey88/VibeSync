@@ -43,4 +43,16 @@ const isConfigured = () =>
      process.env.CLOUDINARY_API_KEY &&
      process.env.CLOUDINARY_API_SECRET);
 
-module.exports = { cloudinary, uploadToCloudinary, isConfigured };
+/**
+ * Generates a signature for a direct authenticated upload from the client.
+ */
+const generateUploadSignature = (params) => {
+  const timestamp = Math.round(new Date().getTime() / 1000);
+  const signature = cloudinary.utils.api_sign_request(
+    { ...params, timestamp },
+    process.env.CLOUDINARY_API_SECRET
+  );
+  return { timestamp, signature, apiKey: process.env.CLOUDINARY_API_KEY, cloudName: process.env.CLOUDINARY_CLOUD_NAME };
+};
+
+module.exports = { cloudinary, uploadToCloudinary, isConfigured, generateUploadSignature };

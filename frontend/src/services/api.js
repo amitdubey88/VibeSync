@@ -45,12 +45,53 @@ export const getRoomMessages = (code) =>
     api.get(`/rooms/${code}/messages`).then((r) => r.data);
 
 // ── Video Upload ──────────────────────────────────────────────────────────────
-export const uploadVideo = (file, onProgress) => {
+
+/**
+ * Fetches a signature for direct Cloudinary upload.
+ */
+export const getUploadSignature = () =>
+    api.get('/upload/sign').then((r) => r.data);
+
+/**
+ * Uploads a file directly to Cloudinary (fastest) or our server (local dev fallback).
+ */
+export const uploadVideo = async (file, onProgress) => {
+    try {
+        // 1. Try to get a Cloudinary signature for direct upload
+        const signData = await getUploadSignature();
+
+        if (signData.success) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('api_key', signData.apiKey);
+            formData.append('timestamp', signData.timestamp);
+            formData.append('signature', signData.signature);
+            formData.append('folder', signData.folder);
+            formData.append('resource_type', 'video');
+
+            const cloudUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/video/upload`;
+
+            const response = await axios.post(cloudUrl, formData, {
+                onUploadProgress: (evt) => {
+                    if (onProgress) {
+                        const pct = Math.round((evt.loaded * 100) / (evt.total || evt.loaded));
+                        onProgress(pct);
+                    }
+                },
+            });
+
+            return { url: response.data.secure_url };
+        }
+    } catch (err) {
+        console.warn('[upload] Direct upload to Cloudinary skipped or failed, falling back to server:', err.message);
+    }
+
+// 2. Fallback: Upload to our own server (used in local dev or if Cloudinary is misconfigured)
     const form = new FormData();
     form.append('video', file);
     return api.post('/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        timeout: 0, // Disable timeout for uploads
+        timeout: 0, 
         onUploadProgress: (evt) => {
             if (onProgress) {
                 const pct = Math.round((evt.loaded * 100) / (evt.total || evt.loaded));
