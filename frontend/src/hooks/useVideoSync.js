@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 
-const DRIFT_THRESHOLD = 1.5; // seconds before enforcing a hard seek
+const DRIFT_THRESHOLD = 2.5; // seconds before enforcing a hard seek
 
 /**
  * useVideoSync
@@ -114,8 +114,11 @@ const useVideoSync = (videoEl) => {
         const onSyncState = ({ videoState: vs }) => {
             if (!videoEl) return;
             applyTimeIfNeeded(vs.currentTime);
-            if (vs.isPlaying) videoEl.play().catch(() => { });
-            else videoEl.pause();
+            if (vs.isPlaying) {
+                if (videoEl.paused) videoEl.play().catch(() => { });
+            } else {
+                if (!videoEl.paused) videoEl.pause();
+            }
         };
 
         socket.on('video:play', onPlay);

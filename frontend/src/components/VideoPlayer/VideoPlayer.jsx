@@ -5,6 +5,7 @@ import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
+import FloatingReactions from './FloatingReactions';
 import YouTubePlayer from './YouTubePlayer';
 import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle, Zap } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
@@ -317,7 +318,7 @@ const VideoPlayer = () => {
 
       setVideoSource(
         { url: data.url, type: 'file', title: file.name, e2ee: !!roomKey },
-        { currentTime: ct, isPlaying: wasPlaying, preserveState: true }
+        { currentTime: ct, isPlaying: false, preserveState: true }
       );
       
       toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 4000 });
@@ -340,7 +341,7 @@ const VideoPlayer = () => {
     const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([a-zA-Z0-9_-]{11})/);
     
     if (ytMatch) {
-      setVideoSource({ url: ytMatch[1], type: 'youtube', title: 'YouTube Video' });
+      setVideoSource({ url: ytMatch[1], type: 'youtube', title: 'YouTube Video' }, { isPlaying: false });
       setShowSourcePicker(false);
       setUrlInput('');
       toast.success('YouTube video loaded!');
@@ -535,7 +536,8 @@ const VideoPlayer = () => {
       {/* Controls Overlay - only render if a video is active/loaded */}
       {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming) && (
         <>
-          {/* Reactions (floaters are always visible, bar follows showControls) */}
+          {/* Reactions (floaters are always visible, menu follows showControls) */}
+          <FloatingReactions />
           <VideoReactionBar visible={showControls} />
 
           {/* Fading Controls Group */}

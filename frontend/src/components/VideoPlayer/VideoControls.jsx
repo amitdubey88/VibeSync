@@ -128,24 +128,22 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
         </div>
       )}
 
-      {/* ── Progress bar (Hidden if live) ── */}
-      {!isLive && (
+      {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
+      <div
+        className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
+        onClick={isHost ? handleSeek : undefined}
+      >
         <div
-          className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
-          onClick={handleSeek}
-        >
+          className="h-full rounded-full bg-accent-red transition-all duration-150"
+          style={{ width: `${progress}%` }}
+        />
+        {isHost && (
           <div
-            className="h-full rounded-full bg-accent-red transition-all duration-150"
-            style={{ width: `${progress}%` }}
+            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
+            style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
           />
-          {isHost && (
-            <div
-              className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
-              style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
-            />
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* ── Buttons row ── */}
       <div className="flex items-center gap-3">

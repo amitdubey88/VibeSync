@@ -20,6 +20,12 @@ export const WebRTCProvider = ({ children }) => {
     const [remotePremierStream, setRemotePremierStream] = useState(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
     
+    // Mute/unmute all remote audio elements when our voice status changes
+    useEffect(() => {
+        const audios = document.querySelectorAll('audio[id^="audio-"]');
+        audios.forEach(a => { a.muted = !isInVoice; });
+    }, [isInVoice]);
+    
     const roomCode = room?.code;
 
     // ── Create a peer connection ─────────────────────────────────────────────
@@ -54,6 +60,8 @@ export const WebRTCProvider = ({ children }) => {
                     document.body.appendChild(audio);
                 }
                 audio.srcObject = stream;
+                // Mute remote audio if we are in passive mode
+                audio.muted = !isInVoice;
             } else if (event.track.kind === 'video') {
                 // This is the premier stream broadcast from the host
                 console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
@@ -228,7 +236,8 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('room:muted', onMutedByHost);
 
         // Passive registration: join voice signaling pool automatically
-        // REMOVED: joinVoice(true); // Don't automatically join, wait for user action
+        // This ensures video streams are received immediately upon joining
+        joinVoice(true);
 
         return () => {
             socket.off('voice:user-joined', onUserJoined);
