@@ -50,9 +50,10 @@ export const uploadVideo = (file, onProgress) => {
     form.append('video', file);
     return api.post('/upload', form, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 0, // Disable timeout for uploads
         onUploadProgress: (evt) => {
             if (onProgress) {
-                const pct = Math.round((evt.loaded * 100) / evt.total);
+                const pct = Math.round((evt.loaded * 100) / (evt.total || evt.loaded));
                 onProgress(pct);
             }
         },
