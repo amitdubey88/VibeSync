@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 
 const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, visible }) => {
-  const { videoState } = useRoom();
+  const { videoState, currentVideo } = useRoom();
   const { isInVoice, isMuted, toggleMute, joinVoice, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
   const [isMutedLocal, setIsMutedLocal] = useState(false);
