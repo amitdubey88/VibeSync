@@ -98,6 +98,28 @@ export const WebRTCProvider = ({ children }) => {
             if (!isPassive) {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
+                
+                // CRITICAL: Update all existing peer connections with the newly captured audio track
+                const audioTrack = stream.getAudioTracks()[0];
+                if (audioTrack && roomKey) {
+                    const peers = Object.entries(peersRef.current);
+                    for (const [targetSocketId, pc] of peers) {
+                        // Check if we already have an audio sender
+                        const senders = pc.getSenders();
+                        const audioSender = senders.find(s => s.track?.kind === 'audio');
+                        
+                        if (audioSender) {
+                            audioSender.replaceTrack(audioTrack);
+                        } else {
+                            pc.addTrack(audioTrack, stream);
+                            // Renegotiate
+                            const offer = await pc.createOffer();
+                            await pc.setLocalDescription(offer);
+                            const encryptedOffer = await encryptData(offer, roomKey);
+                            socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
+                        }
+                    }
+                }
             }
             setIsInVoice(true);
             
@@ -113,7 +135,7 @@ export const WebRTCProvider = ({ children }) => {
                 setVoiceError('Could not access microphone. It may be in use by another app.');
             }
         }
-    }, [socket, roomCode]);
+    }, [socket, roomCode, roomKey]);
 
     const leaveVoice = useCallback(() => {
         if (!socket || !roomCode) return;

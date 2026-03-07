@@ -49,13 +49,17 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
     videoRef.current.currentTime = ratio * duration;
   }, [videoRef, isHost, duration]);
 
+  // Sync volume state to video element
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.volume = isMutedLocal ? 0 : volume;
+      videoRef.current.muted = isMutedLocal;
+    }
+  }, [videoRef, volume, isMutedLocal]);
+
   const handleVolume = (e) => {
     const v = parseFloat(e.target.value);
     setVolume(v);
-    if (videoRef.current) {
-      videoRef.current.volume = v;
-      videoRef.current.muted = (v === 0);
-    }
     setIsMutedLocal(v === 0);
   };
 

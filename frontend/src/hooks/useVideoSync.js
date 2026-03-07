@@ -2,7 +2,7 @@ import { useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 
-const DRIFT_THRESHOLD = 2.5; // seconds before enforcing a hard seek
+const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
 
 /**
  * useVideoSync
@@ -85,7 +85,7 @@ const useVideoSync = (videoEl) => {
             if (drift > DRIFT_THRESHOLD) {
                 isSyncingRef.current = true;
                 videoEl.currentTime = targetTime;
-                setTimeout(() => { isSyncingRef.current = false; }, 300);
+                setTimeout(() => { isSyncingRef.current = false; }, 500);
             }
         };
 
@@ -113,11 +113,16 @@ const useVideoSync = (videoEl) => {
 
         const onSyncState = ({ videoState: vs }) => {
             if (!videoEl || isHost) return;
-            applyTimeIfNeeded(vs.currentTime);
+            // Only correct drift if playing to avoid jitter while paused
             if (vs.isPlaying) {
+                applyTimeIfNeeded(vs.currentTime);
                 if (videoEl.paused) videoEl.play().catch(() => { });
             } else {
                 if (!videoEl.paused) videoEl.pause();
+                // If paused, we want exact match
+                if (Math.abs(videoEl.currentTime - vs.currentTime) > 1.5) {
+                    videoEl.currentTime = vs.currentTime;
+                }
             }
         };
 
