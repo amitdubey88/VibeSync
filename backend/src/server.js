@@ -122,6 +122,17 @@ app.post('/api/upload', (req, res) => {
                                 else resolve(cloudResult);
                             }
                         );
+
+                        // Handle stream errors
+                        fileStream.on('error', (err) => {
+                            console.error('[upload] File stream error:', err);
+                            reject(err);
+                        });
+                        cloudStream.on('error', (err) => {
+                            console.error('[upload] Cloud stream error:', err);
+                            reject(err);
+                        });
+
                         fileStream.pipe(cloudStream);
                     });
 

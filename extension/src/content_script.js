@@ -383,7 +383,7 @@
   }
 
   // ── Listen for messages from background/popup ─────────────────────────────
-  chrome.runtime.onMessage.addListener((msg) => {
+  chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     if (msg.type === 'CONNECT') {
       settings = { vs_room_code: msg.roomCode, vs_username: msg.username, vs_backend_url: msg.backendUrl, vs_connected: true };
       // Preserve current overlay setting
@@ -393,16 +393,22 @@
       });
       updateOverlayConnected(true);
       if (!video) waitForVideo(attachListeners);
+      sendResponse({ ok: true });
     }
-    if (msg.type === 'DISCONNECT') {
+    else if (msg.type === 'DISCONNECT') {
       settings.vs_connected = false;
-      clearInterval(pollInterval);
+      if (pollInterval) clearInterval(pollInterval);
       updateOverlayConnected(false);
+      sendResponse({ ok: true });
     }
-    if (msg.type === 'TOGGLE_OVERLAY') {
+    else if (msg.type === 'TOGGLE_OVERLAY') {
       settings.vs_show_overlay = msg.show;
       applyOverlayVisibility();
+      sendResponse({ ok: true });
+    } else {
+      sendResponse({ ok: true });
     }
+    return false; // synchronous
   });
 
   // ── Init ──────────────────────────────────────────────────────────────────

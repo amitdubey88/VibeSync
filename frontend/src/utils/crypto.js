@@ -94,10 +94,16 @@ export async function decryptData(encryptedBase64, key) {
 
 /**
  * Encrypts a File or Blob.
- * Returns a new Blob containing [IV(12 bytes) + Ciphertext].
+ * Note: For very large files (>100MB), this may use significant memory.
  */
 export async function encryptFile(file, key) {
     if (!key) return file;
+
+    // Safety check for browsers with limited memory
+    if (file.size > 150 * 1024 * 1024) {
+        console.warn('[crypto] Large file detected, memory usage will be high.');
+    }
+
     const iv = window.crypto.getRandomValues(new Uint8Array(12));
     const arrayBuffer = await file.arrayBuffer();
 

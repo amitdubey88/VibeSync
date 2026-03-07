@@ -11,7 +11,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     chrome.storage.local.get(['vs_room_code', 'vs_username', 'vs_backend_url', 'vs_connected'], (data) => {
       sendResponse(data);
     });
-    return true; // keep channel open for async response
+    return true; 
   }
 
   if (msg.type === 'SAVE_SETTINGS') {
@@ -33,7 +33,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   if (msg.type === 'DISCONNECT') {
-    chrome.storage.local.set({ vs_connected: false }, () => sendResponse({ ok: true }));
+    chrome.storage.local.set({ vs_connected: false }, () => {
+      sendResponse({ ok: true });
+    });
     return true;
   }
+
+  // Always return something or indicate sync
+  sendResponse({ ok: true });
+  return false;
 });
