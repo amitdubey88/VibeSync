@@ -91,6 +91,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
   const { currentVideo, room, isHost, setVideoSource, notifyUploading } = useRoom();
+  const { setPremierStream, remotePremierStream } = useWebRTC();
   const { user } = useAuth();
   const { socket } = useSocket();
   const videoRef = useRef(null);
@@ -146,6 +147,19 @@ const VideoPlayer = () => {
     videoEl.addEventListener('canplay', onCanPlay);
     videoEl.addEventListener('play', onPlayEv);
     videoEl.addEventListener('pause', onPauseEv);
+
+    // If host is uploading, capture stream and broadcast
+    if (isHost && isUploading && videoEl.captureStream) {
+      try {
+        const stream = videoEl.captureStream();
+        setPremierStream(stream);
+      } catch (err) {
+        console.error('Failed to capture premier stream:', err);
+      }
+    } else if (isHost && !isUploading) {
+      setPremierStream(null);
+    }
+
     return () => {
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
@@ -283,6 +297,7 @@ const VideoPlayer = () => {
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
+      setPremierStream(null); // Stop broadcasting once Cloudinary takes over
     }
   };
 
@@ -399,24 +414,33 @@ const VideoPlayer = () => {
   if (!isHost && currentVideo?.type === 'uploading') {
     return (
       <div className="relative w-full h-full bg-black flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4 p-8 text-center">
-          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
-            <CloudUpload className="w-9 h-9 text-accent-purple" />
+        {remotePremierStream ? (
+           <video 
+             autoPlay 
+             playsInline 
+             className="w-full h-full object-contain"
+             ref={el => { if (el) el.srcObject = remotePremierStream; }}
+           />
+        ) : (
+          <div className="flex flex-col items-center gap-4 p-8 text-center">
+            <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center animate-pulse">
+              <CloudUpload className="w-9 h-9 text-accent-purple" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary mb-1">Host is uploading a video</h3>
+              <p className="text-text-secondary text-sm font-medium">{currentVideo.title || 'Video'}</p>
+              <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Watching live via Premier Stream…
+              </p>
+            </div>
+            <div className="flex gap-1.5 mt-2">
+              {[0, 1, 2].map(i => (
+                <span key={i} className="w-2 h-2 rounded-full bg-accent-purple/60 animate-bounce"
+                  style={{ animationDelay: `${i * 0.15}s` }} />
+              ))}
+            </div>
           </div>
-          <div>
-            <h3 className="text-lg font-bold text-text-primary mb-1">Host is uploading a video</h3>
-            <p className="text-text-secondary text-sm font-medium">{currentVideo.title || 'Video'}</p>
-            <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
-              <Clock className="w-3.5 h-3.5" /> You'll sync automatically when it's ready
-            </p>
-          </div>
-          <div className="flex gap-1.5 mt-2">
-            {[0, 1, 2].map(i => (
-              <span key={i} className="w-2 h-2 rounded-full bg-accent-purple/60 animate-bounce"
-                style={{ animationDelay: `${i * 0.15}s` }} />
-            ))}
-          </div>
-        </div>
+        )}
       </div>
     );
   }

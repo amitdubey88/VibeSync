@@ -16,6 +16,8 @@ export const WebRTCProvider = ({ children }) => {
     const [voiceError, setVoiceError] = useState(null);
 
     const localStreamRef = useRef(null);
+    const premierStreamRef = useRef(null);
+    const [remotePremierStream, setRemotePremierStream] = useState(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
     
     const roomCode = room?.code;
@@ -52,11 +54,18 @@ export const WebRTCProvider = ({ children }) => {
                     document.body.appendChild(audio);
                 }
                 audio.srcObject = stream;
+            } else if (event.track.kind === 'video') {
+                // This is the premier stream broadcast from the host
+                setRemotePremierStream(stream);
             }
         };
 
         if (localStreamRef.current) {
             localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current));
+        }
+
+        if (premierStreamRef.current) {
+            premierStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, premierStreamRef.current));
         }
 
         peersRef.current[remoteSocketId] = pc;
@@ -103,6 +112,30 @@ export const WebRTCProvider = ({ children }) => {
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, socket, roomCode]);
+
+    const setPremierStream = useCallback((stream) => {
+        premierStreamRef.current = stream;
+        // If we're already in voice/connected to peers, we need to add the track to existing connections
+        if (stream) {
+            const videoTrack = stream.getVideoTracks()[0];
+            if (videoTrack) {
+                Object.values(peersRef.current).forEach(pc => {
+                    const senders = pc.getSenders();
+                    const alreadyHasVideo = senders.some(s => s.track?.kind === 'video');
+                    if (!alreadyHasVideo) {
+                        pc.addTrack(videoTrack, stream);
+                        // Renegotiation might be needed here, but usually the other side handles ontrack fine
+                        // if they are already connected. For simplicity, we assume new joiners pick it up.
+                        // For existing ones, they might need a new offer.
+                        pc.createOffer().then(offer => {
+                            pc.setLocalDescription(offer);
+                            socket.emit('voice:offer', { targetSocketId: Object.keys(peersRef.current).find(id => peersRef.current[id] === pc), offer, roomCode, e2ee: !!roomKey });
+                        });
+                    }
+                });
+            }
+        }
+    }, [roomCode, roomKey, socket]);
 
     useEffect(() => {
         if (!socket) return;
@@ -183,7 +216,8 @@ export const WebRTCProvider = ({ children }) => {
 
     return (
         <WebRTCContext.Provider value={{
-            isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute
+            isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute,
+            setPremierStream, remotePremierStream
         }}>
             {children}
         </WebRTCContext.Provider>
