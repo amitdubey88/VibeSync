@@ -532,17 +532,19 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls Overlay - container itself is ALWAYS pointer-events-none to avoid blocking the center */}
-      <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
-        <VideoControls
-          videoRef={videoRef}
-          currentTime={currentTime}
-          duration={duration}
-          isHost={isHost}
-          onLoadClick={() => setShowSourcePicker(true)}
-        />
-        <VideoReactionBar visible={showControls} />
-      </div>
+      {/* Controls Overlay - only render if a video is active/loaded */}
+      {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming) && (
+        <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
+          <VideoControls
+            videoRef={videoRef}
+            currentTime={currentTime}
+            duration={duration}
+            isHost={isHost}
+            onLoadClick={() => setShowSourcePicker(true)}
+          />
+          <VideoReactionBar visible={showControls} />
+        </div>
+      )}
 
       {sourcePicker}
     </div>

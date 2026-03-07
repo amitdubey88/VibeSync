@@ -165,7 +165,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick })
         </button>
         <input
           type="range" min="0" max="1" step="0.05"
-          value={isMuted ? 0 : volume}
+          value={isMutedLocal ? 0 : volume}
           onChange={handleVolume}
           className="w-20 accent-accent-red cursor-pointer"
         />
