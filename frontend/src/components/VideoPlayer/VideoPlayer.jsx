@@ -267,8 +267,8 @@ const VideoPlayer = () => {
       if (roomKey) {
         toast.loading('Encrypting video for security...', { id: 'encrypting' });
         const encryptedBlob = await encryptFile(file, roomKey);
-        // Wrap in File to preserve the filename for the backend's extension check
-        fileToUpload = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
+        // Workaround: Use video/mp4 type even for encrypted blobs to bypass Cloudinary's 10MB 'raw' limit
+        fileToUpload = new File([encryptedBlob], file.name, { type: 'video/mp4' });
         toast.success('Video encrypted!', { id: 'encrypting' });
       }
 

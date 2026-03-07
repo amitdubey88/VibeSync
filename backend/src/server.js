@@ -54,8 +54,8 @@ app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow video serving
 }));
 app.use(cors({ origin: corsOriginFn, credentials: true }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
 }
@@ -125,8 +125,10 @@ app.post('/api/upload', (req, res) => {
 
                     // Pipe the file stream to Cloudinary
                     const result = await new Promise((resolve, reject) => {
-                        // Use 'raw' for encrypted blobs, 'video' for standard media
-                        const resourceType = req.file.mimetype === 'application/octet-stream' ? 'raw' : 'video';
+                        // Use 'video' for anything with a video extension to get the 100MB limit
+                        // even if it's an encrypted octet-stream.
+                        const isVideoExt = req.file.originalname.toLowerCase().match(/\.(mp4|mkv|webm|mov|avi|flv)$/);
+                        const resourceType = isVideoExt ? 'video' : 'raw';
 
                         const cloudStream = cloudinary.uploader.upload_stream(
                             {
