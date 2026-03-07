@@ -103,6 +103,21 @@ export const RoomProvider = ({ children }) => {
     setIsMutedByHost(false);
   }, [socket, room]);
 
+  // ── Smooth Video Time Stepping ──────────────────────────────────────────────
+  // Participants use this for progression when watching a broadcast/live stream
+  useEffect(() => {
+    if (!videoState || !videoState.isPlaying) return;
+
+    const interval = setInterval(() => {
+      setVideoState((prev) => {
+        if (!prev || !prev.isPlaying) return prev;
+        return { ...prev, currentTime: prev.currentTime + 0.1 };
+      });
+    }, 100);
+
+    return () => clearInterval(interval);
+  }, [videoState?.isPlaying, videoState?.lastUpdated]); // Re-sync on pause/play or hard seek
+
   // ── Socket event listeners ────────────────────────────────────────────────
   useEffect(() => {
     if (!socket) return;
@@ -314,12 +329,18 @@ export const RoomProvider = ({ children }) => {
       roomCode: room.code,
       video: encryptedVideo,
       currentTime: opts.currentTime,
+      duration: opts.duration,
       isPlaying: opts.isPlaying,
     });
     
     setCurrentVideo(video); // Update locally with plain text
     if (!opts.preserveState) {
-      setVideoState({ currentTime: opts.currentTime ?? 0, isPlaying: opts.isPlaying ?? false, lastUpdated: Date.now() });
+      setVideoState({ 
+        currentTime: opts.currentTime ?? 0, 
+        duration: opts.duration ?? 0,
+        isPlaying: opts.isPlaying ?? false, 
+        lastUpdated: Date.now() 
+      });
     }
   }, [socket, room, roomKey]);
 

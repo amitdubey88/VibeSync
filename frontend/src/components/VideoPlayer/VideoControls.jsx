@@ -113,8 +113,13 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
     }
   }, [videoRef]);
 
-  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading';
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || (currentVideo?.type === 'live' || currentVideo?.type === 'uploading');
+  
+  // For participants in live mode, use the synced time/duration from host
+  const displayTime = (!isHost && isLive && videoState?.currentTime) ? videoState.currentTime : currentTime;
+  const displayDuration = (duration > 0 && duration !== Infinity) ? duration : (videoState?.duration || 0);
+  
+  const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
   return (
     <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 transition-all duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
@@ -174,7 +179,7 @@ const VideoControls = ({ videoRef, currentTime, duration, isHost, onLoadClick, v
 
         {/* Time */}
         <span className="text-white/70 text-xs font-mono select-none ml-1">
-          {formatTime(currentTime)} / {formatTime(duration)}
+          {formatTime(displayTime)} / {formatTime(displayDuration)}
         </span>
 
         {/* Mic toggle */}

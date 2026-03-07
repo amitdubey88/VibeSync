@@ -43,8 +43,9 @@ module.exports = (io, socket, roomStore) => {
         room.currentVideo = video;
         // Preserve playback position if provided (background upload scenario)
         const t = (typeof currentTime === 'number') ? currentTime : 0;
+        const dur = (typeof duration === 'number') ? duration : 0;
         const playing = isPlaying ?? false;
-        room.videoState = { currentTime: t, isPlaying: playing, lastUpdated: Date.now() };
+        room.videoState = { currentTime: t, duration: dur, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
         if (video && video.url && (video.type === 'file' || video.type === 'url')) {
@@ -70,7 +71,7 @@ module.exports = (io, socket, roomStore) => {
         const { room, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
-        room.videoState = { currentTime, isPlaying: true, lastUpdated: Date.now() };
+        room.videoState = { ...room.videoState, currentTime, isPlaying: true, lastUpdated: Date.now() };
 
         // Broadcast to all OTHER clients (host already played locally)
         const hashedCode = hashRoomCode(roomCode);
@@ -83,7 +84,7 @@ module.exports = (io, socket, roomStore) => {
         const { room, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
-        room.videoState = { currentTime, isPlaying: false, lastUpdated: Date.now() };
+        room.videoState = { ...room.videoState, currentTime, isPlaying: false, lastUpdated: Date.now() };
 
         const hashedCode = hashRoomCode(roomCode);
         socket.to(hashedCode).emit('video:pause', { currentTime });

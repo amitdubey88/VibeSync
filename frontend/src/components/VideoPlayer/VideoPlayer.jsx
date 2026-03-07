@@ -197,6 +197,18 @@ const VideoPlayer = () => {
     if (decryptedUrlRef.current) { URL.revokeObjectURL(decryptedUrlRef.current); decryptedUrlRef.current = null; }
   }, []);
 
+  // Host: sync duration to room state once metadata/source is loaded
+  useEffect(() => {
+    if (isHost && duration > 0 && currentVideo && videoState && (!videoState.duration || videoState.duration === 0)) {
+      setVideoSource(currentVideo, { 
+        currentTime: videoState.currentTime, 
+        duration: duration,
+        isPlaying: videoState.isPlaying,
+        preserveState: true // Don't reset play state
+      });
+    }
+  }, [isHost, duration, currentVideo, videoState?.duration]);
+
   // When Cloudinary URL replaces blob URL: seek to saved position once metadata loads
   const pendingSeekRef = useRef(null);
   useEffect(() => {
@@ -318,7 +330,7 @@ const VideoPlayer = () => {
 
       setVideoSource(
         { url: data.url, type: 'file', title: file.name, e2ee: !!roomKey },
-        { currentTime: ct, isPlaying: false }
+        { currentTime: ct, duration: videoEl.duration, isPlaying: false }
       );
       
       toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 4000 });
