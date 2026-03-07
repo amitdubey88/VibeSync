@@ -141,7 +141,8 @@ export const WebRTCProvider = ({ children }) => {
         if (!socket) return;
         
         const onUserJoined = async ({ socketId }) => {
-            if (!localStreamRef.current || !roomKey) return;
+            // Signal if either a microphone stream OR a premier video stream exists
+            if ((!localStreamRef.current && !premierStreamRef.current) || !roomKey) return;
             const pc = createPeerConnection(socketId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
@@ -151,7 +152,8 @@ export const WebRTCProvider = ({ children }) => {
         };
 
         const onOffer = async ({ fromSocketId, offer, e2ee }) => {
-            if (!localStreamRef.current || !roomKey) return;
+            // Guests can accept video offers even if they haven't enabled their own microphone
+            if (!roomKey) return;
             
             let decryptedOffer = offer;
             if (e2ee) {

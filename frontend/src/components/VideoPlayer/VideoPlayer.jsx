@@ -431,8 +431,14 @@ const VideoPlayer = () => {
             <div>
               <h3 className="text-lg font-bold text-text-primary mb-1">Host is uploading a video</h3>
               <p className="text-text-secondary text-sm font-medium">{currentVideo.title || 'Video'}</p>
-              <p className="text-text-muted text-xs mt-2 flex items-center justify-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> Watching live via Premier Stream…
+              <div className="flex items-center justify-center gap-2 mt-3 mb-2">
+                <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  <span className="text-[10px] font-black tracking-widest uppercase">Live Streaming</span>
+                </div>
+              </div>
+              <p className="text-text-muted text-xs flex items-center justify-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> Watching live via Premier Feed…
               </p>
             </div>
             <div className="flex gap-1.5 mt-2">
@@ -456,13 +462,30 @@ const VideoPlayer = () => {
       onClick={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
-      {/* Background upload progress bar — thin strip at top (host only) */}
+      {/* Background upload progress bar — prominent at top (host only) */}
       {isHost && isUploading && (
-        <div className="absolute top-0 left-0 right-0 z-20 h-1 bg-bg-hover">
+        <div className="absolute top-0 left-0 right-0 z-40 h-3 bg-black/40 backdrop-blur-md overflow-hidden">
           <div
-            className="h-full bg-gradient-to-r from-accent-purple to-accent-red transition-all duration-300"
+            className="h-full bg-gradient-to-r from-accent-purple via-accent-red to-accent-yellow transition-all duration-300 relative"
             style={{ width: `${uploadProgress}%` }}
-          />
+          >
+            {/* Glossy overlay */}
+            <div className="absolute inset-0 bg-white/10" />
+          </div>
+          {/* Percentage label */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] uppercase tracking-tighter">
+              Uploading {uploadProgress}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {/* LIVE Badge (host only) */}
+      {isHost && isUploading && (
+        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600 px-2.5 py-1 rounded-md shadow-lg animate-fade-in">
+          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <span className="text-[10px] font-black text-white tracking-widest uppercase">Live Premier</span>
         </div>
       )}
 
