@@ -67,7 +67,6 @@ export const uploadVideo = async (file, onProgress) => {
             formData.append('timestamp', signData.timestamp);
             formData.append('signature', signData.signature);
             formData.append('folder', signData.folder);
-            formData.append('resource_type', 'video');
 
             const cloudUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/video/upload`;
 

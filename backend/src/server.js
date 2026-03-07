@@ -144,12 +144,13 @@ app.get('/api/upload/sign', (req, res) => {
         if (!useCloudinary) {
             return res.status(400).json({ success: false, message: 'Cloudinary not configured' });
         }
+        // ONLY include parameters that Cloudinary expects in the signature string.
+        // resource_type is NOT one of them for the upload endpoint.
         const params = {
-            resource_type: 'video',
             folder: 'vibesync',
         };
         const signData = generateUploadSignature(params);
-        return res.json({ success: true, ...signData, ...params });
+        return res.json({ success: true, ...signData, folder: params.folder });
     });
 });
 
