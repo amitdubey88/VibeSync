@@ -4,10 +4,14 @@
  */
 const { cloudinary, isConfigured } = require('../config/cloudinary');
 
+const fs = require('fs');
+const path = require('path');
+
 // Try to use MongoDB models gracefully
-let Room;
+let Room, Message;
 try {
     Room = require('../models/Room');
+    Message = require('../models/Message');
 } catch (_) { }
 
 /**
@@ -26,15 +30,16 @@ module.exports = (io, socket, roomStore) => {
     const assertHost = (room) => room && room.hostId === socket.user.id;
 
     // ── room:delete ────────────────────────────────────────────────────────────
-    // Host deletes the room → cleanup Cloudinary file → notify everyone → destroy room
-    socket.on('room:delete', ({ roomCode }) => {
+    // Host deletes the room → cleanup files → wipe DB → notify everyone → destroy room
+    socket.on('room:delete', async ({ roomCode }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room) return socket.emit('error', { message: 'Room not found' });
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can delete the room' });
 
-        // Delete Cloudinary video if the current video was uploaded there
         const videoUrl = room.currentVideo?.url;
+
+        // 1. Cleanup Cloudinary video
         if (videoUrl && isConfigured() && videoUrl.includes('res.cloudinary.com')) {
             const publicId = extractPublicId(videoUrl);
             if (publicId) {
@@ -44,23 +49,41 @@ module.exports = (io, socket, roomStore) => {
                 });
             }
         }
+        // 2. Cleanup Local disk video
+        else if (videoUrl && videoUrl.startsWith('/uploads/')) {
+            const fileName = videoUrl.replace('/uploads/', '');
+            const filePath = path.join(__dirname, '..', '..', 'uploads', fileName);
+            if (fs.existsSync(filePath)) {
+                fs.unlink(filePath, (err) => {
+                    if (err) console.error('[fs] local delete error:', err.message);
+                    else console.log(`[fs] deleted local video: ${fileName}`);
+                });
+            }
+        }
 
-        // Notify everyone before destroying
+        // Notify everyone BEFORE destroying
         io.to(code).emit('room:deleted', {
-            message: 'The host has ended the room.',
+            message: 'The host has ended the room and wiped all session data.',
             deletedBy: socket.user.username,
         });
 
-        // Remove room from store
+        // Remove room from in-memory store
         roomStore.delete(code);
 
-        // Deactivate in DB to prevent re-hydrating later
-        if (Room) {
-            Room.updateOne({ code }, { $set: { isActive: false } })
-                .catch(e => console.warn('[rooms/delete] DB deactivate failed:', e.message));
+        // 3. Permanent Cascading Delete in MongoDB
+        if (Room && Message) {
+            try {
+                // Delete the room record
+                await Room.deleteOne({ code });
+                // Delete all messages associated with this room code
+                await Message.deleteMany({ roomId: code });
+                console.log(`[db] Wiped all data for room ${code}`);
+            } catch (e) {
+                console.error('[rooms/delete] DB wipe failed:', e.message);
+            }
         }
 
-        console.log(`🗑️  Room ${code} deleted by ${socket.user.username}`);
+        console.log(`🗑️  Room ${code} and its data permanently deleted by ${socket.user.username}`);
     });
 
     // ── room:toggle-lock ──────────────────────────────────────────────────────
