@@ -113,6 +113,14 @@ export const WebRTCProvider = ({ children }) => {
         try {
             // Only request mic if NOT passive
             if (!isPassive) {
+                // Stop any existing mic tracks FIRST to prevent 'mic in use by another app' error.
+                // This happens when joinVoice(false) is called while localStreamRef is still active
+                // (e.g. after a soft reconnect via onPremierStarted) causing the browser to reject
+                // a second getUserMedia request for the same device on some OS/browser combos.
+                if (localStreamRef.current) {
+                    localStreamRef.current.getTracks().forEach((t) => t.stop());
+                    localStreamRef.current = null;
+                }
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
                 
@@ -293,12 +301,15 @@ export const WebRTCProvider = ({ children }) => {
             Object.keys(peersRef.current).forEach(closePeer);
             // Reset passive join guard so we can re-join
             hasJoinedPassivelyRef.current = false;
-            // Re-emit voice:join — server will send voice:user-joined to host,
-            // who creates a brand-new connection WITH premierStreamRef tracks.
-            if (roomCode) {
-                socket.emit('voice:join', { roomCode, passive: true });
-                hasJoinedPassivelyRef.current = true;
-            }
+            // Small delay before re-joining: the host emits 'voice:premier-started'
+            // and IMMEDIATELY after closes its own peers. If we re-join too fast
+            // the host may not yet have premierStreamRef set. 300ms is safe.
+            setTimeout(() => {
+                if (roomCode && socket?.connected) {
+                    socket.emit('voice:join', { roomCode, passive: true });
+                    hasJoinedPassivelyRef.current = true;
+                }
+            }, 300);
         };
 
         socket.on('voice:user-joined', onUserJoined);

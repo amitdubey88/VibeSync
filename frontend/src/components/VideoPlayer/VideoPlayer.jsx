@@ -133,6 +133,8 @@ const VideoPlayer = () => {
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
+  // Ref to the participant's remote-stream video element so we can keep srcObject in sync
+  const remotePremierVideoRef = useRef(null);
 
   // Live ref so the upload callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
@@ -145,8 +147,21 @@ const VideoPlayer = () => {
 
   useVideoSync(videoEl);
 
-  // Keep live refs updated
-  useEffect(() => { currentTimeRef.current = currentTime; }, [currentTime]);
+  // ── Keep participant's live stream video srcObject in sync ─────────────────
+  // The ref callback on the <video> element only fires on mount. If
+  // remotePremierStream arrives or changes AFTER the element is already in the
+  // DOM (e.g. after the force-reconnect on voice:premier-started), srcObject
+  // would never be updated and the video stays blank. This effect fixes that.
+  useEffect(() => {
+    const el = remotePremierVideoRef.current;
+    if (!el) return;
+    if (remotePremierStream && el.srcObject !== remotePremierStream) {
+      el.srcObject = remotePremierStream;
+      el.play().catch(() => {}); // autoplay might need a nudge
+    } else if (!remotePremierStream) {
+      el.srcObject = null;
+    }
+  }, [remotePremierStream]);
 
   useEffect(() => {
     if (!videoEl) return;
@@ -470,12 +485,14 @@ const VideoPlayer = () => {
           remotePremierStream ? (
             <video 
               autoPlay 
-              defaultMuted={true} // Allow volume control later
               playsInline 
               className="w-full h-full object-contain"
               ref={(el) => {
+                // Store ref for the srcObject-sync useEffect above
+                remotePremierVideoRef.current = el;
                 setVideoRef(el);
-                if (el && el.srcObject !== remotePremierStream) {
+                // Set srcObject on first mount if stream already available
+                if (el && remotePremierStream && el.srcObject !== remotePremierStream) {
                     el.srcObject = remotePremierStream;
                 }
               }}
