@@ -178,7 +178,9 @@ export const WebRTCProvider = ({ children }) => {
                 } else {
                     setVoiceError('Could not access microphone. You can still listen without one.');
                 }
-                socket.emit('voice:join', { roomCode, passive: true });
+                // Do NOT re-emit voice:join — it was already sent above (line 144).
+                // A second emit causes voice:user-joined to fire again on other clients
+                // → duplicate peer connections → audio glitching.
             }
         }
     }, [socket, roomCode, roomKey]);

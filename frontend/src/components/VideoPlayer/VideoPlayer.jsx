@@ -126,6 +126,7 @@ const VideoPlayer = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
+  const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
@@ -174,14 +175,18 @@ const VideoPlayer = () => {
     const onCanPlay = () => setIsLoading(false);
     const onPlayEv = () => {
       isPlayingRef.current = true;
-      // When host plays a live stream, start broadcasting to participants
-      if (isHost && (currentVideo?.type === 'live' || isDirectStreaming || isUploading)) {
-        if (videoEl.captureStream) {
-          try {
-            const stream = videoEl.captureStream(40);
-            setPremierStream(stream);
-          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
-        }
+      // For uploads, start broadcast immediately on play.
+      // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
+      const shouldBroadcast = isHost && (
+        isUploading || 
+        ((currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitialized)
+      );
+      
+      if (shouldBroadcast && videoEl.captureStream) {
+        try {
+          const stream = videoEl.captureStream(40);
+          setPremierStream(stream);
+        } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
       }
     };
     const onPauseEv = () => {
@@ -214,6 +219,7 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (!isHost) return;
     setPremierStream(null);
+    setIsLiveStreamingInitialized(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.url]);
 
@@ -533,16 +539,42 @@ const VideoPlayer = () => {
           )
         ) : activeSrc ? (
           /* Normal Playback (Host, or Guest with file sync) */
-          <video
-            ref={setVideoRef}
-            key={activeSrc}
-            className="w-full h-full object-contain"
-            src={activeSrc}
-            playsInline
-            preload="auto"
-            autoPlay={isHost && !!blobUrl && currentVideo?.type !== 'live'}
-            onCanPlay={() => setIsLoading(false)}
-          />
+          <div className="relative w-full h-full">
+            <video
+              ref={setVideoRef}
+              key={activeSrc}
+              className="w-full h-full object-contain"
+              src={activeSrc}
+              playsInline
+              preload="auto"
+              autoPlay={isHost && !!blobUrl && currentVideo?.type !== 'live'}
+              onCanPlay={() => setIsLoading(false)}
+            />
+            {/* Start Streaming Overlay for Host */}
+            {isHost && (currentVideo?.type === 'live' || isDirectStreaming) && !isLiveStreamingInitialized && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
+                <div className="flex flex-col items-center max-w-sm text-center animate-fade-in fade-in-up">
+                  <div className="w-20 h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-6">
+                    <span className="w-8 h-8 rounded-full bg-accent-red animate-pulse shadow-[0_0_30px_rgba(255,51,102,0.6)]" />
+                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-2">Ready to Go Live</h3>
+                  <p className="text-gray-300 text-sm mb-8 px-4">
+                    Your video is loaded locally. Click below when you're ready to start broadcasting to all participants.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setIsLiveStreamingInitialized(true);
+                      if (videoEl) videoEl.play().catch(() => {});
+                    }}
+                    className="flexItems-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
+                  >
+                    ▶ Start Streaming
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
         ) : (
           /* Landing / Empty State */
           <div className="relative z-40 flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
