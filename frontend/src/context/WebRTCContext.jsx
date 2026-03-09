@@ -33,6 +33,9 @@ export const WebRTCProvider = ({ children }) => {
     const isInVoiceRef = useRef(false);
     useEffect(() => { isInVoiceRef.current = isInVoice; }, [isInVoice]);
 
+    const isHostRef = useRef(false);
+    useEffect(() => { isHostRef.current = room?.hostId === user?.id; }, [room?.hostId, user?.id]);
+
     // ── Remote premier video stream (set when participant receives video) ──────
     const [remotePremierStream, setRemotePremierStream] = useState(null);
     // True from the moment host announces a stream until it ends or host stops.
@@ -78,6 +81,11 @@ export const WebRTCProvider = ({ children }) => {
                 }
                 audio.srcObject = stream;
                 audio.muted = !isInVoiceRef.current;
+                
+                // Explicitly call play() to handle potential autoplay blocks
+                if (!audio.muted) {
+                    audio.play().catch(err => console.warn('[Voice] AutoPlay blocked for incoming voice:', err));
+                }
             }, 150);
         };
 
@@ -334,6 +342,18 @@ export const WebRTCProvider = ({ children }) => {
     useEffect(() => {
         if (!socket) return;
 
+        // Auto-sync active stream to participants who join late
+        const onParticipantUpdate = ({ participants }) => {
+            if (!isHostRef.current || !premierStreamRef.current) return;
+            participants.forEach(p => {
+                if (p.socketId !== socket.id && !videoPeersRef.current[p.socketId]) {
+                    console.log(`[VideoStream] Late joiner detected (${p.username}), sending targeted stream announce`);
+                    socket.emit('video-stream:announce', { roomCode, targetSocketId: p.socketId });
+                    videoPeersRef.current[p.socketId] = 'pending'; // prevent duplicate announcements
+                }
+            });
+        };
+
         // Participant receives this when the host starts a live stream.
         // Create a video-only peer connection and send an offer to the host.
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
@@ -396,6 +416,7 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('video-stream:answer',    onVideoStreamAnswer);
         socket.on('video-stream:ice',       onVideoStreamIce);
         socket.on('video-stream:ended',     onVideoStreamEnded);
+        socket.on('room:participant-update', onParticipantUpdate);
 
         return () => {
             socket.off('video-stream:announced', onVideoStreamAnnounced);
@@ -403,6 +424,7 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('video-stream:answer',    onVideoStreamAnswer);
             socket.off('video-stream:ice',       onVideoStreamIce);
             socket.off('video-stream:ended',     onVideoStreamEnded);
+            socket.off('room:participant-update', onParticipantUpdate);
         };
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
 

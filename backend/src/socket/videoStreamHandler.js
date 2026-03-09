@@ -15,14 +15,20 @@ const { hashRoomCode } = require('../utils/hash');
 
 module.exports = (io, socket, roomStore) => {
     // ── video-stream:announce ──────────────────────────────────────────────────
-    // Host emits this when starting a live stream.
-    // Server relays to ALL room members so they auto-connect to receive video.
-    socket.on('video-stream:announce', ({ roomCode }) => {
+    // Host emits this when starting a live stream, or when a new user joins.
+    // Server relays to ALL room members (or a specific target) so they auto-connect.
+    socket.on('video-stream:announce', ({ roomCode, targetSocketId }) => {
         const room = roomStore.get(roomCode);
         if (!room) return;
         const hashedCode = hashRoomCode(roomCode);
-        // Tell all OTHER sockets in the room to initiate a video connection
-        socket.to(hashedCode).emit('video-stream:announced', { hostSocketId: socket.id });
+
+        if (targetSocketId) {
+            // Tell a specific new socket to initiate a video connection
+            io.to(targetSocketId).emit('video-stream:announced', { hostSocketId: socket.id });
+        } else {
+            // Tell all OTHER sockets in the room to initiate a video connection
+            socket.to(hashedCode).emit('video-stream:announced', { hostSocketId: socket.id });
+        }
     });
 
     // ── video-stream:ended ─────────────────────────────────────────────────────
