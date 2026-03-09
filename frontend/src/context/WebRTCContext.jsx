@@ -182,26 +182,20 @@ export const WebRTCProvider = ({ children }) => {
                 if (audioTrack && roomKey) {
                     for (const [targetSocketId, pc] of Object.entries(peersRef.current)) {
                         const senders = pc.getSenders();
-                        const existing = senders.find(s => s.track?.kind === 'audio' || (!s.track && pc.getTransceivers().some(t => t.sender === s && t.receiver.track.kind === 'audio')));
+                        // Find the existing audio sender
+                        const existing = senders.find(s => !s.track || s.track.kind === 'audio');
                         
                         let targetSender;
                         if (existing) {
-                            if (!existing.track) {
-                                // Passive transceiver (no MSID). Remove it and create a new one to guarantee robust ontrack firing and MSID mapping.
-                                pc.removeTrack(existing);
-                                targetSender = pc.addTrack(audioTrack, stream);
-                            } else {
-                                // Active transceiver (has MSID). Safe to replace track.
-                                await existing.replaceTrack(audioTrack);
-                                targetSender = existing;
-                            }
+                            await existing.replaceTrack(audioTrack);
+                            targetSender = existing;
                         } else {
                             targetSender = pc.addTrack(audioTrack, stream);
                         }
                         
                         // Force a renegotiation on the active transceiver
                         const transceivers = pc.getTransceivers();
-                        const activeTc = transceivers.find(t => t.sender === targetSender);
+                        const activeTc = transceivers.find(t => t.sender === targetSender || t.receiver.track.kind === 'audio');
                         if (activeTc) activeTc.direction = 'sendrecv';
 
                         const offer = await pc.createOffer();
