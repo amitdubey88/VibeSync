@@ -44,7 +44,7 @@ async function hydrateRoom(req, code) {
         const dbRoom = await Room.findOne({ code: hashedCode, isActive: true }).lean();
         if (!dbRoom) return null;
         const roomData = {
-            code: dbRoom.code,
+            code: code,  // Use the plain room code (not the hash stored in DB)
             name: dbRoom.name,
             hostId: dbRoom.hostId,
             type: dbRoom.type,

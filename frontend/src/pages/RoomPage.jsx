@@ -76,15 +76,33 @@ const RoomPage = () => {
 
     init();
 
+    // Cleanup ONLY removes the error listener.
+    // leaveRoom is handled by the unmount effect below — NOT here.
+    // Previously, having leaveRoom() here caused it to fire on every
+    // reconnect (because isConnected is a dependency), clearing room
+    // state and causing "room not found" errors on reconnect.
     return () => {
       socket.off('room:join-error', onJoinError);
-      leaveRoom();
     };
   }, [socket, isConnected, isAuthenticated]);
 
+  // Leave room on component unmount (page navigation away).
+  // Kept separate so it only fires once when the component truly unmounts,
+  // not on every reconnect cycle.
+  const leaveRoomRef = useRef(leaveRoom);
+  useEffect(() => { leaveRoomRef.current = leaveRoom; }, [leaveRoom]);
+  useEffect(() => {
+    return () => { leaveRoomRef.current(); };
+  }, []);
+
   // Track whether we've ever received a room:state (guards against false-positive redirect)
   const hasEverHadRoom = useRef(false);
-  useEffect(() => { if (room) hasEverHadRoom.current = true; }, [room]);
+  const ghostRedirectTimer = useRef(null);
+  const roomRef = useRef(room); // always-current ref to avoid stale closures in setTimeout
+  useEffect(() => {
+    roomRef.current = room;
+    if (room) hasEverHadRoom.current = true;
+  }, [room]);
 
   // Redirect to home if room ended
   useEffect(() => {
@@ -94,12 +112,30 @@ const RoomPage = () => {
     }
   }, [roomEndedByHost, navigate, dismissRoomEnded]);
 
-  // Ghost-room guard: only fires after the room was real and became null
-  // (e.g. deleted, kicked, or user presses Back to a dead room URL)
+  // Ghost-room guard: only fires after the room was real and became null.
+  // We debounce by 4 seconds to allow socket reconnection to restore the room
+  // before we redirect (avoids kicking users on temporary disconnects).
   useEffect(() => {
     if (!joining && !room && !error && hasEverHadRoom.current) {
-      navigate('/', { replace: true });
+      ghostRedirectTimer.current = setTimeout(() => {
+        // Re-check via ref: if room has been restored by reconnect, don't redirect
+        if (!roomRef.current && hasEverHadRoom.current) {
+          navigate('/', { replace: true });
+        }
+      }, 4000);
+    } else {
+      // Room is back (reconnected) — cancel any pending redirect
+      if (ghostRedirectTimer.current) {
+        clearTimeout(ghostRedirectTimer.current);
+        ghostRedirectTimer.current = null;
+      }
     }
+    return () => {
+      if (ghostRedirectTimer.current) {
+        clearTimeout(ghostRedirectTimer.current);
+        ghostRedirectTimer.current = null;
+      }
+    };
   }, [room, joining, error]);
 
   // Refresh participant list when switching to participants tab

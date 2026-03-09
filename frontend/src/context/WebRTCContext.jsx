@@ -19,6 +19,7 @@ export const WebRTCProvider = ({ children }) => {
     const premierStreamRef = useRef(null);
     const [remotePremierStream, setRemotePremierStream] = useState(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
+    const hasJoinedPassivelyRef = useRef(false); // prevent duplicate passive joins
     
     // Mute/unmute all remote audio elements when our voice status changes
     useEffect(() => {
@@ -224,6 +225,9 @@ export const WebRTCProvider = ({ children }) => {
     }, [roomCode, roomKey, socket]);
 
 
+    // ── Socket event listeners for WebRTC signaling ─────────────────────────
+    // NOTE: These are kept separate from the passive join so that listeners
+    // are always registered, even before roomKey is ready.
     useEffect(() => {
         if (!socket) return;
         
@@ -294,10 +298,6 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('voice:user-left', onUserLeft);
         socket.on('room:muted', onMutedByHost);
 
-        // Passive registration: join voice signaling pool automatically
-        // This ensures video streams are received immediately upon joining
-        joinVoice(true);
-
         return () => {
             socket.off('voice:user-joined', onUserJoined);
             socket.off('voice:offer', onOffer);
@@ -307,6 +307,28 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('room:muted', onMutedByHost);
         };
     }, [socket, roomCode, createPeerConnection, closePeer, roomKey]);
+
+    // ── Passive voice join: wait for BOTH socket AND roomKey ─────────────────
+    // This is the critical fix for Bug 2: participants couldn't see the live
+    // stream video unless they manually toggled voice. The root cause was that
+    // joinVoice(true) was called before roomKey was derived (it's async),
+    // causing the signaling pool join to happen with a null key. All subsequent
+    // WebRTC handshakes would fail silently because encryption requires the key.
+    useEffect(() => {
+        if (!socket || !roomCode || !roomKey) return;
+        // Only perform passive join once per room session
+        if (hasJoinedPassivelyRef.current) return;
+        hasJoinedPassivelyRef.current = true;
+        console.log('[WebRTC] roomKey ready — joining voice signaling pool (passive)');
+        joinVoice(true);
+    }, [socket, roomCode, roomKey, joinVoice]);
+
+    // Reset passive join flag when leaving a room
+    useEffect(() => {
+        if (!roomCode) {
+            hasJoinedPassivelyRef.current = false;
+        }
+    }, [roomCode]);
 
     return (
         <WebRTCContext.Provider value={{
