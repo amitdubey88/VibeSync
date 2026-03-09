@@ -175,6 +175,8 @@ const VideoPlayer = () => {
     const onCanPlay = () => setIsLoading(false);
     const onPlayEv = () => {
       isPlayingRef.current = true;
+    };
+    const onPlayingEv = () => {
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
       const shouldBroadcast = isHost && (
@@ -183,10 +185,14 @@ const VideoPlayer = () => {
       );
       
       if (shouldBroadcast && videoEl.captureStream) {
-        try {
-          const stream = videoEl.captureStream(40);
-          setPremierStream(stream);
-        } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
+        // Delay captureStream slightly to ensure the video has actually painted a frame,
+        // otherwise captureStream might return a stream of black frames.
+        setTimeout(() => {
+          try {
+            const stream = videoEl.captureStream(40);
+            setPremierStream(stream);
+          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
+        }, 150);
       }
     };
     const onPauseEv = () => {
@@ -201,6 +207,7 @@ const VideoPlayer = () => {
     videoEl.addEventListener('waiting', onWaiting);
     videoEl.addEventListener('canplay', onCanPlay);
     videoEl.addEventListener('play', onPlayEv);
+    videoEl.addEventListener('playing', onPlayingEv);
     videoEl.addEventListener('pause', onPauseEv);
     videoEl.addEventListener('ended', onPauseEv);
 
@@ -210,10 +217,11 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('waiting', onWaiting);
       videoEl.removeEventListener('canplay', onCanPlay);
       videoEl.removeEventListener('play', onPlayEv);
+      videoEl.removeEventListener('playing', onPlayingEv);
       videoEl.removeEventListener('pause', onPauseEv);
       videoEl.removeEventListener('ended', onPauseEv);
     };
-  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, isUploading, setPremierStream]);
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, isUploading, setPremierStream, isLiveStreamingInitialized]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
@@ -504,6 +512,7 @@ const VideoPlayer = () => {
             <video 
               autoPlay 
               playsInline 
+              muted // muted by default to guarantee autoplay, users can use standard volume controls
               className="w-full h-full object-contain"
               ref={(el) => {
                 // Store ref for the srcObject-sync useEffect above
