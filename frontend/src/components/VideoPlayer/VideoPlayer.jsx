@@ -108,7 +108,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
   const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading, syncDuration } = useRoom();
-  const { setPremierStream, remotePremierStream } = useWebRTC();
+  const { setPremierStream, remotePremierStream, isStreamAnnounced } = useWebRTC();
   const { user } = useAuth();
   const { socket } = useSocket();
   const videoRef = useRef(null);
@@ -186,10 +186,10 @@ const VideoPlayer = () => {
     };
     const onPauseEv = () => {
       isPlayingRef.current = false;
-      // When host pauses a live stream, stop broadcasting
-      if (isHost && (currentVideo?.type === 'live' || isDirectStreaming || isUploading)) {
-        setPremierStream(null);
-      }
+      // When host pauses, do NOT stop the stream.
+      // captureStream keeps sending the frozen current frame — participants
+      // see the paused frame rather than the 'Connecting to Feed...' screen.
+      // Stream is only fully stopped on 'ended' or source change.
     };
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
@@ -492,8 +492,8 @@ const VideoPlayer = () => {
 
       {/* Main Content Area */}
       <div className="w-full h-full flex items-center justify-center">
-        {!isHost && (currentVideo?.type === 'uploading' || currentVideo?.type === 'live') ? (
-          /* Participant: Show Direct/Premier Feed */
+        {!isHost && (remotePremierStream || isStreamAnnounced) ? (
+          /* Participant: Show Direct/Premier Feed — only visible once host presses play */
           remotePremierStream ? (
             <video 
               autoPlay 

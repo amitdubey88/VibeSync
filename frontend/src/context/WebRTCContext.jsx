@@ -35,6 +35,10 @@ export const WebRTCProvider = ({ children }) => {
 
     // ── Remote premier video stream (set when participant receives video) ──────
     const [remotePremierStream, setRemotePremierStream] = useState(null);
+    // True from the moment host announces a stream until it ends or host stops.
+    // Used by VideoPlayer to show 'Connecting to Feed...' only while host is
+    // actively broadcasting (not just because currentVideo.type === 'live').
+    const [isStreamAnnounced, setIsStreamAnnounced] = useState(false);
 
     // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
@@ -306,10 +310,9 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
             if (!roomKey) return;
             console.log('[VideoStream] Host announced stream — connecting for video');
-            // Close any old video connection to this host
+            setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
             closeVideoPeer(hostSocketId);
             const pc = createVideoPeerConnection(hostSocketId);
-            // Create an offer with recvonly transceivers so host knows to send video
             pc.addTransceiver('video', { direction: 'recvonly' });
             pc.addTransceiver('audio', { direction: 'recvonly' });
             const offer = await pc.createOffer();
@@ -356,6 +359,7 @@ export const WebRTCProvider = ({ children }) => {
             console.log('[VideoStream] Host ended live stream');
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
             setRemotePremierStream(null);
+            setIsStreamAnnounced(false); // hide Connecting screen
         };
 
         socket.on('video-stream:announced', onVideoStreamAnnounced);
@@ -384,7 +388,7 @@ export const WebRTCProvider = ({ children }) => {
         <WebRTCContext.Provider value={{
             isInVoice, isMuted, voiceError,
             joinVoice, leaveVoice, toggleMute,
-            setPremierStream, remotePremierStream,
+            setPremierStream, remotePremierStream, isStreamAnnounced,
         }}>
             {children}
         </WebRTCContext.Provider>
