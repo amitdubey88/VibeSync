@@ -221,24 +221,14 @@ const YouTubePlayer = ({ videoId }) => {
 
         {isFullscreen && (
           <div className="flex items-center gap-2">
-            {!isInVoice ? (
-              <button
-                onClick={joinVoice}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-accent-purple/80 hover:bg-accent-purple backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg"
-              >
-                <Phone className="w-4 h-4" />
-                <span>Join Audio</span>
-              </button>
-            ) : (
-              <button
-                onClick={toggleMute}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg
-                  ${isMuted ? 'bg-red-500/80 hover:bg-red-500' : 'bg-green-500/80 hover:bg-green-500'}`}
-              >
-                {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-                <span>{isMuted ? 'Unmute' : 'Mute'}</span>
-              </button>
-            )}
+            <button
+              onClick={toggleMute}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl backdrop-blur-md border border-white/10 text-white text-xs font-semibold transition-all duration-200 shadow-lg
+                ${isMuted ? 'bg-red-500/80 hover:bg-red-500' : 'bg-green-500/80 hover:bg-green-500'}`}
+            >
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              <span>{isMuted ? 'Unmute' : 'Mute'}</span>
+            </button>
           </div>
         )}
       </div>

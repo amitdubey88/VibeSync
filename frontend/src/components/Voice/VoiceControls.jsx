@@ -29,38 +29,20 @@ const VoiceControls = () => {
       )}
 
       <div className="flex gap-2">
-        {/* Join / Leave */}
+        {/* Mute toggle as primary button */}
         <button
-          onClick={isInVoice ? leaveVoice : joinVoice}
+          onClick={toggleMute}
           className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-sm font-semibold transition-all duration-200
-            ${isInVoice
+            ${isMuted
               ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/30'
               : 'bg-accent-green/10 text-accent-green hover:bg-accent-green/20 border border-accent-green/30'
             }`}
+          title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
         >
-          {isInVoice ? (
-            <><PhoneOff className="w-4 h-4" /> Leave</>
-          ) : (
-             <><PhoneCall className="w-4 h-4" /> Join Voice</>
-          )}
+          {isMuted ? <><MicOff className="w-4 h-4" /> Unmute</> : <><Mic className="w-4 h-4" /> Mute</>}
         </button>
 
-        {/* Mute toggle (only when in call) */}
-        {isInVoice && (
-          <button
-            onClick={toggleMute}
-            className={`btn-icon w-10 h-10 rounded-lg border transition-all duration-200
-              ${isMuted
-                ? 'bg-red-500/10 text-red-400 border-red-500/30'
-                : 'bg-bg-hover text-text-secondary border-border-light hover:text-text-primary'
-              }`}
-            title={isMuted ? 'Unmute' : 'Mute'}
-          >
-            {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
-          </button>
-        )}
-
-        {/* Mute All (only for host, when in call) */}
+        {/* Mute All (only for host) */}
         {isHost && isInVoice && (
           <button
             onClick={muteAllParticipants}

@@ -123,20 +123,6 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
 
   return (
     <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 transition-all duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-      {/* ── Contextual Action Layer (Join Audio) ── */}
-      {/* ── Contextual Action Layer (Join Audio) ── */}
-      {!isInVoice && (
-        <div className="absolute -top-16 left-1/2 -translate-x-1/2 animate-bounce-subtle z-50 pointer-events-none">
-           <button
-             onClick={() => joinVoice(true)}
-             className="pointer-events-auto flex items-center gap-2 px-6 py-2.5 rounded-full bg-accent-purple/90 hover:bg-accent-purple backdrop-blur-md border border-white/30 text-white text-[10px] font-black uppercase tracking-widest transition-all duration-300 shadow-[0_10px_30px_rgba(168,85,247,0.5)] whitespace-nowrap"
-           >
-             <Phone className="w-4 h-4" />
-             <span>Join Live Audio</span>
-           </button>
-        </div>
-      )}
-
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
         className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
@@ -185,17 +171,17 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
         {/* Mic toggle */}
         <div className="flex items-center gap-1.5 ml-2">
           {voiceError ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse">
+            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse pointer-events-none">
               <MicOff className="w-3 h-3" />
               <span>Mic Denied</span>
             </div>
           ) : (
             <button
               onClick={toggleMute}
-              className={`btn-icon rounded-full w-8 h-8 transition-all ${isMuted || !isInVoice ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}
-              title={!isInVoice ? 'Join Voice' : isMuted ? 'Unmute Mic' : 'Mute Mic'}
+              className={`btn-icon rounded-full w-8 h-8 transition-all ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}
+              title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
             >
-              {isMuted || !isInVoice ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
             </button>
           )}
         </div>

@@ -233,7 +233,10 @@ export const WebRTCProvider = ({ children }) => {
     const toggleMute = useCallback(async () => {
         if (!localStreamRef.current) {
             await joinVoice(false);
-            if (localStreamRef.current) setIsMuted(false);
+            if (localStreamRef.current) {
+                setIsMuted(false);
+                if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: false });
+            }
             return;
         }
         const newMuted = !isMuted;
@@ -241,6 +244,14 @@ export const WebRTCProvider = ({ children }) => {
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, joinVoice, socket, roomCode]);
+
+    // ── Auto-join Passive Voice on Room Entry ────────────────────────────────
+    useEffect(() => {
+        if (socket && roomCode && !hasJoinedPassivelyRef.current && !isInVoiceRef.current) {
+            hasJoinedPassivelyRef.current = true;
+            joinVoice(true).catch(console.error);
+        }
+    }, [socket, roomCode, joinVoice]);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // LIVE STREAM API (host side)
