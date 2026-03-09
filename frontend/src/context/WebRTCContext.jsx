@@ -111,34 +111,37 @@ export const WebRTCProvider = ({ children }) => {
 
     const joinVoice = useCallback(async (isPassive = false) => {
         if (!socket || !roomCode) return;
-        try {
-            // Only request mic if NOT passive
-            if (!isPassive) {
-                // Stop any existing mic tracks FIRST to prevent 'mic in use by another app' error.
-                // This happens when joinVoice(false) is called while localStreamRef is still active
-                // (e.g. after a soft reconnect via onPremierStarted) causing the browser to reject
-                // a second getUserMedia request for the same device on some OS/browser combos.
+
+        // ── Step 1: Register in voice signaling pool FIRST ──────────────────
+        // This MUST happen before mic access so that:
+        //   a) The server voice:participant count updates immediately (shows 1 not 0)
+        //   b) If mic access fails the user still joins as a passive listener
+        setIsInVoice(true);
+        setVoiceError(null);
+        socket.emit('voice:join', { roomCode, passive: isPassive });
+
+        // ── Step 2: Optionally acquire microphone ────────────────────────────
+        if (!isPassive) {
+            try {
+                // Stop any existing mic tracks FIRST to prevent 'mic in use' error
                 if (localStreamRef.current) {
                     localStreamRef.current.getTracks().forEach((t) => t.stop());
                     localStreamRef.current = null;
                 }
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
-                
-                // CRITICAL: Update all existing peer connections with the newly captured audio track
+
+                // Push the new audio track into all existing peer connections
                 const audioTrack = stream.getAudioTracks()[0];
                 if (audioTrack && roomKey) {
                     const peers = Object.entries(peersRef.current);
                     for (const [targetSocketId, pc] of peers) {
-                        // Check if we already have an audio sender
                         const senders = pc.getSenders();
                         const audioSender = senders.find(s => s.track?.kind === 'audio');
-                        
                         if (audioSender) {
                             audioSender.replaceTrack(audioTrack);
                         } else {
                             pc.addTrack(audioTrack, stream);
-                            // Renegotiate
                             const offer = await pc.createOffer();
                             await pc.setLocalDescription(offer);
                             const encryptedOffer = await encryptData(offer, roomKey);
@@ -146,19 +149,18 @@ export const WebRTCProvider = ({ children }) => {
                         }
                     }
                 }
-            }
-            setIsInVoice(true);
-            
-            setVoiceError(null);
-            socket.emit('voice:join', { roomCode, passive: isPassive });
-        } catch (err) {
-            console.error('[WebRTC] Mic access error:', err);
-            if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                setVoiceError('Microphone permission denied. Please enable it in your browser settings.');
-            } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                setVoiceError('No microphone found on your device.');
-            } else {
-                setVoiceError('Could not access microphone. It may be in use by another app.');
+            } catch (err) {
+                // Mic failed — user remains in voice but as passive listener
+                console.error('[WebRTC] Mic access error:', err);
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    setVoiceError('Microphone permission denied. Please enable it in your browser settings.');
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    setVoiceError('No microphone found. You can still listen to others.');
+                } else {
+                    setVoiceError('Could not access microphone. You can still listen without one.');
+                }
+                // Re-emit as passive so server marks the correct state
+                socket.emit('voice:join', { roomCode, passive: true });
             }
         }
     }, [socket, roomCode, roomKey]);
