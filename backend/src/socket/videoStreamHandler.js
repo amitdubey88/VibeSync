@@ -1,0 +1,57 @@
+/**
+ * videoStreamHandler.js
+ *
+ * Dedicated WebRTC signaling relay for live video streaming.
+ * Completely separate from the voice channel — video is automatically
+ * received by ALL room participants without needing to join voice.
+ *
+ * Flow:
+ *   Host starts stream → emit video-stream:announce
+ *   Server relays → video-stream:announced to all room members
+ *   Participants respond with video-stream:request (offer) to host
+ *   Host answers with video stream tracks → participants see video
+ */
+const { hashRoomCode } = require('../utils/hash');
+
+module.exports = (io, socket, roomStore) => {
+    // ── video-stream:announce ──────────────────────────────────────────────────
+    // Host emits this when starting a live stream.
+    // Server relays to ALL room members so they auto-connect to receive video.
+    socket.on('video-stream:announce', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const hashedCode = hashRoomCode(roomCode);
+        // Tell all OTHER sockets in the room to initiate a video connection
+        socket.to(hashedCode).emit('video-stream:announced', { hostSocketId: socket.id });
+    });
+
+    // ── video-stream:ended ─────────────────────────────────────────────────────
+    // Host emits this when the live stream stops.
+    socket.on('video-stream:ended', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video-stream:ended');
+    });
+
+    // ── Peer-to-peer relays (host ↔ participant) ───────────────────────────────
+    // These are simple relays — the server never inspects the SDP/ICE payloads.
+
+    socket.on('video-stream:offer', ({ targetSocketId, offer, e2ee }) => {
+        io.to(targetSocketId).emit('video-stream:offer', {
+            fromSocketId: socket.id, offer, e2ee
+        });
+    });
+
+    socket.on('video-stream:answer', ({ targetSocketId, answer, e2ee }) => {
+        io.to(targetSocketId).emit('video-stream:answer', {
+            fromSocketId: socket.id, answer, e2ee
+        });
+    });
+
+    socket.on('video-stream:ice', ({ targetSocketId, candidate, e2ee }) => {
+        io.to(targetSocketId).emit('video-stream:ice', {
+            fromSocketId: socket.id, candidate, e2ee
+        });
+    });
+};

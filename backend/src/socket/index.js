@@ -9,6 +9,7 @@ const syncHandler = require('./syncHandler');
 const chatHandler = require('./chatHandler');
 const voiceHandler = require('./voiceHandler');
 const roomActionsHandler = require('./roomActionsHandler');
+const videoStreamHandler = require('./videoStreamHandler');
 const { hashRoomCode } = require('../utils/hash');
 
 module.exports = (io, roomStore) => {
@@ -32,6 +33,7 @@ module.exports = (io, roomStore) => {
         chatHandler(io, socket, roomStore);
         voiceHandler(io, socket, roomStore);
         roomActionsHandler(io, socket, roomStore);
+        videoStreamHandler(io, socket, roomStore);
 
         // Current room this socket belongs to
         let currentRoomCode = null;

@@ -6,152 +6,167 @@ import { encryptData, decryptData } from '../utils/crypto';
 
 const WebRTCContext = createContext();
 
+const ICE_SERVERS = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+    ],
+};
+
 export const WebRTCProvider = ({ children }) => {
     const { socket } = useSocket();
     const { room, roomKey } = useRoom();
     const { user } = useAuth();
 
+    // ── Voice state ───────────────────────────────────────────────────────────
     const [isInVoice, setIsInVoice] = useState(false);
     const [isMuted, setIsMuted] = useState(true);
     const [voiceError, setVoiceError] = useState(null);
 
-    const localStreamRef = useRef(null);
-    const premierStreamRef = useRef(null);
-    const [remotePremierStream, setRemotePremierStream] = useState(null);
-    const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
-    const hasJoinedPassivelyRef = useRef(false); // prevent duplicate passive joins
-    // Always-current ref for isInVoice — used inside createPeerConnection's ontrack
-    // closure to avoid stale value (createPeerConnection only depends on [socket, roomKey])
+    // ── Refs ──────────────────────────────────────────────────────────────────
+    const localStreamRef    = useRef(null);  // host's mic stream
+    const premierStreamRef  = useRef(null);  // host's captureStream (video file)
+    const peersRef          = useRef({});    // voice-only RTCPeerConnections
+    const videoPeersRef     = useRef({});    // video-stream-only RTCPeerConnections
+    const hasJoinedPassivelyRef = useRef(false);
+    // Always-current ref for isInVoice — avoids stale closure in createPeerConnection
     const isInVoiceRef = useRef(false);
     useEffect(() => { isInVoiceRef.current = isInVoice; }, [isInVoice]);
-    
+
+    // ── Remote premier video stream (set when participant receives video) ──────
+    const [remotePremierStream, setRemotePremierStream] = useState(null);
+
     // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
         document.querySelectorAll('audio[data-socket-id]').forEach(a => { a.muted = !isInVoice; });
     }, [isInVoice]);
-    
+
     const roomCode = room?.code;
 
-    // ── Create a peer connection ─────────────────────────────────────────────
-    const createPeerConnection = useCallback((remoteSocketId) => {
-        const pc = new RTCPeerConnection({
-            iceServers: [
-                { urls: 'stun:stun.l.google.com:19302' },
-                { urls: 'stun:stun1.l.google.com:19302' },
-            ],
-        });
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VOICE peer connections (audio only — mic ↔ mic)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const createVoicePeerConnection = useCallback((remoteSocketId) => {
+        const pc = new RTCPeerConnection(ICE_SERVERS);
 
         pc.onicecandidate = async (event) => {
             if (event.candidate && socket && roomKey) {
-                const encryptedCandidate = await encryptData(event.candidate, roomKey);
-                socket.emit('voice:ice-candidate', {
-                    targetSocketId: remoteSocketId,
-                    candidate: encryptedCandidate,
-                    e2ee: true
-                });
+                const enc = await encryptData(event.candidate, roomKey);
+                socket.emit('voice:ice-candidate', { targetSocketId: remoteSocketId, candidate: enc, e2ee: true });
             }
         };
 
         pc.ontrack = (event) => {
+            // Voice connections only carry audio tracks
+            if (event.track.kind !== 'audio') return;
             const stream = event.streams[0];
-            if (event.track.kind === 'video') {
-                // This is the premier stream broadcast from the host
-                console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
-                setRemotePremierStream(stream);
-            } else if (event.track.kind === 'audio') {
-                // Tracks for the same stream arrive asynchronously.
-                // Delay slightly to check if a video track also arrives (premier stream).
-                setTimeout(() => {
-                    // If this audio belongs to the premier stream, the <video> element
-                    // in VideoPlayer plays it — don't create a redundant <audio> element.
-                    if (stream.getVideoTracks().length > 0) return;
-
-                    const audioId = `audio-${remoteSocketId}-${stream.id}`;
-                    let audio = document.getElementById(audioId);
-                    if (!audio) {
-                        audio = document.createElement('audio');
-                        audio.id = audioId;
-                        audio.autoplay = true;
-                        audio.playsInline = true;
-                        // Use dataset for reliable cleanup and mute state checks
-                        audio.dataset.socketId = remoteSocketId;
-                        document.body.appendChild(audio);
-                    }
-                    audio.srcObject = stream;
-                    // Use isInVoiceRef (always-current) to avoid the stale closure bug
-                    // where createPeerConnection captures isInVoice = false (its initial
-                    // value) and new audio elements are permanently muted.
-                    audio.muted = !isInVoiceRef.current;
-                }, 150);
-            }
+            setTimeout(() => {
+                const audioId = `audio-${remoteSocketId}-${stream.id}`;
+                let audio = document.getElementById(audioId);
+                if (!audio) {
+                    audio = document.createElement('audio');
+                    audio.id = audioId;
+                    audio.autoplay = true;
+                    audio.playsInline = true;
+                    audio.dataset.socketId = remoteSocketId;
+                    document.body.appendChild(audio);
+                }
+                audio.srcObject = stream;
+                audio.muted = !isInVoiceRef.current;
+            }, 150);
         };
 
+        // Only attach the mic track — NO VIDEO TRACKS on voice connections
         if (localStreamRef.current) {
-            localStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, localStreamRef.current));
-        }
-
-        if (premierStreamRef.current) {
-            premierStreamRef.current.getTracks().forEach((track) => pc.addTrack(track, premierStreamRef.current));
+            localStreamRef.current.getAudioTracks().forEach(track =>
+                pc.addTrack(track, localStreamRef.current)
+            );
         }
 
         peersRef.current[remoteSocketId] = pc;
         return pc;
     }, [socket, roomKey]);
 
-    const closePeer = useCallback((remoteSocketId) => {
+    const closeVoicePeer = useCallback((remoteSocketId) => {
         const pc = peersRef.current[remoteSocketId];
-        if (pc) {
-            pc.close();
-            delete peersRef.current[remoteSocketId];
-        }
-        // Remove ALL audio elements belonging to this socket (they use dataset.socketId
-        // for reliable lookup, since element IDs include the stream ID).
+        if (pc) { pc.close(); delete peersRef.current[remoteSocketId]; }
         document.querySelectorAll(`audio[data-socket-id="${remoteSocketId}"]`).forEach(a => a.remove());
     }, []);
+
+    // Alias for backward compatibility with other parts of the code
+    const closePeer = closeVoicePeer;
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VIDEO STREAM peer connections (video only — separate from voice)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const createVideoPeerConnection = useCallback((remoteSocketId) => {
+        const pc = new RTCPeerConnection(ICE_SERVERS);
+
+        pc.onicecandidate = async (event) => {
+            if (event.candidate && socket && roomKey) {
+                const enc = await encryptData(event.candidate, roomKey);
+                socket.emit('video-stream:ice', { targetSocketId: remoteSocketId, candidate: enc, e2ee: true });
+            }
+        };
+
+        pc.ontrack = (event) => {
+            // This connection only carries the premier video stream
+            const stream = event.streams[0];
+            console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}`);
+            setRemotePremierStream(stream);
+        };
+
+        videoPeersRef.current[remoteSocketId] = pc;
+        return pc;
+    }, [socket, roomKey]);
+
+    const closeVideoPeer = useCallback((remoteSocketId) => {
+        const pc = videoPeersRef.current[remoteSocketId];
+        if (pc) { pc.close(); delete videoPeersRef.current[remoteSocketId]; }
+    }, []);
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // VOICE API
+    // ═══════════════════════════════════════════════════════════════════════════
 
     const joinVoice = useCallback(async (isPassive = false) => {
         if (!socket || !roomCode) return;
 
-        // ── Step 1: Register in voice signaling pool FIRST ──────────────────
-        // This MUST happen before mic access so that:
-        //   a) The server voice:participant count updates immediately (shows 1 not 0)
-        //   b) If mic access fails the user still joins as a passive listener
+        // Step 1: Register in voice pool FIRST (count updates immediately, even if mic fails)
         setIsInVoice(true);
         setVoiceError(null);
         socket.emit('voice:join', { roomCode, passive: isPassive });
 
-        // ── Step 2: Optionally acquire microphone ────────────────────────────
+        // Step 2: Optionally acquire microphone
         if (!isPassive) {
             try {
-                // Stop any existing mic tracks FIRST to prevent 'mic in use' error
                 if (localStreamRef.current) {
-                    localStreamRef.current.getTracks().forEach((t) => t.stop());
+                    localStreamRef.current.getTracks().forEach(t => t.stop());
                     localStreamRef.current = null;
                 }
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
                 localStreamRef.current = stream;
 
-                // Push the new audio track into all existing peer connections
                 const audioTrack = stream.getAudioTracks()[0];
                 if (audioTrack && roomKey) {
-                    const peers = Object.entries(peersRef.current);
-                    for (const [targetSocketId, pc] of peers) {
+                    for (const [targetSocketId, pc] of Object.entries(peersRef.current)) {
                         const senders = pc.getSenders();
-                        const audioSender = senders.find(s => s.track?.kind === 'audio');
-                        if (audioSender) {
-                            audioSender.replaceTrack(audioTrack);
+                        const existing = senders.find(s => s.track?.kind === 'audio');
+                        if (existing) {
+                            existing.replaceTrack(audioTrack);
                         } else {
                             pc.addTrack(audioTrack, stream);
                             const offer = await pc.createOffer();
                             await pc.setLocalDescription(offer);
-                            const encryptedOffer = await encryptData(offer, roomKey);
-                            socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
+                            const enc = await encryptData(offer, roomKey);
+                            socket.emit('voice:offer', { targetSocketId, offer: enc, roomCode, e2ee: true });
                         }
                     }
                 }
             } catch (err) {
-                // Mic failed — user remains in voice but as passive listener
-                console.error('[WebRTC] Mic access error:', err);
+                console.error('[Voice] Mic access error:', err);
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
                     setVoiceError('Microphone permission denied. Please enable it in your browser settings.');
                 } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
@@ -159,7 +174,6 @@ export const WebRTCProvider = ({ children }) => {
                 } else {
                     setVoiceError('Could not access microphone. You can still listen without one.');
                 }
-                // Re-emit as passive so server marks the correct state
                 socket.emit('voice:join', { roomCode, passive: true });
             }
         }
@@ -167,191 +181,201 @@ export const WebRTCProvider = ({ children }) => {
 
     const leaveVoice = useCallback(() => {
         if (!socket || !roomCode) return;
-        localStreamRef.current?.getTracks().forEach((t) => t.stop());
+        localStreamRef.current?.getTracks().forEach(t => t.stop());
         localStreamRef.current = null;
-        Object.keys(peersRef.current).forEach(closePeer);
+        Object.keys(peersRef.current).forEach(closeVoicePeer);
         setIsInVoice(false);
         setIsMuted(false);
         socket.emit('voice:leave', { roomCode });
-    }, [socket, roomCode, closePeer]);
+    }, [socket, roomCode, closeVoicePeer]);
 
     const toggleMute = useCallback(async () => {
-        // If in passive mode (listening but no mic), joining for real is what we want
         if (!localStreamRef.current) {
             await joinVoice(false);
-            // If join was successful, we are now unmuted (sending audio)
             if (localStreamRef.current) setIsMuted(false);
             return;
         }
-
         const newMuted = !isMuted;
-        localStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = !newMuted; });
+        localStreamRef.current.getAudioTracks().forEach(t => { t.enabled = !newMuted; });
         setIsMuted(newMuted);
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, joinVoice, socket, roomCode]);
 
-    const setPremierStream = useCallback(async (stream) => {
+    // ═══════════════════════════════════════════════════════════════════════════
+    // LIVE STREAM API (host side)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    const setPremierStream = useCallback((stream) => {
         premierStreamRef.current = stream;
-        
         if (!socket || !roomCode) return;
 
         if (stream) {
-            // ── Reliable host-driven reconnect ───────────────────────────────
-            // The previous approach (signaling participants to re-join) only sent
-            // the video track but NOT the host's mic audio, because it was the
-            // HOST creating offers to participants — and the host's mic is only
-            // included when the host ANSWERS participant offers (onOffer path).
-            //
-            // The working flow ('host leaves/rejoins audio') is:
-            //   host re-emits voice:join → server sends voice:user-joined (host)
-            //   to participants → participants create connections → send offers to
-            //   host → host ANSWERS with BOTH localStream (mic) + premierStream
-            //
-            // We replicate that exact flow here:
-            //   1. Close all existing stale peer connections
-            //   2. HOST re-emits voice:join (passive:false if has mic, else true)
-            //   3. Participants get voice:user-joined (host) → create connections
-            //      → offer to host → host answers with mic + premier stream
-            Object.keys(peersRef.current).forEach(closePeer);
-            const isPassive = !localStreamRef.current;
-            socket.emit('voice:join', { roomCode, passive: isPassive });
+            // Close any stale video peer connections
+            Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
+            // Announce to ALL room participants — they will send video-stream:offer requests
+            socket.emit('video-stream:announce', { roomCode });
+            console.log('[VideoStream] Announced live stream to room');
         } else {
-            // Stream stopped — remove video senders from all existing peers
-            const peers = Object.entries(peersRef.current);
-            for (const [targetSocketId, pc] of peers) {
-                const senders = pc.getSenders();
-                senders.forEach(sender => {
-                    if (sender.track?.kind === 'video') {
-                        pc.removeTrack(sender);
-                    }
-                });
-                try {
-                    const offer = await pc.createOffer();
-                    await pc.setLocalDescription(offer);
-                    const encryptedOffer = await encryptData(offer, roomKey);
-                    socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
-                } catch (err) {
-                    console.error('[WebRTC] Failed to renegotiate stream stop:', err);
-                }
-            }
+            // Stream stopped — close all video connections and notify participants
+            Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
+            socket.emit('video-stream:ended', { roomCode });
+            setRemotePremierStream(null);
         }
-    }, [roomCode, roomKey, socket, closePeer]);
+    }, [roomCode, socket, closeVideoPeer]);
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // SOCKET EVENT LISTENERS
+    // ═══════════════════════════════════════════════════════════════════════════
 
-    // ── Socket event listeners for WebRTC signaling ─────────────────────────
-    // NOTE: These are kept separate from the passive join so that listeners
-    // are always registered, even before roomKey is ready.
+    // ── Voice signaling ───────────────────────────────────────────────────────
     useEffect(() => {
         if (!socket) return;
-        
+
         const onUserJoined = async ({ socketId }) => {
-            // All users should initiate a peer connection to newcomers,
-            // even if they don't have a local stream yet (passive listening).
             if (!roomKey) return;
-            const pc = createPeerConnection(socketId);
+            const pc = createVoicePeerConnection(socketId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            
-            const encryptedOffer = await encryptData(offer, roomKey);
-            socket.emit('voice:offer', { targetSocketId: socketId, offer: encryptedOffer, roomCode, e2ee: true });
+            const enc = await encryptData(offer, roomKey);
+            socket.emit('voice:offer', { targetSocketId: socketId, offer: enc, roomCode, e2ee: true });
         };
 
         const onOffer = async ({ fromSocketId, offer, e2ee }) => {
-            // Guests can accept video offers even if they haven't enabled their own microphone
             if (!roomKey) return;
-            
-            let decryptedOffer = offer;
-            if (e2ee) {
-                decryptedOffer = await decryptData(offer, roomKey);
-            }
-
-            let pc = peersRef.current[fromSocketId] || createPeerConnection(fromSocketId);
-            await pc.setRemoteDescription(new RTCSessionDescription(decryptedOffer));
+            const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
+            let pc = peersRef.current[fromSocketId] || createVoicePeerConnection(fromSocketId);
+            await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
-            
-            const encryptedAnswer = await encryptData(answer, roomKey);
-            socket.emit('voice:answer', { targetSocketId: fromSocketId, answer: encryptedAnswer, e2ee: true });
+            const enc = await encryptData(answer, roomKey);
+            socket.emit('voice:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
         };
 
         const onAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
             if (pc && roomKey) {
-                let decryptedAnswer = answer;
-                if (e2ee) {
-                    decryptedAnswer = await decryptData(answer, roomKey);
-                }
-                await pc.setRemoteDescription(new RTCSessionDescription(decryptedAnswer));
+                const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
             }
         };
 
-        const onIceCandidate = async ({ fromSocketId, candidate, e2ee }) => {
+        const onIce = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
             if (pc && candidate && roomKey) {
-                let decryptedCandidate = candidate;
-                if (e2ee) {
-                    decryptedCandidate = await decryptData(candidate, roomKey);
-                }
-                await pc.addIceCandidate(new RTCIceCandidate(decryptedCandidate)).catch(() => {});
+                const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
+                await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(() => {});
             }
         };
 
-        const onUserLeft = ({ socketId }) => closePeer(socketId);
+        const onUserLeft   = ({ socketId }) => closeVoicePeer(socketId);
         const onMutedByHost = () => {
-            if (localStreamRef.current) {
-                localStreamRef.current.getAudioTracks().forEach((t) => { t.enabled = false; });
-                setIsMuted(true);
-            }
+            localStreamRef.current?.getAudioTracks().forEach(t => { t.enabled = false; });
+            setIsMuted(true);
         };
 
-        // Host started a live stream — close stale peer connections.
-        // The host has already re-emitted voice:join (see setPremierStream above),
-        // which will cause participants to receive voice:user-joined for the host
-        // and create fresh connections. Participants just need to close their
-        // stale peers so the new handshake starts cleanly.
-        const onPremierStarted = () => {
-            console.log('[WebRTC] voice:premier-started — clearing stale peers for fresh video+audio connections');
-            Object.keys(peersRef.current).forEach(closePeer);
-            // No need to re-emit voice:join here — the HOST's own voice:join
-            // (emitted in setPremierStream) already triggers voice:user-joined
-            // on participant side, and participants will create new connections.
-        };
-
-        socket.on('voice:user-joined', onUserJoined);
-        socket.on('voice:offer', onOffer);
-        socket.on('voice:answer', onAnswer);
-        socket.on('voice:ice-candidate', onIceCandidate);
-        socket.on('voice:user-left', onUserLeft);
-        socket.on('room:muted', onMutedByHost);
-        socket.on('voice:premier-started', onPremierStarted);
+        socket.on('voice:user-joined',    onUserJoined);
+        socket.on('voice:offer',          onOffer);
+        socket.on('voice:answer',         onAnswer);
+        socket.on('voice:ice-candidate',  onIce);
+        socket.on('voice:user-left',      onUserLeft);
+        socket.on('room:muted',           onMutedByHost);
 
         return () => {
-            socket.off('voice:user-joined', onUserJoined);
-            socket.off('voice:offer', onOffer);
-            socket.off('voice:answer', onAnswer);
-            socket.off('voice:ice-candidate', onIceCandidate);
-            socket.off('voice:user-left', onUserLeft);
-            socket.off('room:muted', onMutedByHost);
-            socket.off('voice:premier-started', onPremierStarted);
+            socket.off('voice:user-joined',   onUserJoined);
+            socket.off('voice:offer',         onOffer);
+            socket.off('voice:answer',        onAnswer);
+            socket.off('voice:ice-candidate', onIce);
+            socket.off('voice:user-left',     onUserLeft);
+            socket.off('room:muted',          onMutedByHost);
         };
-    }, [socket, roomCode, createPeerConnection, closePeer, roomKey]);
+    }, [socket, roomCode, createVoicePeerConnection, closeVoicePeer, roomKey]);
 
-    // ── Passive voice join: wait for BOTH socket AND roomKey ─────────────────
-    // This is the critical fix for Bug 2: participants couldn't see the live
-    // stream video unless they manually toggled voice. The root cause was that
-    // joinVoice(true) was called before roomKey was derived (it's async),
-    // causing the signaling pool join to happen with a null key. All subsequent
-    // WebRTC handshakes would fail silently because encryption requires the key.
+    // ── Video stream signaling (completely separate from voice) ───────────────
+    useEffect(() => {
+        if (!socket) return;
+
+        // Participant receives this when the host starts a live stream.
+        // Create a video-only peer connection and send an offer to the host.
+        const onVideoStreamAnnounced = async ({ hostSocketId }) => {
+            if (!roomKey) return;
+            console.log('[VideoStream] Host announced stream — connecting for video');
+            // Close any old video connection to this host
+            closeVideoPeer(hostSocketId);
+            const pc = createVideoPeerConnection(hostSocketId);
+            // Create an offer with recvonly transceivers so host knows to send video
+            pc.addTransceiver('video', { direction: 'recvonly' });
+            pc.addTransceiver('audio', { direction: 'recvonly' });
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            const enc = await encryptData(offer, roomKey);
+            socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
+        };
+
+        // Host receives offer from a participant → answer with video stream
+        const onVideoStreamOffer = async ({ fromSocketId, offer, e2ee }) => {
+            if (!roomKey || !premierStreamRef.current) return;
+            const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
+            closeVideoPeer(fromSocketId);
+            const pc = createVideoPeerConnection(fromSocketId);
+            // Add all video + audio tracks from the premier stream
+            premierStreamRef.current.getTracks().forEach(track =>
+                pc.addTrack(track, premierStreamRef.current)
+            );
+            await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            const enc = await encryptData(answer, roomKey);
+            socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
+            console.log(`[VideoStream] Sent video answer to ${fromSocketId}`);
+        };
+
+        const onVideoStreamAnswer = async ({ fromSocketId, answer, e2ee }) => {
+            const pc = videoPeersRef.current[fromSocketId];
+            if (pc && roomKey) {
+                const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            }
+        };
+
+        const onVideoStreamIce = async ({ fromSocketId, candidate, e2ee }) => {
+            const pc = videoPeersRef.current[fromSocketId];
+            if (pc && candidate && roomKey) {
+                const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
+                await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(() => {});
+            }
+        };
+
+        const onVideoStreamEnded = () => {
+            console.log('[VideoStream] Host ended live stream');
+            Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
+            setRemotePremierStream(null);
+        };
+
+        socket.on('video-stream:announced', onVideoStreamAnnounced);
+        socket.on('video-stream:offer',     onVideoStreamOffer);
+        socket.on('video-stream:answer',    onVideoStreamAnswer);
+        socket.on('video-stream:ice',       onVideoStreamIce);
+        socket.on('video-stream:ended',     onVideoStreamEnded);
+
+        return () => {
+            socket.off('video-stream:announced', onVideoStreamAnnounced);
+            socket.off('video-stream:offer',     onVideoStreamOffer);
+            socket.off('video-stream:answer',    onVideoStreamAnswer);
+            socket.off('video-stream:ice',       onVideoStreamIce);
+            socket.off('video-stream:ended',     onVideoStreamEnded);
+        };
+    }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
+
+    // ── Passive voice join: once roomKey is ready ─────────────────────────────
     useEffect(() => {
         if (!socket || !roomCode || !roomKey) return;
-        // Only perform passive join once per room session
         if (hasJoinedPassivelyRef.current) return;
         hasJoinedPassivelyRef.current = true;
-        console.log('[WebRTC] roomKey ready — joining voice signaling pool (passive)');
+        console.log('[Voice] roomKey ready — joining voice signaling pool (passive)');
         joinVoice(true);
     }, [socket, roomCode, roomKey, joinVoice]);
 
-    // Reset passive join flag when leaving a room
+    // Reset flags when leaving a room
     useEffect(() => {
         if (!roomCode) {
             hasJoinedPassivelyRef.current = false;
@@ -360,8 +384,9 @@ export const WebRTCProvider = ({ children }) => {
 
     return (
         <WebRTCContext.Provider value={{
-            isInVoice, isMuted, voiceError, joinVoice, leaveVoice, toggleMute,
-            setPremierStream, remotePremierStream
+            isInVoice, isMuted, voiceError,
+            joinVoice, leaveVoice, toggleMute,
+            setPremierStream, remotePremierStream,
         }}>
             {children}
         </WebRTCContext.Provider>
