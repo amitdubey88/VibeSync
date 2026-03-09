@@ -115,6 +115,20 @@ module.exports = (io, socket, roomStore) => {
         io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
     });
 
+    // ── voice:premier-started ──────────────────────────────────────────────────
+    // Host emits this when starting a live stream / screen share.
+    // The server relays it to ALL other room members so they close their stale
+    // peer connections and re-announce via voice:join, triggering fresh connections
+    // that include the video track from the start.
+    socket.on('voice:premier-started', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const hashedCode = hashRoomCode(roomCode);
+        // Relay to everyone else in the room (not the host who emitted it)
+        socket.to(hashedCode).emit('voice:premier-started');
+        console.log(`[voice] Premier stream started by ${socket.user.username} in ${roomCode}`);
+    });
+
     // Exported cleanup called on socket disconnect
     socket.cleanupVoice = (roomCode) => {
         const room = roomStore.get(roomCode);

@@ -182,47 +182,41 @@ export const WebRTCProvider = ({ children }) => {
     const setPremierStream = useCallback(async (stream) => {
         premierStreamRef.current = stream;
         
-        // If we're already connected to peers, we need to add/update tracks
-        if (socket) {
+        if (!socket || !roomCode) return;
+
+        if (stream) {
+            // Signal all participants to refresh their connections.
+            // Renegotiation of existing connections is unreliable (signaling state
+            // may not be stable, or ICE may still be gathering). The reliable
+            // approach: close all current peers, signal everyone to re-join voice,
+            // and create fresh connections that include the video track from the start.
+            socket.emit('voice:premier-started', { roomCode });
+
+            // Close our own stale peers so the host starts fresh too.
+            // When participants re-emit voice:join, host will get voice:user-joined
+            // and createPeerConnection() will attach premierStreamRef tracks.
+            Object.keys(peersRef.current).forEach(closePeer);
+        } else {
+            // Stream stopped — remove video senders from all existing peers
             const peers = Object.entries(peersRef.current);
             for (const [targetSocketId, pc] of peers) {
-                // First, remove existing premier stream tracks from this peer
                 const senders = pc.getSenders();
                 senders.forEach(sender => {
-                    // We can't easily tell which stream a sender belongs to natively in all browsers,
-                    // but we know mic is only audio. However, we can just replace or add.
-                    // Instead of removing, let's just add the tracks.
+                    if (sender.track?.kind === 'video') {
+                        pc.removeTrack(sender);
+                    }
                 });
-
-                if (stream) {
-                    stream.getTracks().forEach(track => {
-                        // Check if we already have a sender for this track kind (video)
-                        const sender = senders.find(s => s.track?.kind === track.kind && s.track?.id === track.id);
-                        if (!sender) {
-                            pc.addTrack(track, stream);
-                        }
-                    });
-                } else {
-                    // If stream is null (stopped), we should remove the video track sender
-                    senders.forEach(sender => {
-                        if (sender.track?.kind === 'video') {
-                            pc.removeTrack(sender);
-                        }
-                    });
-                }
-                
-                // Trigger renegotiation
                 try {
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
                     const encryptedOffer = await encryptData(offer, roomKey);
                     socket.emit('voice:offer', { targetSocketId, offer: encryptedOffer, roomCode, e2ee: true });
                 } catch (err) {
-                    console.error('[WebRTC] Failed to renegotiate premier stream:', err);
+                    console.error('[WebRTC] Failed to renegotiate stream stop:', err);
                 }
             }
         }
-    }, [roomCode, roomKey, socket]);
+    }, [roomCode, roomKey, socket, closePeer]);
 
 
     // ── Socket event listeners for WebRTC signaling ─────────────────────────
@@ -291,12 +285,29 @@ export const WebRTCProvider = ({ children }) => {
             }
         };
 
+        // Host started a live stream — close stale peer connections and re-announce
+        // so the host creates fresh connections that include the video track.
+        const onPremierStarted = () => {
+            console.log('[WebRTC] voice:premier-started received — refreshing peer connections for video');
+            // Close all existing stale peers
+            Object.keys(peersRef.current).forEach(closePeer);
+            // Reset passive join guard so we can re-join
+            hasJoinedPassivelyRef.current = false;
+            // Re-emit voice:join — server will send voice:user-joined to host,
+            // who creates a brand-new connection WITH premierStreamRef tracks.
+            if (roomCode) {
+                socket.emit('voice:join', { roomCode, passive: true });
+                hasJoinedPassivelyRef.current = true;
+            }
+        };
+
         socket.on('voice:user-joined', onUserJoined);
         socket.on('voice:offer', onOffer);
         socket.on('voice:answer', onAnswer);
         socket.on('voice:ice-candidate', onIceCandidate);
         socket.on('voice:user-left', onUserLeft);
         socket.on('room:muted', onMutedByHost);
+        socket.on('voice:premier-started', onPremierStarted);
 
         return () => {
             socket.off('voice:user-joined', onUserJoined);
@@ -305,6 +316,7 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('voice:ice-candidate', onIceCandidate);
             socket.off('voice:user-left', onUserLeft);
             socket.off('room:muted', onMutedByHost);
+            socket.off('voice:premier-started', onPremierStarted);
         };
     }, [socket, roomCode, createPeerConnection, closePeer, roomKey]);
 
