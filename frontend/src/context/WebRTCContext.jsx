@@ -20,11 +20,14 @@ export const WebRTCProvider = ({ children }) => {
     const [remotePremierStream, setRemotePremierStream] = useState(null);
     const peersRef = useRef({}); // { [socketId]: RTCPeerConnection }
     const hasJoinedPassivelyRef = useRef(false); // prevent duplicate passive joins
+    // Always-current ref for isInVoice — used inside createPeerConnection's ontrack
+    // closure to avoid stale value (createPeerConnection only depends on [socket, roomKey])
+    const isInVoiceRef = useRef(false);
+    useEffect(() => { isInVoiceRef.current = isInVoice; }, [isInVoice]);
     
-    // Mute/unmute all remote audio elements when our voice status changes
+    // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
-        const audios = document.querySelectorAll('audio[id^="audio-"]');
-        audios.forEach(a => { a.muted = !isInVoice; });
+        document.querySelectorAll('audio[data-socket-id]').forEach(a => { a.muted = !isInVoice; });
     }, [isInVoice]);
     
     const roomCode = room?.code;
@@ -55,34 +58,31 @@ export const WebRTCProvider = ({ children }) => {
                 // This is the premier stream broadcast from the host
                 console.log(`[WebRTC] Received video track from ${remoteSocketId}`);
                 setRemotePremierStream(stream);
-                
-                // If an audio tag was created for this stream's audio track prematurely, remove it
-                let oldAudio = document.getElementById(`audio-${remoteSocketId}`);
-                if (oldAudio && oldAudio.srcObject?.id === stream.id) {
-                    oldAudio.remove();
-                }
             } else if (event.track.kind === 'audio') {
-                // Tracks for the same stream arrive asynchronously. Delay slightly to see if a video track arrives.
+                // Tracks for the same stream arrive asynchronously.
+                // Delay slightly to check if a video track also arrives (premier stream).
                 setTimeout(() => {
-                    // If this audio track belongs to the premier stream, don't create a voice chat audio tag!
-                    // The <video> element in VideoPlayer will play it.
+                    // If this audio belongs to the premier stream, the <video> element
+                    // in VideoPlayer plays it — don't create a redundant <audio> element.
                     if (stream.getVideoTracks().length > 0) return;
 
-                    let audio = document.getElementById(`audio-${remoteSocketId}`); // unique to the track/stream?
-                    // Actually, if a user has multiple audio streams, we need unique IDs per stream to avoid overriding
                     const audioId = `audio-${remoteSocketId}-${stream.id}`;
+                    let audio = document.getElementById(audioId);
                     if (!audio) {
                         audio = document.createElement('audio');
                         audio.id = audioId;
                         audio.autoplay = true;
                         audio.playsInline = true;
-                        audio.dataset.socketId = remoteSocketId; // save for cleanup
+                        // Use dataset for reliable cleanup and mute state checks
+                        audio.dataset.socketId = remoteSocketId;
                         document.body.appendChild(audio);
                     }
                     audio.srcObject = stream;
-                    // Mute remote voice chat if we are in passive mode
-                    audio.muted = !isInVoice;
-                }, 100);
+                    // Use isInVoiceRef (always-current) to avoid the stale closure bug
+                    // where createPeerConnection captures isInVoice = false (its initial
+                    // value) and new audio elements are permanently muted.
+                    audio.muted = !isInVoiceRef.current;
+                }, 150);
             }
         };
 
@@ -104,8 +104,9 @@ export const WebRTCProvider = ({ children }) => {
             pc.close();
             delete peersRef.current[remoteSocketId];
         }
-        const audio = document.getElementById(`audio-${remoteSocketId}`);
-        if (audio) audio.remove();
+        // Remove ALL audio elements belonging to this socket (they use dataset.socketId
+        // for reliable lookup, since element IDs include the stream ID).
+        document.querySelectorAll(`audio[data-socket-id="${remoteSocketId}"]`).forEach(a => a.remove());
     }, []);
 
     const joinVoice = useCallback(async (isPassive = false) => {
@@ -193,17 +194,25 @@ export const WebRTCProvider = ({ children }) => {
         if (!socket || !roomCode) return;
 
         if (stream) {
-            // Signal all participants to refresh their connections.
-            // Renegotiation of existing connections is unreliable (signaling state
-            // may not be stable, or ICE may still be gathering). The reliable
-            // approach: close all current peers, signal everyone to re-join voice,
-            // and create fresh connections that include the video track from the start.
-            socket.emit('voice:premier-started', { roomCode });
-
-            // Close our own stale peers so the host starts fresh too.
-            // When participants re-emit voice:join, host will get voice:user-joined
-            // and createPeerConnection() will attach premierStreamRef tracks.
+            // ── Reliable host-driven reconnect ───────────────────────────────
+            // The previous approach (signaling participants to re-join) only sent
+            // the video track but NOT the host's mic audio, because it was the
+            // HOST creating offers to participants — and the host's mic is only
+            // included when the host ANSWERS participant offers (onOffer path).
+            //
+            // The working flow ('host leaves/rejoins audio') is:
+            //   host re-emits voice:join → server sends voice:user-joined (host)
+            //   to participants → participants create connections → send offers to
+            //   host → host ANSWERS with BOTH localStream (mic) + premierStream
+            //
+            // We replicate that exact flow here:
+            //   1. Close all existing stale peer connections
+            //   2. HOST re-emits voice:join (passive:false if has mic, else true)
+            //   3. Participants get voice:user-joined (host) → create connections
+            //      → offer to host → host answers with mic + premier stream
             Object.keys(peersRef.current).forEach(closePeer);
+            const isPassive = !localStreamRef.current;
+            socket.emit('voice:join', { roomCode, passive: isPassive });
         } else {
             // Stream stopped — remove video senders from all existing peers
             const peers = Object.entries(peersRef.current);
@@ -293,23 +302,17 @@ export const WebRTCProvider = ({ children }) => {
             }
         };
 
-        // Host started a live stream — close stale peer connections and re-announce
-        // so the host creates fresh connections that include the video track.
+        // Host started a live stream — close stale peer connections.
+        // The host has already re-emitted voice:join (see setPremierStream above),
+        // which will cause participants to receive voice:user-joined for the host
+        // and create fresh connections. Participants just need to close their
+        // stale peers so the new handshake starts cleanly.
         const onPremierStarted = () => {
-            console.log('[WebRTC] voice:premier-started received — refreshing peer connections for video');
-            // Close all existing stale peers
+            console.log('[WebRTC] voice:premier-started — clearing stale peers for fresh video+audio connections');
             Object.keys(peersRef.current).forEach(closePeer);
-            // Reset passive join guard so we can re-join
-            hasJoinedPassivelyRef.current = false;
-            // Small delay before re-joining: the host emits 'voice:premier-started'
-            // and IMMEDIATELY after closes its own peers. If we re-join too fast
-            // the host may not yet have premierStreamRef set. 300ms is safe.
-            setTimeout(() => {
-                if (roomCode && socket?.connected) {
-                    socket.emit('voice:join', { roomCode, passive: true });
-                    hasJoinedPassivelyRef.current = true;
-                }
-            }, 300);
+            // No need to re-emit voice:join here — the HOST's own voice:join
+            // (emitted in setPremierStream) already triggers voice:user-joined
+            // on participant side, and participants will create new connections.
         };
 
         socket.on('voice:user-joined', onUserJoined);
