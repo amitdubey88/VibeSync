@@ -184,7 +184,7 @@ const VideoPlayer = () => {
         // otherwise captureStream might return a stream of black frames.
         setTimeout(() => {
           try {
-            const stream = videoEl.captureStream(40);
+            const stream = videoEl.captureStream(50);
             setPremierStream(stream);
           } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
         }, 150);
