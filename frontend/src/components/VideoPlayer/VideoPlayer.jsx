@@ -134,8 +134,6 @@ const VideoPlayer = () => {
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
-  // Ref to the participant's remote-stream video element so we can keep srcObject in sync
-  const remotePremierVideoRef = useRef(null);
 
   // Live ref so the upload callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
@@ -149,20 +147,17 @@ const VideoPlayer = () => {
   useVideoSync(videoEl);
 
   // ── Keep participant's live stream video srcObject in sync ─────────────────
-  // The ref callback on the <video> element only fires on mount. If
-  // remotePremierStream arrives or changes AFTER the element is already in the
-  // DOM (e.g. after the force-reconnect on voice:premier-started), srcObject
-  // would never be updated and the video stays blank. This effect fixes that.
+  // We use a useEffect bound to the videoEl state. This guarantees no race
+  // condition between inline refs setting srcObject but failing to call play().
   useEffect(() => {
-    const el = remotePremierVideoRef.current;
-    if (!el) return;
-    if (remotePremierStream && el.srcObject !== remotePremierStream) {
-      el.srcObject = remotePremierStream;
-      el.play().catch(() => {}); // autoplay might need a nudge
-    } else if (!remotePremierStream) {
-      el.srcObject = null;
+    if (isHost || !videoEl) return;
+    if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
+      videoEl.srcObject = remotePremierStream;
+      videoEl.play().catch(err => console.error('[Participant Live] AutoPlay blocked:', err));
+    } else if (!remotePremierStream && videoEl.srcObject) {
+      videoEl.srcObject = null;
     }
-  }, [remotePremierStream]);
+  }, [remotePremierStream, videoEl, isHost]);
 
   useEffect(() => {
     if (!videoEl) return;
@@ -514,15 +509,7 @@ const VideoPlayer = () => {
               playsInline 
               muted // muted by default to guarantee autoplay, users can use standard volume controls
               className="w-full h-full object-contain"
-              ref={(el) => {
-                // Store ref for the srcObject-sync useEffect above
-                remotePremierVideoRef.current = el;
-                setVideoRef(el);
-                // Set srcObject on first mount if stream already available
-                if (el && remotePremierStream && el.srcObject !== remotePremierStream) {
-                    el.srcObject = remotePremierStream;
-                }
-              }}
+              ref={setVideoRef}
               onCanPlay={() => setIsLoading(false)}
             />
           ) : (
