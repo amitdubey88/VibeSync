@@ -234,6 +234,13 @@ export const WebRTCProvider = ({ children }) => {
         const onUserJoined = async ({ socketId }) => {
             if (!roomKey) return;
             const pc = createVoicePeerConnection(socketId);
+            // CRITICAL: always declare audio capability in the offer, even without a mic.
+            // Without this, an empty offer (no audio m-line) means the answerer (host)
+            // cannot inject their mic audio — the SDP negotiation has no audio section at all.
+            // Adding a sendrecv transceiver ensures audio can flow in both directions.
+            if (!localStreamRef.current) {
+                pc.addTransceiver('audio', { direction: 'sendrecv' });
+            }
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             const enc = await encryptData(offer, roomKey);

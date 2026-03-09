@@ -126,7 +126,6 @@ const VideoPlayer = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
-  const [isStreamingLive, setIsStreamingLive] = useState(false); // host pressed Start Streaming
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
@@ -173,16 +172,33 @@ const VideoPlayer = () => {
     const onLoadedMetadata = () => setDuration(videoEl.duration);
     const onWaiting = () => setIsLoading(true);
     const onCanPlay = () => setIsLoading(false);
-    const onPlayEv = () => { isPlayingRef.current = true; };
-    const onPauseEv = () => { isPlayingRef.current = false; };
+    const onPlayEv = () => {
+      isPlayingRef.current = true;
+      // When host plays a live stream, start broadcasting to participants
+      if (isHost && (currentVideo?.type === 'live' || isDirectStreaming || isUploading)) {
+        if (videoEl.captureStream) {
+          try {
+            const stream = videoEl.captureStream(40);
+            setPremierStream(stream);
+          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
+        }
+      }
+    };
+    const onPauseEv = () => {
+      isPlayingRef.current = false;
+      // When host pauses a live stream, stop broadcasting
+      if (isHost && (currentVideo?.type === 'live' || isDirectStreaming || isUploading)) {
+        setPremierStream(null);
+      }
+    };
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
     videoEl.addEventListener('waiting', onWaiting);
     videoEl.addEventListener('canplay', onCanPlay);
     videoEl.addEventListener('play', onPlayEv);
     videoEl.addEventListener('pause', onPauseEv);
+    videoEl.addEventListener('ended', onPauseEv);
 
-    // Only register event listeners here — streaming is started manually by the host
     return () => {
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
@@ -190,31 +206,13 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('canplay', onCanPlay);
       videoEl.removeEventListener('play', onPlayEv);
       videoEl.removeEventListener('pause', onPauseEv);
+      videoEl.removeEventListener('ended', onPauseEv);
     };
-  }, [videoEl]);
-
-  // Host manually starts/stops the live stream broadcast
-  const startStreaming = useCallback(() => {
-    if (!videoEl || !videoEl.captureStream) return;
-    try {
-      const stream = videoEl.captureStream(40);
-      setPremierStream(stream);
-      setIsStreamingLive(true);
-      videoEl.play().catch(() => {});
-    } catch (err) {
-      console.error('[VideoPlayer] captureStream failed:', err);
-    }
-  }, [videoEl, setPremierStream]);
-
-  const stopStreaming = useCallback(() => {
-    setPremierStream(null);
-    setIsStreamingLive(false);
-  }, [setPremierStream]);
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, isUploading, setPremierStream]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
     if (!isHost) return;
-    setIsStreamingLive(false);
     setPremierStream(null);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.url]);
@@ -488,28 +486,6 @@ const VideoPlayer = () => {
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
             {isDirectStreaming || currentVideo?.type === 'live' ? 'Direct Live' : 'Live Premier'}
           </span>
-        </div>
-      )}
-
-      {/* Start / Stop Streaming button — host only, live video only */}
-      {isHost && currentVideo?.type === 'live' && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-40">
-          {isStreamingLive ? (
-            <button
-              onClick={stopStreaming}
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-xl transition-all duration-200 border border-red-400/40"
-            >
-              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              Stop Streaming
-            </button>
-          ) : (
-            <button
-              onClick={startStreaming}
-              className="flex items-center gap-2 bg-accent-red hover:bg-accent-red/80 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-xl transition-all duration-200 border border-white/20 animate-pulse"
-            >
-              ▶ Start Streaming
-            </button>
-          )}
         </div>
       )}
 
