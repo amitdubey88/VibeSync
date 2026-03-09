@@ -13,12 +13,6 @@ const VoiceControls = () => {
     <div className="px-4 py-3 border-t border-border-dark">
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">Voice Chat</span>
-        {isInVoice && (
-          <span className="badge bg-accent-green/10 text-accent-green text-[10px]">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse inline-block mr-1" />
-            {voiceParticipants.length} in voice
-          </span>
-        )}
       </div>
 
       {voiceError && (

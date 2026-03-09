@@ -67,7 +67,12 @@ export const WebRTCProvider = ({ children }) => {
         pc.ontrack = (event) => {
             // Voice connections only carry audio tracks
             if (event.track.kind !== 'audio') return;
-            const stream = event.streams[0];
+            
+            // If the track isn't associated with a stream (e.g. upgraded transceivers), wrap it.
+            const stream = event.streams && event.streams.length > 0 
+                ? event.streams[0] 
+                : new MediaStream([event.track]);
+
             setTimeout(() => {
                 const audioId = `audio-${remoteSocketId}-${stream.id}`;
                 let audio = document.getElementById(audioId);
@@ -181,7 +186,7 @@ export const WebRTCProvider = ({ children }) => {
                         const existing = senders.find(s => !s.track || s.track.kind === 'audio');
                         
                         if (existing) {
-                            existing.replaceTrack(audioTrack);
+                            await existing.replaceTrack(audioTrack);
                         } else {
                             pc.addTrack(audioTrack, stream);
                         }
