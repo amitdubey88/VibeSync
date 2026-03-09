@@ -366,15 +366,6 @@ export const WebRTCProvider = ({ children }) => {
         };
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
 
-    // ── Passive voice join: once roomKey is ready ─────────────────────────────
-    useEffect(() => {
-        if (!socket || !roomCode || !roomKey) return;
-        if (hasJoinedPassivelyRef.current) return;
-        hasJoinedPassivelyRef.current = true;
-        console.log('[Voice] roomKey ready — joining voice signaling pool (passive)');
-        joinVoice(true);
-    }, [socket, roomCode, roomKey, joinVoice]);
-
     // Reset flags when leaving a room
     useEffect(() => {
         if (!roomCode) {

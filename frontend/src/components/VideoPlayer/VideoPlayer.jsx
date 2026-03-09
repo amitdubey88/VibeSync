@@ -126,6 +126,7 @@ const VideoPlayer = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
+  const [isStreamingLive, setIsStreamingLive] = useState(false); // host pressed Start Streaming
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
@@ -181,21 +182,7 @@ const VideoPlayer = () => {
     videoEl.addEventListener('play', onPlayEv);
     videoEl.addEventListener('pause', onPauseEv);
 
-    // If host is uploading OR in direct stream mode, capture and broadcast
-    const shouldBroadcast = isHost && (isUploading || currentVideo?.type === 'live' || isDirectStreaming);
-    
-    if (shouldBroadcast && videoEl.captureStream) {
-      try {
-        // Boost to 40fps for premium motion quality during live premier
-        const stream = videoEl.captureStream(40);
-        setPremierStream(stream);
-      } catch (err) {
-        console.error('Failed to capture premier stream:', err);
-      }
-    } else if (isHost) {
-      setPremierStream(null);
-    }
-
+    // Only register event listeners here — streaming is started manually by the host
     return () => {
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
@@ -204,7 +191,33 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('play', onPlayEv);
       videoEl.removeEventListener('pause', onPauseEv);
     };
-  }, [videoEl, isHost, isUploading, currentVideo?.type, isDirectStreaming, setPremierStream]);
+  }, [videoEl]);
+
+  // Host manually starts/stops the live stream broadcast
+  const startStreaming = useCallback(() => {
+    if (!videoEl || !videoEl.captureStream) return;
+    try {
+      const stream = videoEl.captureStream(40);
+      setPremierStream(stream);
+      setIsStreamingLive(true);
+      videoEl.play().catch(() => {});
+    } catch (err) {
+      console.error('[VideoPlayer] captureStream failed:', err);
+    }
+  }, [videoEl, setPremierStream]);
+
+  const stopStreaming = useCallback(() => {
+    setPremierStream(null);
+    setIsStreamingLive(false);
+  }, [setPremierStream]);
+
+  // Stop streaming automatically when the host changes or removes the video source
+  useEffect(() => {
+    if (!isHost) return;
+    setIsStreamingLive(false);
+    setPremierStream(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.url]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => () => {
@@ -477,6 +490,29 @@ const VideoPlayer = () => {
           </span>
         </div>
       )}
+
+      {/* Start / Stop Streaming button — host only, live video only */}
+      {isHost && currentVideo?.type === 'live' && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-40">
+          {isStreamingLive ? (
+            <button
+              onClick={stopStreaming}
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-xl transition-all duration-200 border border-red-400/40"
+            >
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              Stop Streaming
+            </button>
+          ) : (
+            <button
+              onClick={startStreaming}
+              className="flex items-center gap-2 bg-accent-red hover:bg-accent-red/80 text-white text-sm font-bold px-5 py-2.5 rounded-full shadow-xl transition-all duration-200 border border-white/20 animate-pulse"
+            >
+              ▶ Start Streaming
+            </button>
+          )}
+        </div>
+      )}
+
 
       {/* Main Content Area */}
       <div className="w-full h-full flex items-center justify-center">
