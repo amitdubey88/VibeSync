@@ -322,7 +322,7 @@ const VideoPlayer = () => {
       if (room) {
         setVideoSource(
           { url: 'live-stream', type: 'live', title: `(LIVE) ${file.name}`, e2ee: !!roomKey },
-          { currentTime: 0, isPlaying: true }
+          { currentTime: 0, isPlaying: false }
         );
       }
       toast.success('⚡ Live Stream Started! participants are watching you directly.', { duration: 4000 });
@@ -540,7 +540,7 @@ const VideoPlayer = () => {
             src={activeSrc}
             playsInline
             preload="auto"
-            autoPlay={isHost && !!blobUrl}
+            autoPlay={isHost && !!blobUrl && currentVideo?.type !== 'live'}
             onCanPlay={() => setIsLoading(false)}
           />
         ) : (

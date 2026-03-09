@@ -100,10 +100,16 @@ const useVideoSync = (videoEl) => {
 
         const onPause = ({ currentTime }) => {
             if (!videoEl || isHost) return;
-            videoEl.pause();
-            if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
-                applyTimeIfNeeded(currentTime);
+            // For live/upload streams, DO NOT pause the video element.
+            // The participant's video element has srcObject from captureStream (WebRTC).
+            // Calling .pause() on it causes a black screen — the frozen last frame
+            // from the captureStream is the correct 'paused' visual. Just update state.
+            if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
+                setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
+                return;
             }
+            videoEl.pause();
+            applyTimeIfNeeded(currentTime);
             setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
         };
 
