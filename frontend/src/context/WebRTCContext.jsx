@@ -182,19 +182,27 @@ export const WebRTCProvider = ({ children }) => {
                 if (audioTrack && roomKey) {
                     for (const [targetSocketId, pc] of Object.entries(peersRef.current)) {
                         const senders = pc.getSenders();
-                        // Find the existing audio sender
-                        const existing = senders.find(s => !s.track || s.track.kind === 'audio');
+                        const existing = senders.find(s => s.track?.kind === 'audio' || (!s.track && pc.getTransceivers().some(t => t.sender === s && t.receiver.track.kind === 'audio')));
                         
+                        let targetSender;
                         if (existing) {
-                            await existing.replaceTrack(audioTrack);
+                            if (!existing.track) {
+                                // Passive transceiver (no MSID). Remove it and create a new one to guarantee robust ontrack firing and MSID mapping.
+                                pc.removeTrack(existing);
+                                targetSender = pc.addTrack(audioTrack, stream);
+                            } else {
+                                // Active transceiver (has MSID). Safe to replace track.
+                                await existing.replaceTrack(audioTrack);
+                                targetSender = existing;
+                            }
                         } else {
-                            pc.addTrack(audioTrack, stream);
+                            targetSender = pc.addTrack(audioTrack, stream);
                         }
                         
-                        // Force a renegotiation so the remote peer knows we are sending audio now
+                        // Force a renegotiation on the active transceiver
                         const transceivers = pc.getTransceivers();
-                        const audioTc = transceivers.find(t => t.sender === existing || t.receiver.track.kind === 'audio');
-                        if (audioTc) audioTc.direction = 'sendrecv';
+                        const activeTc = transceivers.find(t => t.sender === targetSender);
+                        if (activeTc) activeTc.direction = 'sendrecv';
 
                         const offer = await pc.createOffer();
                         await pc.setLocalDescription(offer);
