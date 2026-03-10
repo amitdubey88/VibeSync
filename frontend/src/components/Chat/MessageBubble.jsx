@@ -72,7 +72,7 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
   return (
     <div
       ref={rowRef}
-      className={`group flex gap-2 items-start animate-fade-in ${isOwn ? 'flex-row-reverse' : ''} mb-2 relative select-none`}
+      className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-2 relative select-none`}
       style={{ touchAction: 'pan-y' }}
       // ── Touch (mobile) ─────────────────────────────────────────
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}

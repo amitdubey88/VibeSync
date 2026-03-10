@@ -14,6 +14,43 @@ import { useSocket } from '../context/SocketContext';
 import { createPortal } from 'react-dom';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
 
+const formatTime = (seconds) => {
+  if (!seconds || isNaN(seconds)) return '00:00';
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = Math.floor(seconds % 60);
+  if (h > 0) return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+  return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+};
+
+const LiveTimeTracker = ({ videoState, currentVideo }) => {
+  const [displayTime, setDisplayTime] = useState(0);
+
+  useEffect(() => {
+    if (!videoState || currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
+      setDisplayTime(0);
+      return;
+    }
+    let raf;
+    const update = () => {
+      let t = videoState.currentTime || 0;
+      if (videoState.isPlaying && videoState.lastUpdated) {
+        const elapsed = (Date.now() - videoState.lastUpdated) / 1000;
+        t += elapsed;
+      }
+      setDisplayTime(t);
+      raf = requestAnimationFrame(update);
+    };
+    raf = requestAnimationFrame(update);
+    return () => cancelAnimationFrame(raf);
+  }, [videoState, currentVideo]);
+
+  if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
+    return <span className="text-accent-red font-bold animate-pulse">LIVE</span>;
+  }
+  return <span>⏱ {formatTime(displayTime)}</span>;
+};
+
 const RoomPage = () => {
   const { code } = useParams();
   const navigate = useNavigate();
@@ -31,11 +68,21 @@ const RoomPage = () => {
 
   const [sidebarTab, setSidebarTab] = useState('chat');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarDimmed, setIsSidebarDimmed] = useState(false);
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const hasJoinedRef = useRef(false);
+
+  // Cinematic dimming listener
+  useEffect(() => {
+    const onControlsVisibility = (e) => {
+      setIsSidebarDimmed(!e.detail);
+    };
+    window.addEventListener('video:controls-visibility', onControlsVisibility);
+    return () => window.removeEventListener('video:controls-visibility', onControlsVisibility);
+  }, []);
 
   // Reset join guard when socket changes or disconnects (e.g. laptop wakes up)
   // so we can re-verify and re-join the room upon reconnection.
@@ -284,11 +331,28 @@ const RoomPage = () => {
             <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
           </button>
           <div className="w-px h-5 bg-border-dark" />
-          <h1 className="text-sm font-bold text-text-primary truncate">{room?.name || code}</h1>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider">
+          <h1 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-xs">{room?.name || code}</h1>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden sm:flex">
             <ShieldCheck className="w-3 h-3" />
             E2EE
           </div>
+          
+          <div className="w-px h-5 bg-border-dark hidden md:block" />
+          <div className="hidden md:flex items-center gap-3 text-[11px] text-text-muted font-medium bg-bg-panel/50 px-2.5 py-1 rounded-lg border border-border-dark shadow-inner">
+            <span className="flex items-center gap-1.5">
+              <Users className="w-3 h-3 text-accent-purple" /> 
+              {participants.filter(p => p.isOnline !== false).length} watching
+            </span>
+            {isLocked && (
+               <>
+                 <span className="w-1 h-1 rounded-full bg-border-light" />
+                 <span className="flex items-center gap-1 text-red-400"><Lock className="w-2.5 h-2.5" /> Locked</span>
+               </>
+            )}
+            <span className="w-1 h-1 rounded-full bg-border-light" />
+            <LiveTimeTracker videoState={room?.videoState} currentVideo={room?.currentVideo} />
+          </div>
+
           {isHost && (
             <span className="badge bg-accent-yellow/10 text-accent-yellow hidden md:flex">
               <Crown className="w-3 h-3" /> Host
@@ -383,8 +447,15 @@ const RoomPage = () => {
 
         {/* ── Sidebar ── */}
         {/* Mobile: full-width flex-1 (fills remaining height) | Desktop: animated width */}
-        <aside className={`flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-300 ease-in-out shrink-0
-          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'hidden md:flex md:w-0 md:border-l-0 opacity-0 overflow-hidden'}`}>
+        <aside 
+          onMouseMove={() => {
+            // Wake up sidebar if user hovers over it
+            window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
+          }}
+          className={`flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
+          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'hidden md:flex md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
+          ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
+        >
           {/* Sidebar tabs */}
           <div className="flex border-b border-border-dark shrink-0">
             {[

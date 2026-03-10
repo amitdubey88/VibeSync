@@ -8,6 +8,7 @@ import useBufferSync from '../../hooks/useBufferSync';
 import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
+import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
 import { Play, Upload, Loader2, X, Film, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -388,13 +389,21 @@ const VideoPlayer = () => {
 
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
+    window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
     clearTimeout(controlsTimer.current);
-    controlsTimer.current = setTimeout(() => setShowControls(false), 3500);
+    controlsTimer.current = setTimeout(() => {
+      setShowControls(false);
+      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
+    }, 3500);
   }, []);
 
   // Initial auto-hide timer on mount
   useEffect(() => {
-    controlsTimer.current = setTimeout(() => setShowControls(false), 3500);
+    window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
+    controlsTimer.current = setTimeout(() => {
+      setShowControls(false);
+      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
+    }, 3500);
     return () => clearTimeout(controlsTimer.current);
   }, []);
 
@@ -669,7 +678,8 @@ const VideoPlayer = () => {
       {/* Controls Overlay - only render if a video is active/loaded */}
       {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming || remotePremierStream) && (
         <>
-          {/* Reactions (floaters are always visible, menu follows showControls) */}
+          {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
+          <VideoPresenceOverlay visible={showControls} />
           <FloatingReactions />
           <VideoReactionBar visible={showControls} />
 
