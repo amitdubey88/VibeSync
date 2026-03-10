@@ -258,7 +258,7 @@ const RoomPage = () => {
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
   useNavigationGuard({
-    enabled: room?.currentVideo?.type === "live",
+    enabled: !!room,
     onAttempt: (type) => {
       setShowRefreshConfirm(true);
     }

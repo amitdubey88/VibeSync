@@ -19,8 +19,11 @@ export const useNavigationGuard = ({ enabled, onAttempt }) => {
         };
 
         const handleBeforeUnload = (e) => {
-            e.preventDefault();
-            e.returnValue = "";
+            if (enabled) {
+                e.preventDefault();
+                e.returnValue = "Are you sure you want to leave?";
+                return e.returnValue;
+            }
         };
 
         const handlePopState = (e) => {
