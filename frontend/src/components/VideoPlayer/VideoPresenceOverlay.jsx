@@ -28,9 +28,9 @@ const VideoPresenceOverlay = ({ visible }) => {
     .slice(0, 5);
 
   return (
-    <div className="absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none">
+    <div className={`absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`}>
       {/* Top Row: Viewer Count & Sync/Status (Simplified) */}
-      <div className={`flex items-center gap-2 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+      <div className="flex items-center gap-2">
         <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-xl pointer-events-auto">
           <Users className="w-3 h-3 text-accent-purple" />
           <span>{onlineCount} watching</span>
