@@ -138,6 +138,8 @@ const RoomPage = () => {
     };
   }, [room, joining, error]);
 
+  const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
+
   // ── Prevent Accidental Refresh & Handle Reloads during Live Streams ──
   useEffect(() => {
     if (!room) return;
@@ -152,16 +154,15 @@ const RoomPage = () => {
       };
       window.addEventListener('beforeunload', handleBeforeUnload, { capture: true });
 
-      // 1b. Catch keyboard refresh shortcuts (F5, Ctrl+R, Cmd+R) explicitly using JS confirm()
+      // 1b. Catch keyboard refresh shortcuts (F5, Ctrl+R, Cmd+R) explicitly
+      // Browsers often block window.confirm() in keydown events, so we use a custom React dialog
       const handleKeyDown = (e) => {
         const isF5 = e.key === 'F5';
         const isCtrlCmdR = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R');
         if (isF5 || isCtrlCmdR) {
           e.preventDefault();
-          if (window.confirm('You are in an active live stream. If you reload, the connection will be lost. Reload anyway?')) {
-            window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true }); // prevent double prompt
-            window.location.reload();
-          }
+          e.stopPropagation();
+          setShowRefreshConfirm(true);
         }
       };
       window.addEventListener('keydown', handleKeyDown, { capture: true });
@@ -518,6 +519,22 @@ const RoomPage = () => {
         danger
         onConfirm={() => { deleteRoom(); navigate('/', { replace: true }); }}
         onCancel={() => setShowDeleteConfirm(false)}
+      />
+
+      {/* Refresh confirmation during live stream */}
+      <ConfirmDialog
+        open={showRefreshConfirm}
+        title="Reload Page?"
+        message="You are in an active live stream. If you reload, the connection will be lost."
+        confirmLabel="Reload Anyway"
+        danger
+        onConfirm={() => {
+          setShowRefreshConfirm(false);
+          // Set flag so the reload detector doesn't think it was an accident
+          sessionStorage.setItem(`reloaded_${code}`, 'true');
+          window.location.reload();
+        }}
+        onCancel={() => setShowRefreshConfirm(false)}
       />
 
       {/* ── Room Ended by Host modal moved to LandingPage ── */}
