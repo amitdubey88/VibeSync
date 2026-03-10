@@ -482,6 +482,12 @@ export const RoomProvider = ({ children }) => {
     setClips(prev => [...prev, { id: Date.now(), time, username: user?.username }]);
   }, [socket, room, user, addSystemMessage]);
 
+  const toggleRoomLock = useCallback((locked) => {
+    if (!socket || !room) return;
+    socket.emit('room:toggle-lock', { roomCode: room.code, isLocked: locked });
+    setIsLocked(locked);
+  }, [socket, room]);
+
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
     socket.emit('room:delete', { roomCode: room.code });
