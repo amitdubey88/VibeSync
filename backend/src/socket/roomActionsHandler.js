@@ -129,6 +129,11 @@ module.exports = (io, socket, roomStore) => {
         if (!room) return socket.emit('error', { message: 'Room not found' });
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can transfer host' });
 
+        // Block host transfer during active live streams
+        if (room.currentVideo?.type === 'live') {
+            return socket.emit('error', { message: 'Cannot transfer host while a live stream is active. Stop the stream first.' });
+        }
+
         const target = room.participants.find((p) => p.userId === targetUserId);
         if (!target) return socket.emit('error', { message: 'Participant not found' });
 

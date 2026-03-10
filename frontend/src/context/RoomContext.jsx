@@ -386,8 +386,12 @@ export const RoomProvider = ({ children }) => {
 
   const transferHost = useCallback((targetUserId) => {
     if (!socket || !room) return;
+    if (currentVideo?.type === 'live') {
+      toast.error('Cannot transfer host during a live stream. Stop the stream first.');
+      return;
+    }
     socket.emit('room:transfer-host', { roomCode: room.code, targetUserId });
-  }, [socket, room]);
+  }, [socket, room, currentVideo]);
 
   const kickParticipant = useCallback((targetUserId) => {
     if (!socket || !room) return;
