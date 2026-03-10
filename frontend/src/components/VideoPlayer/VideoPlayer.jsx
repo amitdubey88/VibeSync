@@ -460,7 +460,7 @@ const VideoPlayer = () => {
     >
       {/* LIVE Badge (Visible to everyone during live streaming) */}
       {(currentVideo?.type === 'live' || isDirectStreaming) && (
-        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/90 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10">
+        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10 opacity-60">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
             Direct Live
