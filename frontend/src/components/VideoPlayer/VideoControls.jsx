@@ -132,7 +132,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
   const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
   return (
-    <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-20 pb-4 px-5 transition-all duration-300 ${visible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
+    <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
         className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}

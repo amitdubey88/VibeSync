@@ -529,25 +529,26 @@ const RoomPage = () => {
             </div>
           )}
           
-          {/* Mobile Tab Switcher Overlay (only on mobile) */}
-          <div className="md:hidden absolute bottom-0 left-0 right-0 z-40 flex bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)]">
-            <button 
-              onClick={() => setActiveMobileTab('chat')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
-            >
-              <MessageSquare className="w-4 h-4 mb-0.5" />
-              CHAT
-              {unreadChatCount > 0 && <span className="absolute top-2 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />}
-            </button>
-            <button 
-              onClick={() => setActiveMobileTab('people')}
-              className={`flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
-            >
-              <Users className="w-4 h-4 mb-0.5" />
-              PEOPLE ({onlineCount})
-              {joinRequests.length > 0 && <span className="absolute top-2 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
-            </button>
-          </div>
+        </div>
+
+        {/* Mobile Tab Switcher Overlay (only on mobile) */}
+        <div className="md:hidden flex bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40">
+          <button 
+            onClick={() => setActiveMobileTab('chat')}
+            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+          >
+            <MessageSquare className="w-4.5 h-4.5 mb-1" />
+            <span>CHAT</span>
+            {unreadChatCount > 0 && <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />}
+          </button>
+          <button 
+            onClick={() => setActiveMobileTab('people')}
+            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+          >
+            <Users className="w-4.5 h-4.5 mb-1" />
+            <span>PEOPLE ({onlineCount})</span>
+            {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
+          </button>
         </div>
 
         {/* ── Sidebar ── */}
