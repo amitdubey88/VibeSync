@@ -6,7 +6,6 @@ import useVideoSync from '../../hooks/useVideoSync';
 import useClockSync from '../../hooks/useClockSync';
 import useBufferSync from '../../hooks/useBufferSync';
 import VideoControls from './VideoControls';
-import FloatingReactions from './FloatingReactions';
 import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
 import SyncStatusBadge from './SyncStatusBadge';
@@ -717,7 +716,6 @@ const VideoPlayer = () => {
         <>
           {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
           <VideoPresenceOverlay visible={showControls} />
-          <FloatingReactions />
           <ReactionBurst />
           <QuickReactionBar visible={showControls} />
 
