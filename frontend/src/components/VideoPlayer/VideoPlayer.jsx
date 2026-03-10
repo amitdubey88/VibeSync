@@ -7,7 +7,7 @@ import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle, Zap } from 'lucide-react';
+import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
 import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -128,6 +128,9 @@ const VideoPlayer = () => {
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
+  // Live stream audio is muted by default (HTML5 autoplay policy).
+  // Track whether participant has manually unmuted so we can show the button.
+  const [liveAudioMuted, setLiveAudioMuted] = useState(true);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -504,14 +507,33 @@ const VideoPlayer = () => {
         {!isHost && (remotePremierStream || isStreamAnnounced) ? (
           /* Participant: Show Direct/Premier Feed — only visible once host presses play */
           remotePremierStream ? (
-            <video 
-              autoPlay 
-              playsInline 
-              muted // muted by default to guarantee autoplay, users can use standard volume controls
-              className="w-full h-full object-contain"
-              ref={setVideoRef}
-              onCanPlay={() => setIsLoading(false)}
-            />
+            <div className="relative w-full h-full">
+              <video 
+                autoPlay 
+                playsInline 
+                muted={liveAudioMuted}
+                className="w-full h-full object-contain"
+                ref={setVideoRef}
+                onCanPlay={() => setIsLoading(false)}
+              />
+              {/* Audio unmute button — required because autoplay policy forces muted start */}
+              <button
+                onClick={() => {
+                  const newMuted = !liveAudioMuted;
+                  setLiveAudioMuted(newMuted);
+                  if (videoRef.current) videoRef.current.muted = newMuted;
+                }}
+                className="absolute bottom-4 right-4 z-30 flex items-center gap-2 px-3 py-2 rounded-xl
+                           bg-black/70 hover:bg-black/90 border border-white/20 hover:border-white/40
+                           text-white text-xs font-semibold backdrop-blur-sm transition-all duration-200
+                           shadow-lg hover:shadow-xl hover:scale-105"
+                title={liveAudioMuted ? 'Enable Audio' : 'Mute Audio'}
+              >
+                {liveAudioMuted
+                  ? <><VolumeX className="w-4 h-4 text-red-400" /><span className="text-red-300">Enable Audio</span></>
+                  : <><Volume2 className="w-4 h-4 text-green-400" /><span className="text-green-300">Audio On</span></>}
+              </button>
+            </div>
           ) : (
             /* Waiting UI inside the player */
             <div className="flex flex-col items-center gap-4 p-8 text-center animate-pulse">

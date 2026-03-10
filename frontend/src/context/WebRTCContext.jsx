@@ -182,21 +182,25 @@ export const WebRTCProvider = ({ children }) => {
                 if (audioTrack && roomKey) {
                     for (const [targetSocketId, pc] of Object.entries(peersRef.current)) {
                         const senders = pc.getSenders();
-                        // Find the existing audio sender
+                        // Find an existing audio sender (with or without a track)
                         const existing = senders.find(s => !s.track || s.track.kind === 'audio');
                         
-                        let targetSender;
                         if (existing) {
                             await existing.replaceTrack(audioTrack);
-                            targetSender = existing;
                         } else {
-                            targetSender = pc.addTrack(audioTrack, stream);
+                            pc.addTrack(audioTrack, stream);
                         }
                         
-                        // Force a renegotiation on the active transceiver
-                        const transceivers = pc.getTransceivers();
-                        const activeTc = transceivers.find(t => t.sender === targetSender || t.receiver.track.kind === 'audio');
-                        if (activeTc) activeTc.direction = 'sendrecv';
+                        // Force sendrecv on the audio transceiver.
+                        // BUGFIX: t.receiver.track can be null before remote track arrives,
+                        // so we must null-check it before accessing .kind.
+                        const audioTc = pc.getTransceivers().find(t =>
+                            t.sender.track?.kind === 'audio' ||
+                            (t.receiver.track && t.receiver.track.kind === 'audio')
+                        );
+                        if (audioTc && audioTc.direction !== 'sendrecv') {
+                            audioTc.direction = 'sendrecv';
+                        }
 
                         const offer = await pc.createOffer();
                         await pc.setLocalDescription(offer);
@@ -204,10 +208,14 @@ export const WebRTCProvider = ({ children }) => {
                         socket.emit('voice:offer', { targetSocketId, offer: enc, roomCode, e2ee: true });
                     }
                 }
+                // BUGFIX: Mark as unmuted after successfully acquiring mic
+                setIsMuted(false);
+                if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: false });
             } else {
                 // First time joining voice — tell the room we joined AFTER we have the mic.
                 // This guarantees the first WebRTC handshakes will include the audio track.
                 setIsInVoice(true);
+                setIsMuted(false);
                 socket.emit('voice:join', { roomCode, passive: false });
             }
         } catch (err) {
@@ -233,7 +241,8 @@ export const WebRTCProvider = ({ children }) => {
         localStreamRef.current = null;
         Object.keys(peersRef.current).forEach(closeVoicePeer);
         setIsInVoice(false);
-        setIsMuted(false);
+        // BUGFIX: Reset to true (muted) so next join starts in correct muted state
+        setIsMuted(true);
         socket.emit('voice:leave', { roomCode });
     }, [socket, roomCode, closeVoicePeer]);
 
