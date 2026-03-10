@@ -4,6 +4,7 @@ import { useRoom } from '../../context/RoomContext';
 import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import useClockSync from '../../hooks/useClockSync';
+import useBufferSync from '../../hooks/useBufferSync';
 import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
@@ -127,6 +128,7 @@ const VideoPlayer = () => {
 
   useClockSync();
   useVideoSync(videoEl);
+  const { bufferingUsers } = useBufferSync(videoEl);
 
   // ── Auto-play for participants when videoEl mounts while host was already playing ──
   // useVideoSync handles live video:play events, but if the participant's video element
@@ -582,6 +584,18 @@ const VideoPlayer = () => {
                 </button>
               )}
             </div>
+            
+            {/* Buffering Indicator Overlay (Host and Guests both see this if anyone buffers) */}
+            {bufferingUsers.length > 0 && (
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-bg-panel/90 backdrop-blur border border-white/10 px-4 py-2 rounded-full flex items-center gap-3 animate-fade-in pointer-events-none">
+                <Loader2 className="w-4 h-4 text-accent-red animate-spin" />
+                <span className="text-sm font-medium text-text-primary">
+                  Waiting for {bufferingUsers.length === 1 ? bufferingUsers[0].username : `${bufferingUsers.length} users`} to buffer...
+                </span>
+              </div>
+            )}
+
+            {/* Custom Controls Layer */}
           </div>
         )}
       </div>
