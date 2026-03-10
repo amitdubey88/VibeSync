@@ -522,7 +522,7 @@ const VideoPlayer = () => {
             /* Waiting UI inside the player — stream announced but WebRTC not connected yet */
             <div className="flex flex-col items-center gap-4 p-8 text-center animate-pulse">
               <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center text-accent-purple">
-                <CloudUpload className="w-9 h-9" />
+                <Loader2 className="w-9 h-9 animate-spin" />
               </div>
               <div>
                 <h3 className="text-lg font-bold text-text-primary mb-1">Connecting to Feed…</h3>

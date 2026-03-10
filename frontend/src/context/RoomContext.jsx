@@ -350,11 +350,6 @@ export const RoomProvider = ({ children }) => {
     setVideoState(prev => prev ? { ...prev, duration } : { currentTime: 0, duration, isPlaying: false, lastUpdated: Date.now() });
   }, [socket, room]);
 
-  const notifyUploading = useCallback((title) => {
-    if (!socket || !room) return;
-    socket.emit('video:set-uploading', { roomCode: room.code, title });
-  }, [socket, room]);
-
   const refreshParticipants = useCallback(() => {
     if (!socket || !room) return;
     socket.emit('room:get-participants', { roomCode: room.code });
@@ -419,7 +414,7 @@ export const RoomProvider = ({ children }) => {
       room, roomKey, participants, voiceParticipants, messages,
       videoState, setVideoState, currentVideo, isHost, isMutedByHost,
       reactions, joinRoom, leaveRoom, sendMessage,
-      sendReaction, setVideoSource, notifyUploading, syncDuration,
+      sendReaction, setVideoSource, syncDuration,
       deleteRoom, transferHost, kickParticipant, muteParticipant,
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
