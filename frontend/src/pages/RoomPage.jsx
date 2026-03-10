@@ -144,12 +144,16 @@ const RoomPage = () => {
 
     if (room.currentVideo?.type === 'live') {
       // 1. Warn before refresh/leave
+      // Browsers require e.preventDefault() and returning a string to show the dialog
       const handleBeforeUnload = (e) => {
+        const msg = 'You are in an active live stream. If you reload, the connection will be lost.';
         e.preventDefault();
-        e.returnValue = 'You are in an active live stream. If you reload, the connection will be lost.';
-        return e.returnValue;
+        e.returnValue = msg;
+        return msg;
       };
-      window.addEventListener('beforeunload', handleBeforeUnload);
+      
+      // We must add it to the window
+      window.addEventListener('beforeunload', handleBeforeUnload, { capture: true });
 
       // 2. Detect if this specific page load WAS a refresh
       const navEntries = performance.getEntriesByType('navigation');
@@ -159,17 +163,17 @@ const RoomPage = () => {
       const redirectKey = `reloaded_${code}`;
       if (isReload && !sessionStorage.getItem(redirectKey)) {
         sessionStorage.setItem(redirectKey, 'true');
-        toast.error('Session disconnected due to page refresh.');
-        // Briefly delay to let toast show, then redirect
+        // Give the UI a tiny moment to render the toast before navigating away
         setTimeout(() => {
+          toast.error('Session disconnected due to page refresh.', { duration: 4000 });
           navigate('/', { replace: true });
-        }, 100);
+        }, 50);
       } else if (!isReload) {
         // Clean up flag if they navigated here normally
         sessionStorage.removeItem(redirectKey);
       }
 
-      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true });
     }
   }, [room, code, navigate]);
 
