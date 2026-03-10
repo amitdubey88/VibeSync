@@ -138,6 +138,41 @@ const RoomPage = () => {
     };
   }, [room, joining, error]);
 
+  // ── Prevent Accidental Refresh & Handle Reloads during Live Streams ──
+  useEffect(() => {
+    if (!room) return;
+
+    if (room.currentVideo?.type === 'live') {
+      // 1. Warn before refresh/leave
+      const handleBeforeUnload = (e) => {
+        e.preventDefault();
+        e.returnValue = 'You are in an active live stream. If you reload, the connection will be lost.';
+        return e.returnValue;
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+
+      // 2. Detect if this specific page load WAS a refresh
+      const navEntries = performance.getEntriesByType('navigation');
+      const isReload = navEntries.length > 0 && navEntries[0].type === 'reload';
+      
+      // Prevent redirect loop in case 'reload' type persists somehow
+      const redirectKey = `reloaded_${code}`;
+      if (isReload && !sessionStorage.getItem(redirectKey)) {
+        sessionStorage.setItem(redirectKey, 'true');
+        toast.error('Session disconnected due to page refresh.');
+        // Briefly delay to let toast show, then redirect
+        setTimeout(() => {
+          navigate('/', { replace: true });
+        }, 100);
+      } else if (!isReload) {
+        // Clean up flag if they navigated here normally
+        sessionStorage.removeItem(redirectKey);
+      }
+
+      return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }
+  }, [room, code, navigate]);
+
   // Refresh participant list when switching to participants tab
   const handleTabChange = useCallback((tab) => {
     setSidebarTab(tab);
