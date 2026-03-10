@@ -418,8 +418,6 @@ const VideoPlayer = () => {
       onFileUpload={handleFileUpload}
       urlInput={urlInput}
       setUrlInput={setUrlInput}
-      isUploading={isUploading}
-      uploadProgress={uploadProgress}
     />
   );
 
@@ -460,29 +458,12 @@ const VideoPlayer = () => {
       onClick={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
     >
-      {/* Background upload progress bar — prominent at top (host only) */}
-      {isHost && isUploading && (
-        <div className="absolute top-0 left-0 right-0 z-40 h-3 bg-black/40 backdrop-blur-md overflow-hidden">
-          <div
-            className="h-full bg-gradient-to-r from-accent-purple via-accent-red to-accent-yellow transition-all duration-300 relative"
-            style={{ width: `${uploadProgress}%` }}
-          >
-            <div className="absolute inset-0 bg-white/10" />
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-[10px] font-black text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)] uppercase tracking-tighter">
-              Uploading {uploadProgress}%
-            </span>
-          </div>
-        </div>
-      )}
-
-      {/* LIVE Badge (Visible to everyone during live streaming or premier) */}
-      {(isUploading || currentVideo?.type === 'live' || isDirectStreaming) && (
+      {/* LIVE Badge (Visible to everyone during live streaming) */}
+      {(currentVideo?.type === 'live' || isDirectStreaming) && (
         <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/90 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10">
           <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
-            {isDirectStreaming || currentVideo?.type === 'live' ? 'Direct Live' : 'Live Premier'}
+            Direct Live
           </span>
         </div>
       )}
