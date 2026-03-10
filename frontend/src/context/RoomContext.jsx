@@ -283,6 +283,16 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onRoomDeleted = ({ message }) => {
+      // If I'm the host, the deletion was likely my action.
+      // Redirect home quietly without the "Session Ended" alert.
+      if (isHost) {
+        sessionStorage.removeItem("vibesync_session");
+        setRoom(null); setParticipants([]); setMessages([]);
+        setVideoState(null); setCurrentVideo(null); setIsHost(false);
+        window.location.href = '/'; 
+        return;
+      }
+
       setRoomEndedByHost({ message: message || 'The host has ended this session.' });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
@@ -490,7 +500,11 @@ export const RoomProvider = ({ children }) => {
 
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
+    sessionStorage.removeItem("vibesync_session"); // Clear immediately to prevent auto-rejoin
     socket.emit('room:delete', { roomCode: room.code });
+    // Local cleanup
+    setRoom(null);
+    window.location.href = '/';
   }, [socket, room]);
 
   const transferHost = useCallback((targetUserId) => {
