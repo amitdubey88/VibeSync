@@ -141,6 +141,10 @@ const VideoPlayer = () => {
   // Live ref so the upload callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
+  // Guards against re-capturing the stream on 'playing' events fired after seeking.
+  // Once captureStream is active, seeking triggers 'playing' again — without this guard,
+  // setPremierStream would tear down all participant connections on every seek.
+  const isStreamingActiveRef = useRef(false);
 
   const setVideoRef = useCallback((el) => {
     videoRef.current = el;
@@ -212,11 +216,19 @@ const VideoPlayer = () => {
       );
       
       if (shouldBroadcast && videoEl.captureStream) {
+        // BUGFIX: 'playing' fires after every seek (video resumes from new position).
+        // Without this guard, every seek would call captureStream() again → setPremierStream()
+        // which closes ALL existing video peer connections → blank screen + no audio for participants.
+        // The captureStream API automatically tracks the video element's output across seeks,
+        // so we only need to capture it ONCE when streaming starts.
+        if (isStreamingActiveRef.current) return;
+
         // Delay captureStream slightly to ensure the video has actually painted a frame,
         // otherwise captureStream might return a stream of black frames.
         setTimeout(() => {
           try {
             const stream = videoEl.captureStream(50);
+            isStreamingActiveRef.current = true;
             setPremierStream(stream);
           } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
         }, 150);
@@ -254,6 +266,7 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (!isHost) return;
     setPremierStream(null);
+    isStreamingActiveRef.current = false; // Reset so next stream start re-captures correctly
     setIsLiveStreamingInitialized(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.url]);
