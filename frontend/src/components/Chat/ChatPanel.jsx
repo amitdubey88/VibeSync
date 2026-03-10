@@ -85,12 +85,10 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       <div className="flex-1 overflow-y-auto scroll-area px-3 py-3 space-y-1">
 
         {/* E2EE Security Notice */}
-        <div className="flex flex-col items-center py-4 px-6 mb-4 bg-accent-yellow/5 border border-accent-yellow/20 rounded-2xl text-center">
-            <div className="w-10 h-10 rounded-full bg-accent-yellow/10 flex items-center justify-center mb-2">
-                <ShieldCheck className="w-5 h-5 text-accent-yellow" />
-            </div>
-            <p className="text-[11px] text-accent-yellow/90 leading-relaxed font-medium max-w-[240px]">
-                Messages and calls are end-to-end encrypted. No one outside of this room, not even VibeSync, can read or listen to them.
+        <div className="flex items-center gap-2.5 py-2.5 px-4 mb-4 bg-accent-yellow/5 border border-accent-yellow/10 rounded-xl justify-center">
+            <ShieldCheck className="w-3.5 h-3.5 text-accent-yellow/60 shrink-0" />
+            <p className="text-[10px] text-accent-yellow/80 font-medium tracking-wide uppercase">
+                End-to-end encrypted
             </p>
         </div>
 
