@@ -133,7 +133,8 @@ export const WebRTCProvider = ({ children }) => {
 
     const closeVoicePeer = useCallback((remoteSocketId) => {
         const pc = peersRef.current[remoteSocketId];
-        if (pc) { pc.close(); delete peersRef.current[remoteSocketId]; }
+        if (pc && typeof pc.close === 'function') pc.close();
+        delete peersRef.current[remoteSocketId];
         document.querySelectorAll(`audio[data-socket-id="${remoteSocketId}"]`).forEach(a => a.remove());
     }, []);
 
@@ -195,7 +196,8 @@ export const WebRTCProvider = ({ children }) => {
 
     const closeVideoPeer = useCallback((remoteSocketId) => {
         const pc = videoPeersRef.current[remoteSocketId];
-        if (pc) { pc.close(); delete videoPeersRef.current[remoteSocketId]; }
+        if (pc && typeof pc.close === 'function') pc.close();
+        delete videoPeersRef.current[remoteSocketId];
     }, []);
 
     // ═══════════════════════════════════════════════════════════════════════════
