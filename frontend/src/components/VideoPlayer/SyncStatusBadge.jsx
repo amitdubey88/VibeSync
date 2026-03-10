@@ -19,7 +19,7 @@ const SyncStatusBadge = ({ status }) => {
       textColor: 'text-accent-yellow'
     },
     buffering: {
-      icon: <Loader2 className="w-3 h-3 text-accent-red animate-spin" />,
+      icon: <div className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />,
       text: 'Buffering',
       bg: 'bg-accent-red/10',
       border: 'border-accent-red/20',
