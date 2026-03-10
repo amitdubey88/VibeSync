@@ -313,7 +313,13 @@ const RoomPage = () => {
           <div className="text-5xl mb-4">😕</div>
           <h2 className="text-xl font-bold text-text-primary mb-2">Can't Join Room</h2>
           <p className="text-text-secondary text-sm mb-6">{error}</p>
-          <button className="btn-primary w-full" onClick={() => navigate('/')}>
+          <button 
+            className="btn-primary w-full" 
+            onClick={() => {
+              sessionStorage.removeItem("vibesync_session");
+              navigate('/');
+            }}
+          >
             <ChevronLeft className="w-4 h-4" /> Back to Home
           </button>
         </div>
