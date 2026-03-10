@@ -124,10 +124,15 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </div>
         )}
 
-        {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-center py-8">
-            <div className="text-4xl">💬</div>
-            <p className="text-text-muted text-sm">No messages yet.<br />Say hello!</p>
+        {messages.filter(m => m.type !== 'system').length === 0 && (
+          <div className="flex flex-col items-center justify-center py-10 px-6 text-center animate-fade-in">
+            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 text-3xl shadow-inner border border-white/5">
+              💬
+            </div>
+            <h4 className="text-sm font-bold text-text-primary mb-1">No messages yet</h4>
+            <p className="text-xs text-text-muted leading-relaxed max-w-[180px]">
+              Be the first to say something and start the conversation!
+            </p>
           </div>
         )}
         {messages.map((msg) => {

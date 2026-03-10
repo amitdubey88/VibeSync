@@ -8,11 +8,14 @@ import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import EnergyMeter from '../components/UI/EnergyMeter';
+import ActivityFeed from '../components/Sidebar/ActivityFeed';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { createPortal } from 'react-dom';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
+import RoomSkeleton from '../components/UI/RoomSkeleton';
 
 const formatTime = (seconds) => {
   if (!seconds || isNaN(seconds)) return '00:00';
@@ -67,13 +70,69 @@ const RoomPage = () => {
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
+  const [activeMobileTab, setActiveMobileTab] = useState('chat'); // For mobile layout
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isSidebarDimmed, setIsSidebarDimmed] = useState(false);
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showConfirmLeave, setShowConfirmLeave] = useState(false);
   const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [showRoomInfo, setShowRoomInfo] = useState(false);
   const hasJoinedRef = useRef(false);
+
+  // ── Keyboard Shortcuts ──
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger shortcuts if user is typing in an input or textarea
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') {
+        if (e.key === 'Escape') document.activeElement.blur();
+        return;
+      }
+
+      switch (e.key.toLowerCase()) {
+        case ' ':
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('video:toggle-play'));
+          break;
+        case 'f':
+          window.dispatchEvent(new CustomEvent('video:toggle-fullscreen'));
+          break;
+        case 'm':
+          window.dispatchEvent(new CustomEvent('video:toggle-mute'));
+          break;
+        case 'c':
+          setSidebarTab('chat');
+          setActiveMobileTab('chat');
+          if (!isSidebarOpen) setIsSidebarOpen(true);
+          break;
+        case 'p':
+          setSidebarTab('participants');
+          setActiveMobileTab('people');
+          if (!isSidebarOpen) setIsSidebarOpen(true);
+          break;
+        case '?':
+          setShowShortcutsHelp(true);
+          break;
+        case '/':
+          e.preventDefault();
+          setSidebarTab('chat');
+          setActiveMobileTab('chat');
+          if (!isSidebarOpen) setIsSidebarOpen(true);
+          // Wait for sidebar to open then focus
+          setTimeout(() => {
+            document.querySelector('.chat-input')?.focus();
+          }, 100);
+          break;
+        default:
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSidebarOpen]);
 
   // Cinematic dimming listener
   useEffect(() => {
@@ -242,8 +301,13 @@ const RoomPage = () => {
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
   const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
 
-  const handleLeave = () => {
-    sessionStorage.removeItem("vibesync_session");
+  const handleLeave = (e) => {
+    // If Shift key is pressed, bypass confirmation
+    if (e?.shiftKey) {
+      executeLeave();
+      return;
+    }
+
     if (isHost) {
       const others = participants.filter(
         (p) => p.userId !== user?.id && p.isOnline !== false
@@ -259,6 +323,13 @@ const RoomPage = () => {
         return;
       }
     }
+    
+    // For non-hosts or if no others online, show confirmation
+    setShowConfirmLeave(true);
+  };
+
+  const executeLeave = () => {
+    sessionStorage.removeItem("vibesync_session");
     leaveRoom(true);
     navigate('/', { replace: true });
   };
@@ -295,15 +366,8 @@ const RoomPage = () => {
     );
   }
 
-  if (joining) {
-    return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 rounded-full border-2 border-accent-red border-t-transparent animate-spin" />
-          <p className="text-text-secondary">Joining room…</p>
-        </div>
-      </div>
-    );
+  if (joining || (!room && !error)) {
+    return <RoomSkeleton />;
   }
 
   if (error) {
@@ -337,32 +401,41 @@ const RoomPage = () => {
             <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
           </button>
           <div className="w-px h-5 bg-border-dark" />
-          <h1 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-xs">{room?.name || code}</h1>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden sm:flex">
+          <h1 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-xs text-left">{room?.name || code}</h1>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden sm:flex shrink-0">
             <ShieldCheck className="w-3 h-3" />
             E2EE
           </div>
           
+          {/* Now Watching Banner */}
+          {currentVideo && (
+            <div className="hidden lg:flex flex-col border-l border-border-dark pl-4 ml-2 animate-fade-in max-w-[200px]">
+              <span className="text-[10px] text-text-muted font-black uppercase tracking-widest">Now Watching</span>
+              <span className="text-xs font-bold text-text-primary truncate">{currentVideo.title || 'Untitled Video'}</span>
+            </div>
+          )}
+
           <div className="w-px h-5 bg-border-dark hidden md:block" />
-          <div className="hidden md:flex items-center gap-3 text-[11px] text-text-muted font-medium bg-bg-panel/50 px-2.5 py-1 rounded-lg border border-border-dark shadow-inner">
+          
+          {/* Energy Meter */}
+          <div className="hidden md:flex items-center px-3 border-r border-border-dark mr-2">
+            <EnergyMeter />
+          </div>
+
+          <div className="hidden md:flex items-center gap-3 text-[11px] text-text-muted font-medium bg-white/5 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner">
             <span className="flex items-center gap-1.5">
               <Users className="w-3 h-3 text-accent-purple" /> 
-              {participants.filter(p => p.isOnline !== false).length} watching
+              {participants.filter(p => p.isOnline !== false).length}
             </span>
-            {isLocked && (
-               <>
-                 <span className="w-1 h-1 rounded-full bg-border-light" />
-                 <span className="flex items-center gap-1 text-red-400"><Lock className="w-2.5 h-2.5" /> Locked</span>
-               </>
-            )}
-            <span className="w-1 h-1 rounded-full bg-border-light" />
-            <LiveTimeTracker videoState={room?.videoState} currentVideo={room?.currentVideo} />
+            {isLocked && <Lock className="w-2.5 h-2.5 text-red-400" />}
+            <LiveTimeTracker videoState={videoState} currentVideo={currentVideo} />
           </div>
 
           {isHost && (
-            <span className="badge bg-accent-yellow/10 text-accent-yellow hidden md:flex">
-              <Crown className="w-3 h-3" /> Host
-            </span>
+            <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30 rounded-full animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+              <Crown className="w-3.5 h-3.5 text-accent-yellow drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
+              <span className="text-[10px] font-bold text-accent-yellow uppercase tracking-widest">Host</span>
+            </div>
           )}
         </div>
 
@@ -397,31 +470,21 @@ const RoomPage = () => {
           </button>
 
           {/* BRB / Away Toggle */}
+          {/* Shortcuts Help */}
           <button
-            onClick={() => {
-              const p = participants.find(p => p.userId === user?.id);
-              const newStatus = p?.status === 'away' ? 'online' : 'away';
-              setUserStatus(newStatus);
-              toast.success(`You are now marked as ${newStatus}`);
-            }}
-            className={`flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 transition-colors ${
-              participants.find(p => p.userId === user?.id)?.status === 'away' 
-                ? 'bg-accent-yellow/20 text-accent-yellow border border-accent-yellow/40 hover:bg-accent-yellow/30' 
-                : 'text-text-muted hover:text-accent-yellow'
-            }`}
-             title="Toggle Away Status"
+            onClick={() => setShowShortcutsHelp(true)}
+            className="btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-accent-purple transition-all"
+            title="Keyboard Shortcuts (?)"
           >
             <Clock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">
-               {participants.find(p => p.userId === user?.id)?.status === 'away' ? 'Away' : 'BRB'}
-            </span>
+            <span className="hidden sm:inline">Help</span>
           </button>
 
           {/* Leave Room */}
           <button
-            onClick={handleLeave}
+            onClick={(e) => handleLeave(e)}
             className="flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-red-400 transition-colors"
-            title="Leave room"
+            title="Leave room (Shift + Click to bypass)"
           >
             <LogOut className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Leave</span>
@@ -450,42 +513,69 @@ const RoomPage = () => {
 
         {/* ── Video area ── */}
         {/* Mobile: fixed height so chat is visible | Desktop: fills remaining width */}
-        <div className="h-[42vw] min-h-[200px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
+        <div className="h-[42vw] min-h-[220px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
           <VideoPlayer />
+          
+          {/* Reconnection Banner */}
+          {!isConnected && (
+            <div className="absolute top-0 left-0 right-0 z-50 animate-slide-up">
+              <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
+                <WifiOff className="w-4 h-4 animate-pulse" />
+                <span className="text-xs font-bold tracking-wide uppercase">Connection lost. Attempting to reconnect...</span>
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              </div>
+            </div>
+          )}
+          
+          {/* Mobile Tab Switcher Overlay (only on mobile) */}
+          <div className="md:hidden absolute bottom-0 left-0 right-0 z-40 flex bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)]">
+            <button 
+              onClick={() => setActiveMobileTab('chat')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            >
+              <MessageSquare className="w-4 h-4 mb-0.5" />
+              CHAT
+              {unreadChatCount > 0 && <span className="absolute top-2 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />}
+            </button>
+            <button 
+              onClick={() => setActiveMobileTab('people')}
+              className={`flex-1 flex flex-col items-center justify-center py-2 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            >
+              <Users className="w-4 h-4 mb-0.5" />
+              PEOPLE ({onlineCount})
+              {joinRequests.length > 0 && <span className="absolute top-2 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
+            </button>
+          </div>
         </div>
 
         {/* ── Sidebar ── */}
-        {/* Mobile: full-width flex-1 (fills remaining height) | Desktop: animated width */}
+        {/* Mobile: flex-1 height but only shows one tab at a time | Desktop: animated width */}
         <aside 
           onMouseMove={() => {
             // Wake up sidebar if user hovers over it
             window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
           }}
           className={`flex flex-col glass-panel md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
-          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'hidden md:flex md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
+          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
-          {/* Sidebar tabs */}
-          <div className="flex border-b border-border-dark shrink-0">
+          {/* Desktop Sidebar tabs (hidden on mobile) */}
+          <div className="hidden md:flex border-b border-border-dark shrink-0">
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
+              { id: 'activity', icon: Activity, label: 'Activity' },
             ].map(({ id, icon: Icon, label }) => (
               <button
                 key={id}
                 onClick={() => handleTabChange(id)}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all duration-200
                   ${sidebarTab === id
-                    ? 'border-accent-red text-text-primary'
+                    ? 'border-accent-red text-text-primary bg-white/5'
                     : 'border-transparent text-text-muted hover:text-text-secondary'}`}
               >
                 <Icon className="w-4 h-4" />
-                <span>{label}</span>
-                {id === 'participants' && joinRequests.length > 0 && (
-                  <span className="w-4 h-4 rounded-full bg-accent-red text-white text-xs flex items-center justify-center">
-                    {joinRequests.length}
-                  </span>
-                )}
+                <span className="hidden xl:inline">{label}</span>
                 {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
                   <span className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)]">
                     {unreadChatCount > 9 ? '9+' : unreadChatCount}
@@ -495,76 +585,111 @@ const RoomPage = () => {
             ))}
           </div>
 
-          {/* Host: controls sidebar block */}
-          {isHost && sidebarTab === 'participants' && (
-            <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">
-              
-              {/* Approval mode toggle */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {requiresApproval
-                    ? <ShieldCheck className="w-4 h-4 text-accent-green" />
-                    : <ShieldOff className="w-4 h-4 text-text-muted" />}
-                  <span className="text-xs font-semibold text-text-secondary">
-                    {requiresApproval ? 'Approval ON' : 'Approval OFF'}
-                  </span>
-                  {requiresApproval && joinRequests.length > 0 && (
-                    <span className="text-xs text-accent-yellow font-semibold">
-                      ({joinRequests.length} waiting)
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setApprovalRequired(!requiresApproval)}
-                  className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
-                    requiresApproval ? 'bg-accent-green' : 'bg-bg-hover border border-border-dark'
-                  }`}
-                  title={requiresApproval ? 'Disable approval' : 'Enable approval'}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    requiresApproval ? 'translate-x-5' : 'translate-x-0'
-                  }`} />
-                </button>
-              </div>
-
-              {/* Lock Room toggle */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  {isLocked
-                    ? <Lock className="w-4 h-4 text-red-500" />
-                    : <Unlock className="w-4 h-4 text-text-muted" />}
-                  <span className="text-xs font-semibold text-text-secondary">
-                    {isLocked ? 'Room Locked' : 'Room Unlocked'}
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => toggleRoomLock(!isLocked)}
-                  className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 shrink-0 ${
-                    isLocked ? 'bg-red-500' : 'bg-bg-hover border border-border-dark'
-                  }`}
-                  title={isLocked ? 'Unlock Room' : 'Lock Room'}
-                >
-                  <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                    isLocked ? 'translate-x-5' : 'translate-x-0'
-                  }`} />
-                </button>
-              </div>
-
-            </div>
-          )}
-
-          {/* Tab content */}
           <div className="flex-1 overflow-hidden flex flex-col">
-            {sidebarTab === 'chat' && <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />}
-            {sidebarTab === 'participants' && <ParticipantsList />}
+            {/* Tab Logic: Hybrid Mobile/Desktop */}
+            {(sidebarTab === 'chat' || (activeMobileTab === 'chat' && window.innerWidth < 768)) ? (
+              <div className={`flex-1 flex flex-col overflow-hidden ${(window.innerWidth < 768 && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
+                <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />
+              </div>
+            ) : null}
+            
+            {(sidebarTab === 'participants' || (activeMobileTab === 'people' && window.innerWidth < 768)) ? (
+              <div className={`flex-1 flex flex-col overflow-hidden ${(window.innerWidth < 768 && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
+                {/* Host: controls sidebar block */}
+                {isHost && (
+                  <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        {requiresApproval ? <ShieldCheck className="w-4 h-4 text-accent-green" /> : <ShieldOff className="w-4 h-4 text-text-muted" />}
+                        <span className="text-xs font-semibold text-text-secondary">{requiresApproval ? 'Approval ON' : 'Approval OFF'}</span>
+                      </div>
+                      <button onClick={() => setApprovalRequired(!requiresApproval)} className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? 'bg-accent-green' : 'bg-bg-hover'}`}>
+                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${requiresApproval ? 'translate-x-5' : 'translate-x-0'}`} />
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <ParticipantsList />
+              </div>
+            ) : null}
           </div>
 
           {/* Voice controls */}
           <VoiceControls />
         </aside>
       </div>
+
+      {/* Leave confirmation */}
+      <ConfirmDialog
+        open={showConfirmLeave}
+        title="Leave Room?"
+        message="You will disconnect from the watch session. Are you sure you want to leave?"
+        confirmLabel="Leave Room"
+        danger
+        onConfirm={executeLeave}
+        onCancel={() => setShowConfirmLeave(false)}
+      />
+
+      {/* Room Info Modal */}
+      <ConfirmDialog
+        open={showRoomInfo}
+        title="Room Information"
+        message={
+          <div className="flex flex-col gap-4 text-left py-2">
+            <div>
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Room Name</label>
+              <div className="text-sm font-semibold text-text-primary">{room?.name || 'VibeSync Party'}</div>
+            </div>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Room ID</label>
+                <div className="text-sm font-mono font-bold text-accent-purple">{code}</div>
+              </div>
+              <div className="flex-1">
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Security</label>
+                <div className="text-sm font-semibold text-accent-green flex items-center gap-1">
+                  <ShieldCheck className="w-3.5 h-3.5" /> End-to-End Encrypted
+                </div>
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Invite Link</label>
+              <div className="flex items-center gap-2 mt-1">
+                <input 
+                  readOnly 
+                  value={window.location.href}
+                  className="flex-1 bg-black/30 border border-white/10 rounded px-2 py-1.5 text-xs text-text-secondary outline-none focus:border-accent-purple/50"
+                />
+                <button onClick={copyRoomLink} className="btn-ghost p-1.5 h-auto">
+                  <Copy className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        confirmLabel="Close"
+        onConfirm={() => setShowRoomInfo(false)}
+        onCancel={() => setShowRoomInfo(false)}
+      />
+
+      {/* Shortcuts Help Modal */}
+      <ConfirmDialog
+        open={showShortcutsHelp}
+        title="Keyboard Shortcuts"
+        message={
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-left py-2">
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">Space</span> <span className="text-xs">Play/Pause</span></div>
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">F</span> <span className="text-xs">Fullscreen</span></div>
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">M</span> <span className="text-xs">Mute</span></div>
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">C</span> <span className="text-xs">Chat Tab</span></div>
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">P</span> <span className="text-xs">People Tab</span></div>
+            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">/</span> <span className="text-xs">Focus Chat</span></div>
+          </div>
+        }
+        confirmLabel="Got it"
+        onConfirm={() => setShowShortcutsHelp(false)}
+        onCancel={() => setShowShortcutsHelp(false)}
+      />
 
       {/* Delete room confirmation */}
       <ConfirmDialog

@@ -24,6 +24,15 @@
     padding: 0;
   }
 
+  :focus-visible {
+    outline: 2px solid #8b5cf6;
+    outline-offset: 2px;
+  }
+
+  button:focus-visible {
+    @apply ring-2 ring-accent-purple ring-offset-2 ring-offset-bg-primary;
+  }
+
   html {
     scroll-behavior: smooth;
     -webkit-text-size-adjust: 100%;
@@ -307,4 +316,15 @@
 
 .btn-ghost:hover, .btn-icon:hover {
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+}
+
+@keyframes float-up {
+  0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
+  20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
+  50% { transform: translate(-50%, -100px) rotate(15deg); }
+  100% { transform: translate(-50%, -400px) rotate(-15deg); opacity: 0; scale: 0.8; }
+}
+
+.animate-float-up {
+  animation: float-up 3s ease-out forwards;
 }

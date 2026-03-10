@@ -5,29 +5,50 @@ import { getRoomMessages } from '../services/api';
 import toast from 'react-hot-toast';
 import { deriveKey, encryptData, decryptData } from '../utils/crypto';
 
-// Simple beep generator for notifications without needing an external audio file
-const playNotifySound = () => {
+// Enhanced sound generator for premium UI feedback
+const playUISound = (type = 'message') => {
   try {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     
-    // Quick, pleasant "pop" sound
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(600, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.1);
-    
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.2, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
-    
     osc.connect(gain);
     gain.connect(ctx.destination);
     
-    osc.start();
-    osc.stop(ctx.currentTime + 0.2);
+    const now = ctx.currentTime;
+    
+    if (type === 'message') {
+      // Soft, high-pitched "ding"
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.1, now + 0.01);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+      osc.start(now);
+      osc.stop(now + 0.3);
+    } else if (type === 'social') {
+      // Mellow, mid-range "pop" (joins/leaves)
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } else if (type === 'action') {
+      // Very short "tick" (clicks)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1200, now);
+      gain.gain.setValueAtTime(0, now);
+      gain.gain.linearRampToValueAtTime(0.05, now + 0.005);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+      osc.start(now);
+      osc.stop(now + 0.05);
+    }
   } catch (e) {
-    // Ignore audio context errors (e.g. if user hasn't interacted with page yet)
+    // Ignore audio context issues
   }
 };
 
@@ -57,6 +78,22 @@ export const RoomProvider = ({ children }) => {
   const [unreadChatCount, setUnreadChatCount] = useState(0);
   const [chatMuted, setChatMuted] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
+  const [energy, setEnergy] = useState(0); // 0-100 social energy
+  const [clips, setClips] = useState([]); // List of timestamp highlights
+  const participantsRef = useRef([]);
+
+  const addSystemMessage = useCallback((content) => {
+    const sysMsg = {
+      id: `sys-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      type: 'system',
+      userId: 'system',
+      username: 'System',
+      content,
+      timestamp: new Date().toISOString()
+    };
+    setMessages(prev => [...prev, sysMsg]);
+    playUISound('social');
+  }, []);
 
   // Derive key when room code changes
   useEffect(() => {
@@ -150,16 +187,43 @@ export const RoomProvider = ({ children }) => {
       setJoinStatus('joined'); // receiving full state means we're in
     };
 
-    const onParticipantUpdate = ({ participants: pts }) => setParticipants(pts || []);
+    const onParticipantUpdate = ({ participants: pts }) => {
+      const prev = participantsRef.current;
+      const current = pts || [];
+      
+      // Detect joins
+      current.forEach(p => {
+        if (!prev.find(old => old.userId === p.userId) && p.userId !== user?.id) {
+          addSystemMessage(`${p.username} joined the room`);
+        }
+      });
+      
+      // Detect leaves
+      prev.forEach(p => {
+        if (!current.find(curr => curr.userId === p.userId)) {
+          addSystemMessage(`${p.username} left the room`);
+        }
+      });
+      
+      participantsRef.current = current;
+      setParticipants(current);
+    };
     const onVoiceUpdate = ({ voiceParticipants: vp }) => {
       const active = (vp || []).filter(p => !p.isPassive);
       setVoiceParticipants(active);
     };
 
     const onHostChanged = ({ newHostId, newHostUsername }) => {
+      const oldHost = participants.find(p => p.userId === room?.hostId);
       setIsHost(newHostId === user?.id);
       setRoom((prev) => prev ? { ...prev, hostId: newHostId } : prev);
-      if (newHostId === user?.id) toast.success('👑 You are now the host!');
+      
+      if (newHostId === user?.id) {
+        toast.success('👑 You are now the host!');
+        addSystemMessage(`You are now the room host`);
+      } else {
+        addSystemMessage(`${newHostUsername} is now the room host`);
+      }
     };
 
     const onChatMessage = async (msg) => {
@@ -177,7 +241,8 @@ export const RoomProvider = ({ children }) => {
         
         setChatMuted((isMuted) => {
           if (!isMuted) {
-            playNotifySound();
+            playUISound('message');
+            setEnergy(prev => Math.min(prev + 10, 100)); // Boost energy
             toast(`💬 ${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
               duration: 2000,
               icon: '📩',
@@ -213,6 +278,7 @@ export const RoomProvider = ({ children }) => {
       
       const id = reaction.id;
       setReactions((prev) => [...prev, { ...reaction, emoji: displayEmoji, id }]);
+      setEnergy(prev => Math.min(prev + 5, 100)); // Small boost for reactions
       setTimeout(() => setReactions((prev) => prev.filter((r) => r.id !== id)), 3500);
     };
 
@@ -257,6 +323,23 @@ export const RoomProvider = ({ children }) => {
       else toast('The room is now unlocked.', { icon: '🔓', duration: 2000 });
     };
 
+    const onRemotePlay = ({ currentTime }) => {
+      if (!isHost) {
+        addSystemMessage(`Host resumed the video`);
+      }
+    };
+    const onRemotePause = ({ currentTime }) => {
+      if (!isHost) {
+        addSystemMessage(`Host paused the video`);
+      }
+    };
+    const onRemoteSeek = ({ currentTime }) => {
+      if (!isHost) {
+        const time = new Date(currentTime * 1000).toISOString().substr(11, 8).replace(/^00:/, '');
+        addSystemMessage(`Host jumped to ${time}`);
+      }
+    };
+
     socket.on('room:state', onRoomState);
     socket.on('room:participant-update', onParticipantUpdate);
     socket.on('room:voice-update', onVoiceUpdate);
@@ -273,6 +356,9 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:join-denied', onJoinDenied);
     socket.on('room:approval-changed', onApprovalChanged);
     socket.on('room:lock-changed', onLockChanged);
+    socket.on('video:play', onRemotePlay);
+    socket.on('video:pause', onRemotePause);
+    socket.on('video:seek', onRemoteSeek);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -291,8 +377,19 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:join-denied', onJoinDenied);
       socket.off('room:approval-changed', onApprovalChanged);
       socket.off('room:lock-changed', onLockChanged);
+      socket.off('video:play', onRemotePlay);
+      socket.off('video:pause', onRemotePause);
+      socket.off('video:seek', onRemoteSeek);
     };
   }, [socket, user, roomKey]);
+
+  // ── Social Energy Decay ──────────────────────────────────────────────────
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setEnergy(prev => Math.max(prev - 2, 0));
+    }, 2000);
+    return () => clearInterval(timer);
+  }, []);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (content, replyTo = null) => {
@@ -378,11 +475,12 @@ export const RoomProvider = ({ children }) => {
     setRequiresApproval(value);
   }, [socket, room]);
 
-  const toggleRoomLock = useCallback((locked) => {
+  const sendClip = useCallback((time) => {
     if (!socket || !room) return;
-    socket.emit('room:toggle-lock', { roomCode: room.code, isLocked: locked });
-    setIsLocked(locked);
-  }, [socket, room]);
+    const timeStr = new Date(time * 1000).toISOString().substr(11, 8).replace(/^00:/, '');
+    addSystemMessage(`${user?.username} clipped a moment at ${timeStr}`);
+    setClips(prev => [...prev, { id: Date.now(), time, username: user?.username }]);
+  }, [socket, room, user, addSystemMessage]);
 
   const deleteRoom = useCallback(() => {
     if (!socket || !room) return;
@@ -431,7 +529,9 @@ export const RoomProvider = ({ children }) => {
       dismissRoomEnded: () => setRoomEndedByHost(null),
       unreadChatCount, setUnreadChatCount,
       chatMuted, setChatMuted,
-      setUserStatus
+      setUserStatus,
+      energy, setEnergy,
+      clips, sendClip
     }}>
       {children}
     </RoomContext.Provider>

@@ -1,15 +1,21 @@
 import { useRoom } from '../../context/RoomContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users } from 'lucide-react';
 
 const VideoPresenceOverlay = ({ visible }) => {
-  const { participants, voiceParticipants } = useRoom();
+  const { participants, voiceParticipants, reactions } = useRoom();
 
-  // Only show top 6 online participants in the overlay to avoid clutter
+  const onlineCount = participants.filter(p => p.isOnline !== false).length;
+
+  // Aggregate current reactions for the collective counter
+  const reactionCounts = reactions.reduce((acc, r) => {
+    acc[r.emoji] = (acc[r.emoji] || 0) + 1;
+    return acc;
+  }, {});
+
   const activeParticipants = [...participants]
     .filter(p => p.isOnline !== false)
     .sort((a, b) => {
-      // Prioritize speaking users, then buffering users, then others
       const aVoice = voiceParticipants.find(vp => vp.userId === a.userId);
       const bVoice = voiceParticipants.find(vp => vp.userId === b.userId);
       const aSpeaking = aVoice && !aVoice.isMuted;
@@ -17,52 +23,66 @@ const VideoPresenceOverlay = ({ visible }) => {
       
       if (aSpeaking && !bSpeaking) return -1;
       if (!aSpeaking && bSpeaking) return 1;
-      if (a.isBuffering && !b.isBuffering) return -1;
-      if (!a.isBuffering && b.isBuffering) return 1;
       return 0;
     })
-    .slice(0, 6);
-
-  if (activeParticipants.length === 0) return null;
+    .slice(0, 5);
 
   return (
-    <div className={`absolute top-4 left-4 z-40 flex flex-col gap-2 transition-opacity duration-300 pointer-events-none ${visible ? 'opacity-100' : 'opacity-0'}`}>
-      {activeParticipants.map(p => {
-        const voiceData = voiceParticipants.find(vp => vp.userId === p.userId);
-        const isSpeaking = voiceData && !voiceData.isMuted;
-        
-        return (
-          <div key={p.userId} className="flex items-center gap-2 animate-fade-in group pointer-events-auto cursor-default">
+    <div className="absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none">
+      {/* Top Row: Viewer Count & Sync/Status (Simplified) */}
+      <div className={`flex items-center gap-2 transition-opacity duration-300 ${visible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-xl pointer-events-auto">
+          <Users className="w-3 h-3 text-accent-purple" />
+          <span>{onlineCount} watching</span>
+        </div>
+      </div>
+
+      {/* Collective Reactions Counter */}
+      {Object.entries(reactionCounts).length > 0 && (
+        <div className="flex flex-wrap gap-2 animate-bounce">
+          {Object.entries(reactionCounts).map(([emoji, count]) => (
+            <div key={emoji} className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-2 py-0.5 text-xs font-bold text-white shadow-lg pointer-events-auto">
+              <span>{emoji}</span>
+              <span className="text-accent-purple">x{count}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Avatar Stack Overlay */}
+      <div className="flex items-center -space-x-2 pointer-events-auto">
+        {activeParticipants.map((p, idx) => {
+          const voiceData = voiceParticipants.find(vp => vp.userId === p.userId);
+          const isSpeaking = voiceData && !voiceData.isMuted;
+          
+          return (
             <div 
-              className={`relative flex items-center justify-center w-8 h-8 rounded-full text-xs font-bold text-white shadow-lg border border-white/20 transition-all ${isSpeaking ? 'ring-2 ring-accent-green trigger-pulse-ring' : ''}`}
-              style={{ backgroundColor: p.avatar || getAvatarColor(p.username) }}
+              key={p.userId} 
+              className={`relative flex items-center justify-center w-8 h-8 rounded-full text-[10px] font-bold text-white shadow-2xl border-2 border-bg-card transition-all hover:z-10 hover:-translate-y-1 group
+                ${isSpeaking ? 'ring-2 ring-accent-green trigger-pulse-ring' : ''}`}
+              style={{ backgroundColor: p.avatar || getAvatarColor(p.username), zIndex: 10 - idx }}
               title={p.username}
             >
               {getInitials(p.username)}
               
-              {/* Status Badge Overlays */}
-              {p.isBuffering ? (
-                <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 bg-bg-panel rounded-full border border-border-dark shadow-sm">
-                  <Loader2 className="w-2.5 h-2.5 text-accent-yellow animate-spin" />
-                </span>
-              ) : p.status === 'away' ? (
-                <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 bg-bg-panel rounded-full border border-border-dark shadow-sm">
-                  <span className="text-[8px]">💤</span>
-                </span>
-              ) : isSpeaking ? (
-                <span className="absolute -bottom-1 -right-1 flex items-center justify-center w-4 h-4 bg-bg-panel rounded-full border border-border-dark shadow-sm">
-                  <span className="w-2 h-2 rounded-full bg-accent-green animate-pulse" />
-                </span>
-              ) : null}
+              {/* Speaking Indicator Dot */}
+              {isSpeaking && (
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent-green rounded-full border border-bg-card animate-pulse" />
+              )}
+
+              {/* Tooltip */}
+              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-sm text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                {p.username}
+              </div>
             </div>
-            
-            {/* Expanded hover tooltip/name (visible only on hover when controls are active) */}
-            <div className={`bg-black/60 backdrop-blur-sm border border-white/10 px-2 py-0.5 rounded text-[10px] font-semibold text-white truncate max-w-[100px] opacity-0 group-hover:opacity-100 transition-opacity`}>
-              {p.username}
-            </div>
+          );
+        })}
+        {onlineCount > activeParticipants.length && (
+          <div className="w-8 h-8 rounded-full bg-bg-hover border-2 border-bg-card flex items-center justify-center text-[10px] font-black text-text-muted z-0">
+            +{onlineCount - activeParticipants.length}
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { formatTime } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 import {
   Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload,
-  Mic, MicOff, Phone
+  Mic, MicOff, Phone, Pin
 } from 'lucide-react';
 
 const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoadClick, visible }) => {
@@ -142,6 +142,16 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
           className="h-full rounded-full bg-accent-red transition-all duration-150"
           style={{ width: `${progress}%` }}
         />
+        {/* Clip Markers */}
+        {clips && clips.map(clip => (
+          <div 
+            key={clip.id}
+            className="absolute top-0 bottom-0 w-0.5 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)] z-10"
+            style={{ left: `${(clip.time / duration) * 100}%` }}
+            title={`Clip by ${clip.username}`}
+          />
+        ))}
+
         {isHost && (
           <div
             className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
@@ -204,6 +214,15 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
             <Upload className="w-4 h-4" />
           </button>
         )}
+
+        {/* Clip moment */}
+        <button 
+          onClick={() => sendClip(currentTime)} 
+          className="btn-icon text-white hover:text-accent-red transition-colors" 
+          title="Clip This Moment"
+        >
+          <Pin className="w-4 h-4" />
+        </button>
 
         {/* Fullscreen */}
         <button type="button" onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">

@@ -22,6 +22,7 @@ const useVideoSync = (videoEl) => {
     const { room, isHost, setVideoState, currentVideo } = useRoom();
     const { sendSyncMessage, onSyncMessage } = useSyncDataChannel();
     const isSyncingRef = useRef(false);
+    const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'catching-up' | 'buffering'
     const roomCode = room?.code;
 
     // ── Host: emit events ────────────────────────────────────────────────────
@@ -143,11 +144,14 @@ const useVideoSync = (videoEl) => {
 
         const applyTimeIfNeeded = (targetTime) => {
             if (!videoEl) return;
-            const drift = Math.abs(videoEl.currentTime - targetTime);
             if (drift > DRIFT_THRESHOLD) {
                 isSyncingRef.current = true;
+                setSyncStatus('catching-up');
                 videoEl.currentTime = targetTime;
-                setTimeout(() => { isSyncingRef.current = false; }, 500);
+                setTimeout(() => { 
+                    isSyncingRef.current = false; 
+                    setSyncStatus('synced');
+                }, 800);
             }
         };
 
@@ -232,14 +236,20 @@ const useVideoSync = (videoEl) => {
             if (Math.abs(drift) > 1.2) {
                 // Large drift: Hard jump
                 isSyncingRef.current = true;
+                setSyncStatus('catching-up');
                 videoEl.currentTime = expectedTime;
-                setTimeout(() => { isSyncingRef.current = false; }, 500);
-            } else if (Math.abs(drift) > 0.25) {
+                setTimeout(() => { 
+                    isSyncingRef.current = false; 
+                    setSyncStatus('synced');
+                }, 800);
+            } else if (Math.abs(drift) > 0.3) {
                 // Medium drift: Adjust playback rate to scrub gracefully
                 videoEl.playbackRate = drift > 0 ? 1.05 : 0.95;
+                setSyncStatus('catching-up');
             } else {
                 // Synchronized: Restore natural rate
                 videoEl.playbackRate = 1.0;
+                setSyncStatus('synced');
             }
 
             // Emit drift telemetry back to host for adaptive sync adjusting
@@ -286,7 +296,11 @@ const useVideoSync = (videoEl) => {
         return () => clearTimeout(timer);
     }, [socket, roomCode, isHost]);
 
-    return { onBufferStart, onBufferEnd };
+    return { 
+        onBufferStart: () => { setSyncStatus('buffering'); onBufferStart(); }, 
+        onBufferEnd: () => { setSyncStatus('synced'); onBufferEnd(); },
+        syncStatus 
+    };
 };
 
 export default useVideoSync;

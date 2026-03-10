@@ -10,6 +10,9 @@ import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
 import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
+import SyncStatusBadge from './SyncStatusBadge';
+import ReactionBurst from './ReactionBurst';
+import QuickReactionBar from './QuickReactionBar';
 import { Play, Upload, Loader2, X, Film, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
@@ -128,7 +131,7 @@ const VideoPlayer = () => {
   }, []);
 
   useClockSync();
-  useVideoSync(videoEl);
+  const { onBufferStart, onBufferEnd, syncStatus } = useVideoSync(videoEl);
   const { bufferingUsers } = useBufferSync(videoEl);
 
   // ── Auto-play for participants when videoEl mounts while host was already playing ──
@@ -396,6 +399,41 @@ const VideoPlayer = () => {
       window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
     }, 3500);
   }, []);
+
+  // ── Keyboard Shortcut Event Listeners ──
+  useEffect(() => {
+    const handleTogglePlay = () => {
+      if (!isHost) {
+        toast.error('Only the host can control playback');
+        return;
+      }
+      if (videoEl) {
+        if (videoEl.paused) videoEl.play();
+        else videoEl.pause();
+      }
+    };
+    const handleToggleFullscreen = () => {
+      const el = document.querySelector('.video-container') || videoEl;
+      if (!el) return;
+      if (!document.fullscreenElement) {
+        el.requestFullscreen?.().catch(e => console.error(e));
+      } else {
+        document.exitFullscreen?.();
+      }
+    };
+    const handleToggleMute = () => {
+      if (videoEl) videoEl.muted = !videoEl.muted;
+    };
+
+    window.addEventListener('video:toggle-play', handleTogglePlay);
+    window.addEventListener('video:toggle-fullscreen', handleToggleFullscreen);
+    window.addEventListener('video:toggle-mute', handleToggleMute);
+    return () => {
+      window.removeEventListener('video:toggle-play', handleTogglePlay);
+      window.removeEventListener('video:toggle-fullscreen', handleToggleFullscreen);
+      window.removeEventListener('video:toggle-mute', handleToggleMute);
+    };
+  }, [videoEl, isHost]);
 
   // Initial auto-hide timer on mount
   useEffect(() => {
@@ -681,7 +719,16 @@ const VideoPlayer = () => {
           {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
           <VideoPresenceOverlay visible={showControls} />
           <FloatingReactions />
+          <ReactionBurst />
+          <QuickReactionBar visible={showControls} />
           <VideoReactionBar visible={showControls} />
+
+          {/* Sync Status Badge (Phase 5) */}
+          {!isHost && currentVideo && currentVideo.type !== 'live' && (
+            <div className="absolute top-4 right-4 z-40 pointer-events-none">
+              <SyncStatusBadge status={syncStatus} />
+            </div>
+          )}
 
           {/* Fading Controls Group */}
           <div className={`absolute inset-0 z-30 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
