@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { useRoom } from '../../context/RoomContext';
 import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
+import useClockSync from '../../hooks/useClockSync';
 import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
@@ -124,6 +125,7 @@ const VideoPlayer = () => {
     setVideoEl(el);
   }, []);
 
+  useClockSync();
   useVideoSync(videoEl);
 
   // ── Auto-play for participants when videoEl mounts while host was already playing ──

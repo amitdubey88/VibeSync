@@ -186,4 +186,13 @@ module.exports = (io, socket, roomStore) => {
             io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         }
     });
+
+    // ── sync:ping ─────────────────────────────────────────────────────────────
+    // Used by clients to calculate network latency and server clock offset
+    socket.on('sync:ping', ({ clientTime }) => {
+        socket.emit('sync:pong', {
+            clientTime,
+            serverTime: Date.now()
+        });
+    });
 };

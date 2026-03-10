@@ -85,7 +85,8 @@ const useVideoSync = (videoEl) => {
                     roomCode,
                     currentTime: videoEl.currentTime,
                     isPlaying: !videoEl.paused,
-                    timestamp: Date.now()
+                    rate: videoEl.playbackRate,
+                    timestamp: Date.now() + (window.serverOffset || 0)
                 });
             }
         }, 2000);
@@ -163,24 +164,39 @@ const useVideoSync = (videoEl) => {
             }
         };
 
-        const onHeartbeatSync = ({ currentTime, isPlaying, timestamp }) => {
+        const onHeartbeatSync = ({ currentTime, isPlaying, rate = 1, timestamp }) => {
             if (!videoEl || isHost || isSyncingRef.current) return;
             const videoType = currentVideo?.type;
             if (videoType === 'live' || videoType === 'uploading') return;
 
-            // Calculate latency-adjusted target time
-            const latency = (Date.now() - timestamp) / 1000;
-            const targetTime = isPlaying ? currentTime + latency : currentTime;
+            // Calculate precisely where the host is *right now* mathematically
+            const serverNow = Date.now() + (window.serverOffset || 0);
+            const elapsedSecs = (serverNow - timestamp) / 1000;
+            const expectedTime = isPlaying ? currentTime + (elapsedSecs * rate) : currentTime;
 
-            applyTimeIfNeeded(targetTime);
+            const drift = expectedTime - videoEl.currentTime;
 
-            // Enforce pause/play state drift (only if not already mid-state change)
+            // Enforce pause/play state drift
             if (isPlaying && videoEl.paused) {
                 videoEl.play().catch(() => {});
-                setVideoState(prev => ({ ...prev, isPlaying: true, currentTime: targetTime }));
+                setVideoState(prev => ({ ...prev, isPlaying: true, currentTime: expectedTime }));
             } else if (!isPlaying && !videoEl.paused) {
                 videoEl.pause();
-                setVideoState(prev => ({ ...prev, isPlaying: false, currentTime: targetTime }));
+                setVideoState(prev => ({ ...prev, isPlaying: false, currentTime: expectedTime }));
+            }
+
+            // Smooth Drift Correction Matrix
+            if (Math.abs(drift) > 1.2) {
+                // Large drift: Hard jump
+                isSyncingRef.current = true;
+                videoEl.currentTime = expectedTime;
+                setTimeout(() => { isSyncingRef.current = false; }, 500);
+            } else if (Math.abs(drift) > 0.25) {
+                // Medium drift: Adjust playback rate to scrub gracefully
+                videoEl.playbackRate = drift > 0 ? 1.05 : 0.95;
+            } else {
+                // Synchronized: Restore natural rate
+                videoEl.playbackRate = 1.0;
             }
         };
 
