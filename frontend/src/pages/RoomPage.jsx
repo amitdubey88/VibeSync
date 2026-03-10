@@ -524,7 +524,6 @@ const RoomPage = () => {
               <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <WifiOff className="w-4 h-4 animate-pulse" />
                 <span className="text-xs font-bold tracking-wide uppercase">Connection lost. Attempting to reconnect...</span>
-                <Loader2 className="w-3.5 h-3.5 animate-spin" />
               </div>
             </div>
           )}
