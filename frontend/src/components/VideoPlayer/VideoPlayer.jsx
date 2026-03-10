@@ -611,7 +611,7 @@ const VideoPlayer = () => {
       )}
 
       {/* Controls Overlay - only render if a video is active/loaded */}
-      {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming) && (
+      {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming || remotePremierStream) && (
         <>
           {/* Reactions (floaters are always visible, menu follows showControls) */}
           <FloatingReactions />
