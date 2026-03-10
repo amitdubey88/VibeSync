@@ -69,6 +69,8 @@ const RoomPage = () => {
     setUserStatus, isLocked, toggleRoomLock, videoState, currentVideo
   } = useRoom();
 
+  const onlineCount = participants.filter(p => p.isOnline !== false).length;
+
   const [sidebarTab, setSidebarTab] = useState('chat');
   const [activeMobileTab, setActiveMobileTab] = useState('chat'); // For mobile layout
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
