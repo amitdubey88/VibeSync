@@ -7,16 +7,15 @@ import VideoControls from './VideoControls';
 import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
 import YouTubePlayer from './YouTubePlayer';
-import { Play, Upload, Loader2, X, Film, CloudUpload, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
-import { uploadVideo } from '../../services/api';
+import { Play, Upload, Loader2, X, Film, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import useWebRTC from '../../hooks/useWebRTC';
 import useHostTransferSync from '../../hooks/useHostTransferSync';
-import { encryptFile, decryptFile } from '../../utils/crypto';
+import { decryptFile } from '../../utils/crypto';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
-const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, isUploading, uploadProgress }) =>
+const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput }) =>
   createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
@@ -33,47 +32,21 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
           </button>
         </div>
 
-        {/* File upload options */}
+        {/* File upload */}
         <div className="space-y-3 mb-5">
           <label className="block text-xs font-semibold text-text-secondary uppercase tracking-wide">
             Select Video File
           </label>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Standard Upload */}
-            <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed transition-all
-              ${isUploading ? 'border-accent-purple bg-accent-purple/5 opacity-50 pointer-events-none' : 'border-border-light hover:border-accent-purple/60 hover:bg-accent-purple/5 cursor-pointer'}`}>
-              <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e, 'upload')} disabled={isUploading} />
-              <CloudUpload className="w-6 h-6 text-accent-purple" />
-              <div className="text-center">
-                <span className="text-xs font-bold text-text-primary">Sync via Upload</span>
-                <p className="text-[10px] text-text-muted">Permanent & reliable</p>
-              </div>
-            </label>
-
-            {/* Direct Stream */}
-            <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed transition-all
-              ${isUploading ? 'opacity-50 pointer-events-none' : 'border-accent-red hover:border-accent-red/60 hover:bg-accent-red/5 cursor-pointer'}`}>
-              <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e, 'live')} disabled={isUploading} />
-              <Zap className="w-6 h-6 text-accent-red" />
-              <div className="text-center">
-                <span className="text-xs font-bold text-text-primary">Stream Instantly</span>
-                <p className="text-[10px] text-text-muted">Zero-wait WebRTC</p>
-              </div>
-            </label>
-          </div>
-
-          {isUploading && (
-            <div className="mt-4 p-4 rounded-xl bg-accent-purple/10 border border-accent-purple/20">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-accent-purple">Uploading to Cloud…</span>
-                <span className="text-xs font-bold text-accent-purple">{uploadProgress}%</span>
-              </div>
-              <div className="h-2 bg-bg-hover rounded-full overflow-hidden">
-                <div className="h-full bg-accent-purple transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
-              </div>
+          <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed transition-all
+            border-accent-red hover:border-accent-red/60 hover:bg-accent-red/5 cursor-pointer`}>
+            <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e)} />
+            <Zap className="w-6 h-6 text-accent-red" />
+            <div className="text-center">
+              <span className="text-xs font-bold text-text-primary">Stream Instantly</span>
+              <p className="text-[10px] text-text-muted">Zero-wait WebRTC</p>
             </div>
-          )}
+          </label>
         </div>
 
         <div className="flex items-center gap-3 mb-5">
@@ -108,7 +81,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading, syncDuration } = useRoom();
+  const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration } = useRoom();
   const { setPremierStream, remotePremierStream, isStreamAnnounced } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
   const { user } = useAuth();
@@ -125,8 +98,6 @@ const VideoPlayer = () => {
   const [isDecrypting, setIsDecrypting] = useState(false);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [isUploading, setIsUploading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
@@ -140,7 +111,7 @@ const VideoPlayer = () => {
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
 
-  // Live ref so the upload callback can read playback position without stale closure
+  // Live ref so the callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
   const isPlayingRef = useRef(false);
   // Guards against re-capturing the stream on 'playing' events fired after seeking.
@@ -213,8 +184,7 @@ const VideoPlayer = () => {
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
       const shouldBroadcast = isHost && (
-        isUploading || 
-        ((currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitialized)
+        (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitialized
       );
       
       if (shouldBroadcast && videoEl.captureStream) {
@@ -262,7 +232,7 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('pause', onPauseEv);
       videoEl.removeEventListener('ended', onPauseEv);
     };
-  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, isUploading, setPremierStream, isLiveStreamingInitialized]);
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream, isLiveStreamingInitialized]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
@@ -366,12 +336,12 @@ const VideoPlayer = () => {
     return () => clearTimeout(controlsTimer.current);
   }, []);
 
-  // ── File upload / Direct Stream handler ────────────────────────────────────
-  const handleFileUpload = async (e, mode = 'upload') => {
+  // ── File stream handler ────────────────────────────────────────────────────
+  const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // 1. Create blob URL → host starts watching IMMEDIATELY
+    // Create blob URL → host starts watching IMMEDIATELY
     const localUrl = URL.createObjectURL(file);
     blobUrlRef.current = localUrl;
     setBlobUrl(localUrl);
@@ -379,54 +349,15 @@ const VideoPlayer = () => {
     // Close modal instantly
     setShowSourcePicker(false);
 
-    if (mode === 'live') {
-      // DIRECT STREAMING MODE (No Upload)
-      setIsDirectStreaming(true);
-      if (room) {
-        setVideoSource(
-          { url: 'live-stream', type: 'live', title: `(LIVE) ${file.name}`, e2ee: !!roomKey },
-          { currentTime: 0, isPlaying: false }
-        );
-      }
-      toast.success('⚡ Live Stream Started! participants are watching you directly.', { duration: 4000 });
-      return;
-    }
-
-    // UPLOAD MODE (Normal Sync)
-    // 2. Tell participants host started uploading
-    if (room) notifyUploading(file.name);
-    toast.success('▶ Playing now! Uploading for guests to sync…', { duration: 4000 });
-
-    // 3. Upload to Cloudinary in background
-    setIsUploading(true);
-    setUploadProgress(0);
-    try {
-      let fileToUpload = file;
-      if (roomKey) {
-        toast.loading('Encrypting video security...', { id: 'encrypting' });
-        const encryptedBlob = await encryptFile(file, roomKey);
-        fileToUpload = new File([encryptedBlob], file.name, { type: 'application/octet-stream' });
-        toast.success('Video encrypted!', { id: 'encrypting' });
-      }
-
-      const data = await uploadVideo(fileToUpload, setUploadProgress);
-      const ct = currentTimeRef.current;
-      const wasPlaying = isPlayingRef.current;
-      pendingSeekRef.current = { targetTime: ct, shouldPlay: wasPlaying };
-
+    // DIRECT STREAMING MODE
+    setIsDirectStreaming(true);
+    if (room) {
       setVideoSource(
-        { url: data.url, type: 'file', title: file.name, e2ee: !!roomKey },
-        { currentTime: ct, duration: videoEl.duration, isPlaying: false }
+        { url: 'live-stream', type: 'live', title: `(LIVE) ${file.name}`, e2ee: !!roomKey },
+        { currentTime: 0, isPlaying: false }
       );
-      
-      toast.success('☁ Uploaded & Secured! Guests are now syncing.', { duration: 4000 });
-    } catch (err) {
-      toast.error('Upload failed: ' + (err.response?.data?.message || err.message));
-    } finally {
-      setIsUploading(false);
-      setUploadProgress(0);
-      // setPremierStream is handled by useEffect
     }
+    toast.success('⚡ Live Stream Started! Participants are watching you directly.', { duration: 4000 });
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
@@ -673,15 +604,11 @@ const VideoPlayer = () => {
                 <Play className="w-10 h-10 text-accent-red ml-1" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-2">
-                  {!isHost && currentVideo?.type === 'uploading' ? 'Upload in Progress' : 'No Video Loaded'}
-                </h3>
+                <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
                 <p className="text-gray-300 text-sm font-medium">
                   {isHost
                     ? 'Load a video directly, or use the extension to watch streaming platforms together.'
-                    : currentVideo?.type === 'uploading'
-                      ? `Host is uploading "${currentVideo.title}"\u2026 Video will sync automatically when ready.`
-                      : 'Waiting for host to load a video.'}
+                    : 'Waiting for host to load a video.'}
                 </p>
               </div>
               {isHost && (

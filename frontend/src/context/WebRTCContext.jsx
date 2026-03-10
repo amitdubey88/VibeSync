@@ -75,25 +75,24 @@ export const WebRTCProvider = ({ children }) => {
                 ? event.streams[0] 
                 : new MediaStream([event.track]);
 
-            setTimeout(() => {
-                const audioId = `audio-${remoteSocketId}-${stream.id}`;
-                let audio = document.getElementById(audioId);
-                if (!audio) {
-                    audio = document.createElement('audio');
-                    audio.id = audioId;
-                    audio.autoplay = true;
-                    audio.playsInline = true;
-                    audio.dataset.socketId = remoteSocketId;
-                    document.body.appendChild(audio);
-                }
-                audio.srcObject = stream;
-                audio.muted = !isInVoiceRef.current;
-                
-                // Explicitly call play() to handle potential autoplay blocks
-                if (!audio.muted) {
-                    audio.play().catch(err => console.warn('[Voice] AutoPlay blocked for incoming voice:', err));
-                }
-            }, 150);
+            // Create/update audio element immediately (no delay for lowest latency)
+            const audioId = `audio-${remoteSocketId}-${stream.id}`;
+            let audio = document.getElementById(audioId);
+            if (!audio) {
+                audio = document.createElement('audio');
+                audio.id = audioId;
+                audio.autoplay = true;
+                audio.playsInline = true;
+                audio.dataset.socketId = remoteSocketId;
+                document.body.appendChild(audio);
+            }
+            audio.srcObject = stream;
+            audio.muted = !isInVoiceRef.current;
+            
+            // Explicitly call play() to handle potential autoplay blocks
+            if (!audio.muted) {
+                audio.play().catch(err => console.warn('[Voice] AutoPlay blocked for incoming voice:', err));
+            }
         };
 
         // ICE restart: only the offerer re-creates the offer so only one side drives recovery
@@ -220,7 +219,15 @@ export const WebRTCProvider = ({ children }) => {
             }
             
             // Acquire microphone FIRST
-            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: {
+                    echoCancellation: true,
+                    noiseSuppression: true,
+                    autoGainControl: true,
+                    latency: { ideal: 0.01 },   // request minimum buffer for low latency
+                },
+                video: false,
+            });
             localStreamRef.current = stream;
             const audioTrack = stream.getAudioTracks()[0];
 
