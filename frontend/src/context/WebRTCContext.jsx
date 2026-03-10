@@ -377,7 +377,10 @@ export const WebRTCProvider = ({ children }) => {
         const onOffer = async ({ fromSocketId, offer, e2ee }) => {
             if (!roomKey) return;
             const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
-            let pc = peersRef.current[fromSocketId] || createVoicePeerConnection(fromSocketId);
+            // Always close & recreate the PC so the current mic track is attached.
+            // Without this, reused PCs from passive joins won't have the host's audio.
+            closeVoicePeer(fromSocketId);
+            const pc = createVoicePeerConnection(fromSocketId);
             await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
@@ -468,20 +471,28 @@ export const WebRTCProvider = ({ children }) => {
 
         // Host receives offer from a participant → answer with video stream
         const onVideoStreamOffer = async ({ fromSocketId, offer, e2ee }) => {
-            if (!roomKey || !premierStreamRef.current) return;
-            const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
-            closeVideoPeer(fromSocketId);
-            const pc = createVideoPeerConnection(fromSocketId);
-            // Add all video + audio tracks from the premier stream
-            premierStreamRef.current.getTracks().forEach(track =>
-                pc.addTrack(track, premierStreamRef.current)
-            );
-            await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            const enc = await encryptData(answer, roomKey);
-            socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
-            console.log(`[VideoStream] Sent video answer to ${fromSocketId}`);
+            if (!roomKey) return;
+            if (!premierStreamRef.current) {
+                console.warn(`[VideoStream] No active stream to send to ${fromSocketId} — ignoring offer`);
+                return;
+            }
+            try {
+                const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
+                closeVideoPeer(fromSocketId);
+                const pc = createVideoPeerConnection(fromSocketId);
+                // Add all video + audio tracks from the premier stream
+                premierStreamRef.current.getTracks().forEach(track =>
+                    pc.addTrack(track, premierStreamRef.current)
+                );
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                const enc = await encryptData(answer, roomKey);
+                socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
+                console.log(`[VideoStream] Sent video answer to ${fromSocketId}`);
+            } catch (err) {
+                console.error(`[VideoStream] Failed to answer offer from ${fromSocketId}:`, err);
+            }
         };
 
         const onVideoStreamAnswer = async ({ fromSocketId, answer, e2ee }) => {
@@ -527,19 +538,37 @@ export const WebRTCProvider = ({ children }) => {
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
 
     // Late-joiner fallback: if participant detects a live stream but hasn't
-    // received an announce, explicitly request it from the host after a delay.
+    // received the video feed, request announce from host with retries.
     useEffect(() => {
         if (!socket || !roomCode || isHostRef.current) return;
-        // Only request if we know there's a live stream but we don't have
-        // the video feed yet and it hasn't been announced to us.
-        if (currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced) {
-            const timer = setTimeout(() => {
-                console.log('[VideoStream] Late joiner requesting stream announce from host');
-                socket.emit('video-stream:request-announce', { roomCode });
-            }, 1500); // give the normal flow (onParticipantUpdate) 1.5s to fire first
-            return () => clearTimeout(timer);
+        if (currentVideo?.type !== 'live') return;
+        // Already have the stream — nothing to do
+        if (remotePremierStream) return;
+
+        let attempt = 0;
+        const maxAttempts = 3;
+        const baseDelay = 2000; // 2s, 4s, 6s
+
+        const tryRequest = () => {
+            attempt++;
+            console.log(`[VideoStream] Late joiner requesting stream (attempt ${attempt}/${maxAttempts})`);
+            socket.emit('video-stream:request-announce', { roomCode });
+        };
+
+        // First attempt after 1.5s (give normal flow time)
+        const firstTimer = setTimeout(tryRequest, 1500);
+
+        // Subsequent retries
+        const retryTimers = [];
+        for (let i = 1; i < maxAttempts; i++) {
+            retryTimers.push(setTimeout(tryRequest, 1500 + baseDelay * i));
         }
-    }, [socket, roomCode, currentVideo?.type, remotePremierStream, isStreamAnnounced]);
+
+        return () => {
+            clearTimeout(firstTimer);
+            retryTimers.forEach(clearTimeout);
+        };
+    }, [socket, roomCode, currentVideo?.type, remotePremierStream]);
 
     // Reset flags when leaving a room
     useEffect(() => {
