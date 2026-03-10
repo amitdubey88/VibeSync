@@ -488,24 +488,12 @@ export const WebRTCProvider = ({ children }) => {
             setIsStreamAnnounced(false); // hide Connecting screen
         };
 
-        // BUGFIX: When the host changes, forcefully tear down all participant-side
-        // video receiving connections and reset the UI, so the player returns to
-        // a clean "No Video Loaded" state instead of hanging on "Connecting to Feed...".
-        // Also gives the NEW host a clean slate without leftover receiving connections.
-        const onHostChanged = () => {
-            console.log('[VideoStream] Host changed, resetting stream state');
-            Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
-            setRemotePremierStream(null);
-            setIsStreamAnnounced(false);
-        };
-
         socket.on('video-stream:announced', onVideoStreamAnnounced);
         socket.on('video-stream:offer',     onVideoStreamOffer);
         socket.on('video-stream:answer',    onVideoStreamAnswer);
         socket.on('video-stream:ice',       onVideoStreamIce);
         socket.on('video-stream:ended',     onVideoStreamEnded);
         socket.on('room:participant-update', onParticipantUpdate);
-        socket.on('room:host-changed',      onHostChanged);
 
         return () => {
             socket.off('video-stream:announced', onVideoStreamAnnounced);
@@ -514,7 +502,6 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('video-stream:ice',       onVideoStreamIce);
             socket.off('video-stream:ended',     onVideoStreamEnded);
             socket.off('room:participant-update', onParticipantUpdate);
-            socket.off('room:host-changed',      onHostChanged);
         };
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
 

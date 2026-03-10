@@ -271,15 +271,6 @@ const VideoPlayer = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.url]);
 
-  // Reset local streaming state when BECOMING the host, giving them a clean slate
-  // to start their own stream (shows the "Start Streaming" button).
-  useEffect(() => {
-    if (isHost) {
-      setIsLiveStreamingInitialized(false);
-      isStreamingActiveRef.current = false;
-    }
-  }, [isHost]);
-
   // Cleanup blob URLs on unmount
   useEffect(() => () => {
     if (blobUrlRef.current) { URL.revokeObjectURL(blobUrlRef.current); blobUrlRef.current = null; }
