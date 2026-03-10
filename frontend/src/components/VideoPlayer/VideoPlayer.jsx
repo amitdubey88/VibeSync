@@ -249,10 +249,68 @@ const VideoPlayer = () => {
 
   // Reset local streaming state when host changes (driven by useHostTransferSync hook)
   useEffect(() => {
-    if (hostChangedFlag === 0) return; // skip initial render
-    setIsLiveStreamingInitialized(false);
-    isStreamingActiveRef.current = false;
-  }, [hostChangedFlag]);
+    if (hostChangedFlag && isHost) {
+      console.log('[VideoPlayer] Host changed. Prepping clean slate for streaming.');
+      setIsLiveStreamingInitialized(false);
+      setPremierStream(null);
+      isStreamingActiveRef.current = false;
+    }
+  }, [hostChangedFlag, isHost, setPremierStream]);
+
+  // ── Keyboard Shortcuts (Space, Arrows, M) ────────────────────────────────
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Ignore if user is typing in chat or inputs
+      if (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA') return;
+      if (!videoEl) return;
+
+      switch(e.code) {
+        case 'Space':
+        case 'KeyK':
+          e.preventDefault();
+          if (isHost) {
+            if (videoEl.paused) videoEl.play().catch(() => {});
+            else videoEl.pause();
+          }
+          break;
+        case 'ArrowLeft':
+        case 'KeyJ':
+          if (isHost) {
+            e.preventDefault();
+            videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
+          }
+          break;
+        case 'ArrowRight':
+        case 'KeyL':
+          if (isHost) {
+            e.preventDefault();
+            videoEl.currentTime = Math.min(videoEl.duration || 0, videoEl.currentTime + 10);
+          }
+          break;
+        case 'KeyM':
+          e.preventDefault();
+          // Toggle mute locally (works for both host and guest)
+          videoEl.muted = !videoEl.muted;
+          // Dispatch a custom event so VideoControls can sync its UI state
+          window.dispatchEvent(new CustomEvent('video:toggle-mute', { detail: videoEl.muted }));
+          break;
+        case 'KeyF':
+          e.preventDefault();
+          const container = videoEl.closest('.video-reaction-host');
+          if (!container) return;
+          if (!document.fullscreenElement) {
+            if (container.requestFullscreen) container.requestFullscreen();
+          } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+          }
+          break;
+        default:
+          break;
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isHost, videoEl]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => () => {
@@ -456,7 +514,7 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden rounded-2xl border border-border-light shadow-2xl transition-all duration-500"
+      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden rounded-2xl border border-border-light shadow-[0_0_80px_rgba(229,9,20,0.15)] transition-all duration-500"
       onMouseMove={handleMouseMove}
       onTouchStart={handleMouseMove}
       onClick={handleMouseMove}

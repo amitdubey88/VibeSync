@@ -8,7 +8,7 @@ import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { createPortal } from 'react-dom';
@@ -30,6 +30,7 @@ const RoomPage = () => {
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [joining, setJoining] = useState(true);
   const [error, setError] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -316,6 +317,15 @@ const RoomPage = () => {
             Share
           </button>
 
+          {/* Toggle Sidebar */}
+          <button
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="btn-ghost text-xs py-1.5 px-2.5 hidden md:flex items-center gap-1.5 text-text-muted hover:text-white"
+            title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+          >
+            {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+          </button>
+
           {/* BRB / Away Toggle */}
           <button
             onClick={() => {
@@ -372,8 +382,9 @@ const RoomPage = () => {
         </div>
 
         {/* ── Sidebar ── */}
-        {/* Mobile: full-width flex-1 (fills remaining height) | Desktop: fixed 320px */}
-        <aside className="flex-1 md:flex-none md:w-80 xl:w-96 flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden">
+        {/* Mobile: full-width flex-1 (fills remaining height) | Desktop: animated width */}
+        <aside className={`flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-300 ease-in-out shrink-0
+          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'hidden md:flex md:w-0 md:border-l-0 opacity-0 overflow-hidden'}`}>
           {/* Sidebar tabs */}
           <div className="flex border-b border-border-dark shrink-0">
             {[

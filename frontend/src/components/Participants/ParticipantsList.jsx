@@ -89,12 +89,21 @@ const ParticipantsList = () => {
                   {p.isGuest && <span className="badge bg-bg-hover text-text-muted text-[9px] px-1.5 py-0">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className={`text-[10px] ${p.status === 'away' ? 'text-accent-yellow font-semibold' : isOnline ? 'text-accent-green' : 'text-text-muted'}`}>
-                    {p.status === 'away' ? 'Away' : isOnline ? 'Online' : 'Offline'}
-                  </span>
-                  {p.isBuffering && (
-                    <span className="flex items-center gap-1 text-[10px] text-accent-yellow">
-                      <Loader2 className="w-2.5 h-2.5 animate-spin" /> Buffering
+                  {p.status === 'away' ? (
+                    <span className="flex items-center gap-1 text-[10px] text-text-muted font-medium tracking-wide">
+                      💤 Away
+                    </span>
+                  ) : !isOnline ? (
+                    <span className="flex items-center gap-1 text-[10px] text-red-500/80 font-medium tracking-wide">
+                      🔴 Offline
+                    </span>
+                  ) : p.isBuffering ? (
+                    <span className="flex items-center gap-1 text-[10px] text-accent-yellow font-medium tracking-wide animate-pulse">
+                      🟡 Buffering
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[10px] text-accent-green font-medium tracking-wide">
+                      🟢 Watching
                     </span>
                   )}
                 </div>

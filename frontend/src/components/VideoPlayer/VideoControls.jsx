@@ -49,6 +49,13 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     videoRef.current.currentTime = ratio * duration;
   }, [videoRef, isHost, duration]);
 
+  // Sync mute state from keyboard shortcuts (KeyM)
+  useEffect(() => {
+    const onToggleMute = (e) => setIsMutedLocal(e.detail);
+    window.addEventListener('video:toggle-mute', onToggleMute);
+    return () => window.removeEventListener('video:toggle-mute', onToggleMute);
+  }, []);
+
   // Sync volume state to video element
   useEffect(() => {
     if (videoRef.current) {
