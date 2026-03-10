@@ -495,28 +495,10 @@ const VideoPlayer = () => {
               <video 
                 autoPlay 
                 playsInline 
-                muted={liveAudioMuted}
                 className="w-full h-full object-contain"
                 ref={setVideoRef}
                 onCanPlay={() => setIsLoading(false)}
               />
-              {/* Audio unmute button — required because autoplay policy forces muted start */}
-              <button
-                onClick={() => {
-                  const newMuted = !liveAudioMuted;
-                  setLiveAudioMuted(newMuted);
-                  if (videoRef.current) videoRef.current.muted = newMuted;
-                }}
-                className="absolute bottom-4 right-4 z-30 flex items-center gap-2 px-3 py-2 rounded-xl
-                           bg-black/70 hover:bg-black/90 border border-white/20 hover:border-white/40
-                           text-white text-xs font-semibold backdrop-blur-sm transition-all duration-200
-                           shadow-lg hover:shadow-xl hover:scale-105"
-                title={liveAudioMuted ? 'Enable Audio' : 'Mute Audio'}
-              >
-                {liveAudioMuted
-                  ? <><VolumeX className="w-4 h-4 text-red-400" /><span className="text-red-300">Enable Audio</span></>
-                  : <><Volume2 className="w-4 h-4 text-green-400" /><span className="text-green-300">Audio On</span></>}
-              </button>
             </div>
           ) : (
             /* Waiting UI inside the player — stream announced but WebRTC not connected yet */

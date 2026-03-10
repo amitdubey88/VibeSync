@@ -117,7 +117,10 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
   
   // For participants in live mode, use the synced time/duration from host
   const displayTime = (!isHost && isLive && videoState?.currentTime !== undefined) ? videoState.currentTime : currentTime;
-  const displayDuration = (duration > 0 && duration !== Infinity) ? duration : (videoState?.duration || 0);
+  // For live streams, prefer synced duration from host; fall back to local duration
+  const displayDuration = (duration > 0 && duration !== Infinity)
+    ? duration
+    : (videoState?.duration > 0 ? videoState.duration : (videoEl?.duration > 0 && videoEl.duration !== Infinity ? videoEl.duration : 0));
   
   const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
