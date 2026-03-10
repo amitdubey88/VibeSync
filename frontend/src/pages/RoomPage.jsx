@@ -513,9 +513,9 @@ const RoomPage = () => {
       {/* Mobile: video on top, sidebar below   |   Desktop: side-by-side */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
-        {/* ── Video area ── */}
-        {/* Mobile: fixed height so chat is visible | Desktop: fills remaining width */}
-        <div className="h-[42vw] min-h-[220px] md:h-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
+        {/* Video area ── */}
+        {/* Mobile: aspect ratio 16:9 | Desktop: fills remaining width */}
+        <div className="aspect-video md:aspect-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
           <VideoPlayer />
           
           {/* Reconnection Banner */}

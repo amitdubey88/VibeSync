@@ -6,7 +6,6 @@ import useVideoSync from '../../hooks/useVideoSync';
 import useClockSync from '../../hooks/useClockSync';
 import useBufferSync from '../../hooks/useBufferSync';
 import VideoControls from './VideoControls';
-import VideoReactionBar from './VideoReactionBar';
 import FloatingReactions from './FloatingReactions';
 import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
@@ -721,7 +720,6 @@ const VideoPlayer = () => {
           <FloatingReactions />
           <ReactionBurst />
           <QuickReactionBar visible={showControls} />
-          <VideoReactionBar visible={showControls} />
 
           {/* Sync Status Badge (Phase 5) */}
           {!isHost && currentVideo && currentVideo.type !== 'live' && (
