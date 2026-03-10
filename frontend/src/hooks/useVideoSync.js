@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
+import useSyncDataChannel from './useSyncDataChannel';
 
 const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
 
@@ -19,6 +20,7 @@ const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
 const useVideoSync = (videoEl) => {
     const { socket } = useSocket();
     const { room, isHost, setVideoState, currentVideo } = useRoom();
+    const { sendSyncMessage, onSyncMessage } = useSyncDataChannel();
     const isSyncingRef = useRef(false);
     const roomCode = room?.code;
 
@@ -26,23 +28,23 @@ const useVideoSync = (videoEl) => {
     const onHostPlay = useCallback(() => {
         if (!socket || !roomCode) return;
         const currentTime = videoEl?.currentTime || 0;
-        socket.emit('video:play', { roomCode, currentTime });
+        sendSyncMessage('video:play', { roomCode, currentTime });
         setVideoState((prev) => ({ ...prev, isPlaying: true, currentTime }));
-    }, [socket, roomCode, videoEl, setVideoState]);
+    }, [socket, roomCode, videoEl, setVideoState, sendSyncMessage]);
 
     const onHostPause = useCallback(() => {
         if (!socket || !roomCode) return;
         const currentTime = videoEl?.currentTime || 0;
-        socket.emit('video:pause', { roomCode, currentTime });
+        sendSyncMessage('video:pause', { roomCode, currentTime });
         setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
-    }, [socket, roomCode, videoEl, setVideoState]);
+    }, [socket, roomCode, videoEl, setVideoState, sendSyncMessage]);
 
     const onHostSeeked = useCallback(() => {
         if (!socket || !roomCode || isSyncingRef.current) return;
         const currentTime = videoEl?.currentTime || 0;
-        socket.emit('video:seek', { roomCode, currentTime });
+        sendSyncMessage('video:seek', { roomCode, currentTime });
         setVideoState((prev) => ({ ...prev, currentTime }));
-    }, [socket, roomCode, videoEl, setVideoState]);
+    }, [socket, roomCode, videoEl, setVideoState, sendSyncMessage]);
 
     const onBufferStart = useCallback(() => {
         if (!socket || !roomCode) return;
@@ -94,9 +96,22 @@ const useVideoSync = (videoEl) => {
             else if (avgDrift > 0.5) syncIntervalRef.current = 2500;
             else syncIntervalRef.current = 5000;
         };
+
+        // Listen via Socket.IO (Server routed fallback)
         socket.on('video:client-drift', onClientDrift);
-        return () => socket.off('video:client-drift', onClientDrift);
-    }, [isHost, socket]);
+
+        // Listen via WebRTC DataChannel (Direct P2P)
+        const cleanupP2P = onSyncMessage((data) => {
+            if (data.type === 'video:drift-report') {
+                onClientDrift(data.payload);
+            }
+        });
+
+        return () => {
+            socket.off('video:client-drift', onClientDrift);
+            cleanupP2P();
+        };
+    }, [isHost, socket, onSyncMessage]);
 
     // 2. Host emits heartbeat using dynamically scaling timeout
     useEffect(() => {
@@ -105,7 +120,7 @@ const useVideoSync = (videoEl) => {
 
         const sendHeartbeat = () => {
             if (videoEl.readyState >= 1) {
-                socket.emit('video:heartbeat', {
+                sendSyncMessage('video:heartbeat', {
                     roomCode,
                     currentTime: videoEl.currentTime,
                     isPlaying: !videoEl.paused,
@@ -228,14 +243,29 @@ const useVideoSync = (videoEl) => {
             }
 
             // Emit drift telemetry back to host for adaptive sync adjusting
-            socket.emit('video:drift-report', { roomCode, drift: Math.abs(drift) });
+            sendSyncMessage('video:drift-report', { roomCode, drift: Math.abs(drift) });
         };
 
+        // Setup Socket.IO Event Listeners (Fallback path)
         socket.on('video:play', onPlay);
         socket.on('video:pause', onPause);
         socket.on('video:seek', onSeek);
         socket.on('video:sync-state', onSyncState);
         socket.on('video:sync', onHeartbeatSync);
+
+        // Setup WebRTC DataChannel Listeners (P2P Highway path)
+        const cleanupDataChannel = onSyncMessage((data) => {
+            const { type, payload } = data;
+            if (type === 'video:play') onPlay(payload);
+            else if (type === 'video:pause') onPause(payload);
+            else if (type === 'video:seek') onSeek(payload);
+            else if (type === 'video:sync') onHeartbeatSync(payload);
+            else if (type === 'video:heartbeat') {
+                // If a heartbeat comes P2P directly from the host instead of the server Relay (`video:sync`),
+                // we map it identically to the participant's `onHeartbeatSync` function.
+                onHeartbeatSync(payload);
+            }
+        });
 
         return () => {
             socket.off('video:play', onPlay);
@@ -243,8 +273,9 @@ const useVideoSync = (videoEl) => {
             socket.off('video:seek', onSeek);
             socket.off('video:sync-state', onSyncState);
             socket.off('video:sync', onHeartbeatSync);
+            cleanupDataChannel();
         };
-    }, [socket, videoEl, isHost, setVideoState, currentVideo]);
+    }, [socket, videoEl, isHost, setVideoState, currentVideo, sendSyncMessage, onSyncMessage]);
 
     // ── Request sync on mount (for late joiners) ──────────────────────────────
     useEffect(() => {

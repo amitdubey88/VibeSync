@@ -209,4 +209,29 @@ module.exports = (io, socket, roomStore) => {
             serverTime: Date.now()
         });
     });
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // WebRTC DataChannel Signaling (P2P Sync Fallback/Override)
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    socket.on('sync-channel:offer', ({ targetSocketId, offer }) => {
+        socket.to(targetSocketId).emit('sync-channel:offer', {
+            offer,
+            fromSocketId: socket.id
+        });
+    });
+
+    socket.on('sync-channel:answer', ({ targetSocketId, answer }) => {
+        socket.to(targetSocketId).emit('sync-channel:answer', {
+            answer,
+            fromSocketId: socket.id
+        });
+    });
+
+    socket.on('sync-channel:ice', ({ targetSocketId, candidate }) => {
+        socket.to(targetSocketId).emit('sync-channel:ice', {
+            candidate,
+            fromSocketId: socket.id
+        });
+    });
 };
