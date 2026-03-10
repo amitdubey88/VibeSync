@@ -75,6 +75,24 @@ const useVideoSync = (videoEl) => {
         };
     }, [isHost, videoEl, onHostPlay, onHostPause, onHostSeeked, onBufferStart, onBufferEnd]);
 
+    // ── Host: Continuous Heartbeat ───────────────────────────────────────────
+    useEffect(() => {
+        if (!isHost || !videoEl || !socket || !roomCode) return;
+
+        const heartbeatInterval = setInterval(() => {
+            if (videoEl.readyState >= 1) {
+                socket.emit('video:heartbeat', {
+                    roomCode,
+                    currentTime: videoEl.currentTime,
+                    isPlaying: !videoEl.paused,
+                    timestamp: Date.now()
+                });
+            }
+        }, 2000);
+
+        return () => clearInterval(heartbeatInterval);
+    }, [isHost, videoEl, socket, roomCode]);
+
     // ── Guest: receive and apply sync events ──────────────────────────────────
     useEffect(() => {
         if (!socket) return;
@@ -145,16 +163,39 @@ const useVideoSync = (videoEl) => {
             }
         };
 
+        const onHeartbeatSync = ({ currentTime, isPlaying, timestamp }) => {
+            if (!videoEl || isHost || isSyncingRef.current) return;
+            const videoType = currentVideo?.type;
+            if (videoType === 'live' || videoType === 'uploading') return;
+
+            // Calculate latency-adjusted target time
+            const latency = (Date.now() - timestamp) / 1000;
+            const targetTime = isPlaying ? currentTime + latency : currentTime;
+
+            applyTimeIfNeeded(targetTime);
+
+            // Enforce pause/play state drift (only if not already mid-state change)
+            if (isPlaying && videoEl.paused) {
+                videoEl.play().catch(() => {});
+                setVideoState(prev => ({ ...prev, isPlaying: true, currentTime: targetTime }));
+            } else if (!isPlaying && !videoEl.paused) {
+                videoEl.pause();
+                setVideoState(prev => ({ ...prev, isPlaying: false, currentTime: targetTime }));
+            }
+        };
+
         socket.on('video:play', onPlay);
         socket.on('video:pause', onPause);
         socket.on('video:seek', onSeek);
         socket.on('video:sync-state', onSyncState);
+        socket.on('video:sync', onHeartbeatSync);
 
         return () => {
             socket.off('video:play', onPlay);
             socket.off('video:pause', onPause);
             socket.off('video:seek', onSeek);
             socket.off('video:sync-state', onSyncState);
+            socket.off('video:sync', onHeartbeatSync);
         };
     }, [socket, videoEl, isHost, setVideoState, currentVideo]);
 

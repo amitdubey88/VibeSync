@@ -104,6 +104,20 @@ module.exports = (io, socket, roomStore) => {
         console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${roomCode}`);
     });
 
+    // ── video:heartbeat ───────────────────────────────────────────────────────
+    // Host continuously transmits authority playback timestamp
+    socket.on('video:heartbeat', ({ roomCode, currentTime, isPlaying, timestamp }) => {
+        const { room, error } = getRoomAndValidateHost(roomCode);
+        if (error) return; // Silent fail for heartbeats to prevent log spam
+
+        room.videoState.currentTime = currentTime;
+        room.videoState.isPlaying = isPlaying;
+        room.videoState.lastUpdated = Date.now();
+
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video:sync', { currentTime, isPlaying, timestamp });
+    });
+
     // ── video:sync-duration ───────────────────────────────────────────────────
     // Host reports the duration of a newly loaded video/stream.
     socket.on('video:sync-duration', ({ roomCode, duration }) => {
