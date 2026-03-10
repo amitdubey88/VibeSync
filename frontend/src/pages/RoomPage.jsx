@@ -12,6 +12,7 @@ import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, Log
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { createPortal } from 'react-dom';
+import { useNavigationGuard } from "../hooks/useNavigationGuard";
 
 const RoomPage = () => {
   const { code } = useParams();
@@ -67,6 +68,7 @@ const RoomPage = () => {
         // After joining, explicitly request fresh participant list
         // (fixes 'no participants visible' on rejoin / server restart)
         setTimeout(() => refreshParticipants(), 800);
+        sessionStorage.setItem("lastRoom", code);
         setJoining(false);
       } catch (err) {
         setError(err.response?.data?.message || 'Could not join room');
@@ -140,57 +142,12 @@ const RoomPage = () => {
 
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
-  // ── Prevent Accidental Refresh & Handle Reloads during Live Streams ──
-  useEffect(() => {
-    if (!room) return;
-
-    if (room.currentVideo?.type === 'live') {
-      // 1. native beforeunload (catches clicking the browser's refresh button, but requires prior page interaction)
-      const handleBeforeUnload = (e) => {
-        const msg = 'You are in an active live stream. If you reload, the connection will be lost.';
-        e.preventDefault();
-        e.returnValue = msg;
-        return msg;
-      };
-      window.addEventListener('beforeunload', handleBeforeUnload, { capture: true });
-
-      // 1b. Catch keyboard refresh shortcuts (F5, Ctrl+R, Cmd+R) explicitly
-      // Browsers often block window.confirm() in keydown events, so we use a custom React dialog
-      const handleKeyDown = (e) => {
-        const isF5 = e.key === 'F5';
-        const isCtrlCmdR = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R');
-        if (isF5 || isCtrlCmdR) {
-          e.preventDefault();
-          e.stopPropagation();
-          setShowRefreshConfirm(true);
-        }
-      };
-      window.addEventListener('keydown', handleKeyDown, { capture: true });
-
-      // 2. Detect if this specific page load WAS a refresh
-      const navEntries = performance.getEntriesByType('navigation');
-      const isReload = navEntries.length > 0 && navEntries[0].type === 'reload';
-      
-      // Prevent redirect loop in case 'reload' type persists somehow
-      const redirectKey = `reloaded_${code}`;
-      if (isReload && !sessionStorage.getItem(redirectKey)) {
-        sessionStorage.setItem(redirectKey, 'true');
-        // Give the UI a tiny moment to render the toast before navigating away
-        setTimeout(() => {
-          toast.error('Session disconnected due to page refresh.', { duration: 4000 });
-          navigate('/', { replace: true });
-        }, 50);
-      } else if (!isReload) {
-        // Clean up flag if they navigated here normally
-        sessionStorage.removeItem(redirectKey);
-      }
-
-      return () => {
-        window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true });
-        window.removeEventListener('keydown', handleKeyDown, { capture: true });
-      };
+  useNavigationGuard({
+    enabled: room?.currentVideo?.type === "live",
+    onAttempt: (type) => {
+      setShowRefreshConfirm(true);
     }
-  }, [room, code, navigate]);
+  });
 
   // Refresh participant list when switching to participants tab
   const handleTabChange = useCallback((tab) => {
@@ -232,6 +189,7 @@ const RoomPage = () => {
   const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
 
   const handleLeave = () => {
+    sessionStorage.removeItem("lastRoom");
     if (isHost) {
       const others = participants.filter(
         (p) => p.userId !== user?.id && p.isOnline !== false
@@ -252,6 +210,7 @@ const RoomPage = () => {
   };
 
   const confirmLeave = (transferToUserId) => {
+    sessionStorage.removeItem("lastRoom");
     if (transferToUserId) transferHost(transferToUserId);
     setTimeout(() => { leaveRoom(); navigate('/', { replace: true }); }, transferToUserId ? 300 : 0);
   };
@@ -524,9 +483,9 @@ const RoomPage = () => {
       {/* Refresh confirmation during live stream */}
       <ConfirmDialog
         open={showRefreshConfirm}
-        title="Reload Page?"
-        message="You are in an active live stream. If you reload, the connection will be lost."
-        confirmLabel="Reload Anyway"
+        title="Leave Live Session?"
+        message="You are currently in an active live stream. Leaving or refreshing will disconnect you."
+        confirmLabel="Leave Anyway"
         danger
         onConfirm={() => {
           setShowRefreshConfirm(false);

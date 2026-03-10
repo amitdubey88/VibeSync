@@ -23,6 +23,15 @@ const LandingPage = () => {
     if (user?.username && !username) setUsername(user.username);
   }, [user]); // eslint-disable-line
 
+  // Auto-rejoin last active room if user accidentally disconnected
+  useEffect(() => {
+    const lastRoom = sessionStorage.getItem("lastRoom");
+    // Don't auto-rejoin if they explicitly left or host ended it
+    if (lastRoom && !location.state?.roomEnded) {
+      navigate(`/room/${lastRoom}`, { replace: true });
+    }
+  }, [navigate, location.state]);
+
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {
     const name = username.trim();
