@@ -116,7 +116,7 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen gradient-bg flex flex-col">
+    <div className="min-h-screen bg-cinematic flex flex-col">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between">
         <div className="flex items-center gap-2">

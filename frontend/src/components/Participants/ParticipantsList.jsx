@@ -65,6 +65,7 @@ const ParticipantsList = () => {
           const isRoomHost = p.userId === room?.hostId;
           const isInVoice = voiceParticipants.some((vp) => String(vp.userId) === String(p.userId));
           const voiceData = voiceParticipants.find((vp) => String(vp.userId) === String(p.userId));
+          const isSpeaking = voiceData && !voiceData.isMuted;
           const avatarBg = p.avatar || getAvatarColor(p.username);
           const isOnline = p.isOnline !== false;
           const canControl = isHost && !isMe && !isRoomHost;
@@ -72,7 +73,10 @@ const ParticipantsList = () => {
           return (
             <div key={p.userId} className="participant-row relative">
               <div className="relative shrink-0">
-                <div className="avatar w-9 h-9 text-sm text-white" style={{ backgroundColor: avatarBg }}>
+                <div 
+                  className={`avatar w-9 h-9 text-sm text-white avatar-ring transition-all ${isSpeaking ? 'trigger-pulse-ring ring-2 ring-accent-green' : ''}`} 
+                  style={{ backgroundColor: avatarBg }}
+                >
                   {getInitials(p.username)}
                 </div>
                 <span className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-bg-card

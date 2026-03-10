@@ -322,9 +322,9 @@ const RoomPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-bg-primary overflow-hidden">
+    <div className="h-screen flex flex-col bg-cinematic overflow-hidden">
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark bg-bg-secondary shrink-0 gap-2">
+      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0">
             <img src="/favicon.svg" alt="VibeSync Logo" className="w-7 h-7 rounded-md shadow-[0_0_10px_rgba(229,9,20,0.4)]" />
@@ -434,6 +434,9 @@ const RoomPage = () => {
           )}
         </div>
       </header>
+      
+      {/* Animated gradient accent line */}
+      <div className="gradient-line shrink-0" />
 
       {/* ── Main content ── */}
       {/* Mobile: video on top, sidebar below   |   Desktop: side-by-side */}
@@ -452,7 +455,7 @@ const RoomPage = () => {
             // Wake up sidebar if user hovers over it
             window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
           }}
-          className={`flex flex-col bg-bg-secondary md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
+          className={`flex flex-col glass-panel md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
           ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'hidden md:flex md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
