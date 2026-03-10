@@ -66,7 +66,7 @@ const RoomPage = () => {
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
     unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
-    setUserStatus, isLocked, toggleRoomLock
+    setUserStatus, isLocked, toggleRoomLock, videoState, currentVideo
   } = useRoom();
 
   const [sidebarTab, setSidebarTab] = useState('chat');
