@@ -68,7 +68,13 @@ const RoomPage = () => {
         // After joining, explicitly request fresh participant list
         // (fixes 'no participants visible' on rejoin / server restart)
         setTimeout(() => refreshParticipants(), 800);
-        sessionStorage.setItem("lastRoom", code);
+        
+        sessionStorage.setItem("vibesync_session", JSON.stringify({
+          roomCode: code,
+          username: user?.username,
+          joinedAt: Date.now()
+        }));
+
         setJoining(false);
       } catch (err) {
         setError(err.response?.data?.message || 'Could not join room');
@@ -94,7 +100,7 @@ const RoomPage = () => {
   const leaveRoomRef = useRef(leaveRoom);
   useEffect(() => { leaveRoomRef.current = leaveRoom; }, [leaveRoom]);
   useEffect(() => {
-    return () => { leaveRoomRef.current(); };
+    return () => { leaveRoomRef.current(false); }; // false = soft leave (temporary disconnect)
   }, []);
 
   // Track whether we've ever received a room:state (guards against false-positive redirect)
@@ -189,7 +195,7 @@ const RoomPage = () => {
   const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
 
   const handleLeave = () => {
-    sessionStorage.removeItem("lastRoom");
+    sessionStorage.removeItem("vibesync_session");
     if (isHost) {
       const others = participants.filter(
         (p) => p.userId !== user?.id && p.isOnline !== false
@@ -197,7 +203,7 @@ const RoomPage = () => {
       if (others.length === 1) {
         // Auto-transfer to the only other participant before leaving
         transferHost(others[0].userId);
-        setTimeout(() => { leaveRoom(); navigate('/', { replace: true }); }, 100);
+        setTimeout(() => { leaveRoom(true); navigate('/', { replace: true }); }, 100);
         return;
       } else if (others.length > 1) {
         // Must explicitly choose host
@@ -205,14 +211,14 @@ const RoomPage = () => {
         return;
       }
     }
-    leaveRoom();
+    leaveRoom(true);
     navigate('/', { replace: true });
   };
 
   const confirmLeave = (transferToUserId) => {
-    sessionStorage.removeItem("lastRoom");
+    sessionStorage.removeItem("vibesync_session");
     if (transferToUserId) transferHost(transferToUserId);
-    setTimeout(() => { leaveRoom(); navigate('/', { replace: true }); }, transferToUserId ? 300 : 0);
+    setTimeout(() => { leaveRoom(true); navigate('/', { replace: true }); }, transferToUserId ? 300 : 0);
   };
 
   const handleDeleteRoom = () => setShowDeleteConfirm(true);

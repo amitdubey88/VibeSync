@@ -25,10 +25,17 @@ const LandingPage = () => {
 
   // Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
-    const lastRoom = sessionStorage.getItem("lastRoom");
+    const saved = sessionStorage.getItem("vibesync_session");
     // Don't auto-rejoin if they explicitly left or host ended it
-    if (lastRoom && !location.state?.roomEnded) {
-      navigate(`/room/${lastRoom}`, { replace: true });
+    if (saved && !location.state?.roomEnded) {
+      try {
+        const session = JSON.parse(saved);
+        if (session.roomCode) {
+          navigate(`/room/${session.roomCode}`, { replace: true });
+        }
+      } catch (e) {
+        sessionStorage.removeItem("vibesync_session");
+      }
     }
   }, [navigate, location.state]);
 

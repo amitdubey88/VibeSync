@@ -89,9 +89,14 @@ export const RoomProvider = ({ children }) => {
     } catch (_) {}
   }, [socket]);
 
-  const leaveRoom = useCallback(() => {
+  const leaveRoom = useCallback((explicit = false) => {
     if (!socket || !room) return;
-    socket.emit('room:leave');
+    socket.emit('room:leave', { explicit });
+    
+    if (explicit) {
+      sessionStorage.removeItem('vibesync_session');
+    }
+    
     setRoom(null);
     setRoomKey(null);
     setParticipants([]);

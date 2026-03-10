@@ -262,8 +262,11 @@ module.exports = (io, roomStore) => {
         });
 
         // ── room:leave ─────────────────────────────────────────────────────────
-        socket.on('room:leave', () => {
-            if (currentRoomCode) leaveRoom(currentRoomCode);
+        socket.on('room:leave', ({ explicit = false } = {}) => {
+            if (currentRoomCode) {
+                // If explicit=false, treat it as a temporary disconnect (wait 30s)
+                leaveRoom(currentRoomCode, !explicit);
+            }
         });
 
         // ── disconnect ─────────────────────────────────────────────────────────
