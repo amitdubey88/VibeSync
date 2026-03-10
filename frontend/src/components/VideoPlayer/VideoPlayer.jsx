@@ -473,18 +473,18 @@ const VideoPlayer = () => {
       <div className="w-full h-full flex items-center justify-center">
         {!isHost && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
-          <div className="flex flex-col items-center gap-5 p-8 text-center animate-fade-in">
-            <div className="relative w-20 h-20 rounded-full bg-accent-red/10 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
+            <div className="relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/10 flex items-center justify-center">
               <span className="absolute inset-0 rounded-full bg-accent-red/20 animate-ping" />
-              <span className="w-8 h-8 rounded-full bg-accent-red/70" />
+              <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-accent-red/70" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-text-primary mb-1">Host is Preparing to Stream</h3>
-              <p className="text-text-secondary text-sm">
+              <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Host is Preparing to Stream</h3>
+              <p className="text-text-secondary text-xs sm:text-sm">
                 {currentVideo?.title?.replace(/^\(LIVE\)\s*/i, '') || 'Getting the stream ready…'}
               </p>
-              <p className="text-text-muted text-xs mt-3 flex items-center justify-center gap-1.5">
-                <Clock className="w-3.5 h-3.5" /> The stream will begin automatically when the host goes live
+              <p className="text-text-muted text-[10px] sm:text-xs mt-2 sm:mt-3 flex items-center justify-center gap-1.5">
+                <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Stream will begin when host goes live
               </p>
             </div>
           </div>
@@ -520,21 +520,21 @@ const VideoPlayer = () => {
             </div>
           ) : (
             /* Waiting UI inside the player — stream announced but WebRTC not connected yet */
-            <div className="flex flex-col items-center gap-4 p-8 text-center animate-pulse">
-              <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center text-accent-purple">
-                <Loader2 className="w-9 h-9 animate-spin" />
+            <div className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-8 text-center animate-pulse">
+              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-purple/10 flex items-center justify-center text-accent-purple">
+                <Loader2 className="w-6 h-6 sm:w-9 sm:h-9 animate-spin" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-text-primary mb-1">Connecting to Feed…</h3>
-                <p className="text-text-secondary text-sm font-medium">{currentVideo?.title || 'Waiting for host…'}</p>
-                <div className="flex items-center justify-center gap-2 mt-3 mb-2">
-                  <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[10px] font-black tracking-widest uppercase">Live Link Active</span>
+                <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Connecting to Feed…</h3>
+                <p className="text-text-secondary text-xs sm:text-sm font-medium">{currentVideo?.title || 'Waiting for host…'}</p>
+                <div className="flex items-center justify-center gap-2 mt-2 sm:mt-3 mb-1 sm:mb-2">
+                  <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[9px] sm:text-[10px] font-black tracking-widest uppercase">Live Link Active</span>
                   </div>
                 </div>
-                <p className="text-text-muted text-xs flex items-center justify-center gap-1.5">
-                   <Clock className="w-3.5 h-3.5" /> High-quality broadcast starting soon
+                <p className="text-text-muted text-[10px] sm:text-xs flex items-center justify-center gap-1.5">
+                   <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> Broadcast starting soon
                 </p>
               </div>
             </div>
@@ -579,21 +579,21 @@ const VideoPlayer = () => {
 
         ) : (
           /* Landing / Empty State */
-          <div className="relative z-40 flex flex-col items-center justify-center gap-6 p-8 text-center h-full overflow-y-auto">
-            <div className="flex flex-col items-center max-w-md w-full gap-6">
+          <div className="relative z-40 flex flex-col items-center justify-center gap-3 sm:gap-6 p-4 sm:p-8 text-center h-full overflow-y-auto">
+            <div className="flex flex-col items-center max-w-md w-full gap-3 sm:gap-6">
               <div className="hidden sm:flex w-24 h-24 rounded-full bg-bg-hover items-center justify-center animate-pulse-glow shrink-0">
                 <Play className="w-10 h-10 text-accent-red ml-1" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
-                <p className="text-gray-300 text-sm font-medium">
+                <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">No Video Loaded</h3>
+                <p className="text-gray-300 text-xs sm:text-sm font-medium">
                   {isHost
                     ? 'Load a video directly, or use the extension to watch streaming platforms together.'
                     : 'Waiting for host to load a video.'}
                 </p>
               </div>
               {isHost && (
-                <button className="btn-primary mt-3" onClick={() => setShowSourcePicker(true)}>
+                <button className="btn-primary mt-1 sm:mt-3 text-sm" onClick={() => setShowSourcePicker(true)}>
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
               )}
