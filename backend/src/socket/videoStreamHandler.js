@@ -31,6 +31,16 @@ module.exports = (io, socket, roomStore) => {
         }
     });
 
+    // ── video-stream:request-announce ─────────────────────────────────────────
+    // Late-joining participant asks the host to re-announce the stream.
+    // Broadcast to the room — the host's onRequestAnnounce handler picks it up.
+    socket.on('video-stream:request-announce', ({ roomCode }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        const hashedCode = hashRoomCode(roomCode);
+        socket.to(hashedCode).emit('video-stream:request-announce', { fromSocketId: socket.id });
+    });
+
     // ── video-stream:ended ─────────────────────────────────────────────────────
     // Host emits this when the live stream stops.
     socket.on('video-stream:ended', ({ roomCode }) => {

@@ -15,7 +15,7 @@ const ICE_SERVERS = {
 
 export const WebRTCProvider = ({ children }) => {
     const { socket } = useSocket();
-    const { room, roomKey } = useRoom();
+    const { room, roomKey, currentVideo } = useRoom();
     const { user } = useAuth();
 
     // ── Voice state ───────────────────────────────────────────────────────────
@@ -222,14 +222,7 @@ export const WebRTCProvider = ({ children }) => {
             }
             
             // Acquire microphone FIRST
-            const stream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: true,
-                },
-                video: false,
-            });
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             localStreamRef.current = stream;
             const audioTrack = stream.getAudioTracks()[0];
 
@@ -437,7 +430,9 @@ export const WebRTCProvider = ({ children }) => {
 
         // Auto-sync active stream to participants who join late
         const onParticipantUpdate = ({ participants }) => {
-            if (!isHostRef.current || !premierStreamRef.current) return;
+            if (!isHostRef.current) return;
+            // Accept if we have either the stream ref OR have already announced to others
+            if (!premierStreamRef.current) return;
             participants.forEach(p => {
                 if (p.socketId !== socket.id && !videoPeersRef.current[p.socketId]) {
                     console.log(`[VideoStream] Late joiner detected (${p.username}), sending targeted stream announce`);
@@ -445,6 +440,14 @@ export const WebRTCProvider = ({ children }) => {
                     videoPeersRef.current[p.socketId] = 'pending'; // prevent duplicate announcements
                 }
             });
+        };
+
+        // Fallback: a late-joining participant explicitly asks for the stream
+        const onRequestAnnounce = ({ fromSocketId }) => {
+            if (!isHostRef.current || !premierStreamRef.current) return;
+            console.log(`[VideoStream] Participant ${fromSocketId} requested stream announce`);
+            socket.emit('video-stream:announce', { roomCode, targetSocketId: fromSocketId });
+            videoPeersRef.current[fromSocketId] = 'pending';
         };
 
         // Participant receives this when the host starts a live stream.
@@ -510,6 +513,7 @@ export const WebRTCProvider = ({ children }) => {
         socket.on('video-stream:ice',       onVideoStreamIce);
         socket.on('video-stream:ended',     onVideoStreamEnded);
         socket.on('room:participant-update', onParticipantUpdate);
+        socket.on('video-stream:request-announce', onRequestAnnounce);
 
         return () => {
             socket.off('video-stream:announced', onVideoStreamAnnounced);
@@ -518,8 +522,24 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('video-stream:ice',       onVideoStreamIce);
             socket.off('video-stream:ended',     onVideoStreamEnded);
             socket.off('room:participant-update', onParticipantUpdate);
+            socket.off('video-stream:request-announce', onRequestAnnounce);
         };
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
+
+    // Late-joiner fallback: if participant detects a live stream but hasn't
+    // received an announce, explicitly request it from the host after a delay.
+    useEffect(() => {
+        if (!socket || !roomCode || isHostRef.current) return;
+        // Only request if we know there's a live stream but we don't have
+        // the video feed yet and it hasn't been announced to us.
+        if (currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced) {
+            const timer = setTimeout(() => {
+                console.log('[VideoStream] Late joiner requesting stream announce from host');
+                socket.emit('video-stream:request-announce', { roomCode });
+            }, 1500); // give the normal flow (onParticipantUpdate) 1.5s to fire first
+            return () => clearTimeout(timer);
+        }
+    }, [socket, roomCode, currentVideo?.type, remotePremierStream, isStreamAnnounced]);
 
     // Reset flags when leaving a room
     useEffect(() => {
