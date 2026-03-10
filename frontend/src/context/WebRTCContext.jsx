@@ -339,6 +339,13 @@ export const WebRTCProvider = ({ children }) => {
         }
     }, [roomCode, socket, closeVideoPeer]);
 
+    // ── Stream state reset (called by useHostTransferSync on host change) ────
+    const resetStreamState = useCallback(() => {
+        Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
+        setRemotePremierStream(null);
+        setIsStreamAnnounced(false);
+    }, [closeVideoPeer]);
+
     // ═══════════════════════════════════════════════════════════════════════════
     // SOCKET EVENT LISTENERS
     // ═══════════════════════════════════════════════════════════════════════════
@@ -516,7 +523,7 @@ export const WebRTCProvider = ({ children }) => {
         <WebRTCContext.Provider value={{
             isInVoice, isMuted, voiceError,
             joinVoice, leaveVoice, toggleMute,
-            setPremierStream, remotePremierStream, isStreamAnnounced,
+            setPremierStream, remotePremierStream, isStreamAnnounced, resetStreamState,
         }}>
             {children}
         </WebRTCContext.Provider>

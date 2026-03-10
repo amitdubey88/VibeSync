@@ -12,6 +12,7 @@ import { uploadVideo } from '../../services/api';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../context/AuthContext';
 import useWebRTC from '../../hooks/useWebRTC';
+import useHostTransferSync from '../../hooks/useHostTransferSync';
 import { encryptFile, decryptFile } from '../../utils/crypto';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
@@ -109,6 +110,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 const VideoPlayer = () => {
   const { currentVideo, videoState, room, isHost, setVideoSource, notifyUploading, syncDuration } = useRoom();
   const { setPremierStream, remotePremierStream, isStreamAnnounced } = useWebRTC();
+  const { hostChangedFlag } = useHostTransferSync();
   const { user } = useAuth();
   const { socket } = useSocket();
   const videoRef = useRef(null);
@@ -270,6 +272,13 @@ const VideoPlayer = () => {
     setIsLiveStreamingInitialized(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.url]);
+
+  // Reset local streaming state when host changes (driven by useHostTransferSync hook)
+  useEffect(() => {
+    if (hostChangedFlag === 0) return; // skip initial render
+    setIsLiveStreamingInitialized(false);
+    isStreamingActiveRef.current = false;
+  }, [hostChangedFlag]);
 
   // Cleanup blob URLs on unmount
   useEffect(() => () => {
