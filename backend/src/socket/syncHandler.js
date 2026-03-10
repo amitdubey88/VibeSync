@@ -106,7 +106,7 @@ module.exports = (io, socket, roomStore) => {
 
     // ── video:heartbeat ───────────────────────────────────────────────────────
     // Host continuously transmits authority playback timestamp
-    socket.on('video:heartbeat', ({ roomCode, currentTime, isPlaying, timestamp }) => {
+    socket.on('video:heartbeat', ({ roomCode, currentTime, isPlaying, rate, timestamp }) => {
         const { room, error } = getRoomAndValidateHost(roomCode);
         if (error) return; // Silent fail for heartbeats to prevent log spam
 
@@ -115,7 +115,21 @@ module.exports = (io, socket, roomStore) => {
         room.videoState.lastUpdated = Date.now();
 
         const hashedCode = hashRoomCode(roomCode);
-        socket.to(hashedCode).emit('video:sync', { currentTime, isPlaying, timestamp });
+        socket.to(hashedCode).emit('video:sync', { currentTime, isPlaying, rate, timestamp });
+    });
+
+    // ── video:drift-report ────────────────────────────────────────────────────
+    // Guests report their current drift. Server routes this telemetry to the host
+    // to drive adaptive sync frequency scaling.
+    socket.on('video:drift-report', ({ roomCode, drift }) => {
+        const room = roomStore.get(roomCode);
+        if (!room) return;
+        
+        // Find the host's socket ID
+        const hostParticipant = room.participants.find(p => p.id === room.hostId);
+        if (hostParticipant && hostParticipant.socketId) {
+            io.to(hostParticipant.socketId).emit('video:client-drift', { drift });
+        }
     });
 
     // ── video:sync-duration ───────────────────────────────────────────────────

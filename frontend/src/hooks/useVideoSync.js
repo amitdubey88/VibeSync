@@ -75,11 +75,35 @@ const useVideoSync = (videoEl) => {
         };
     }, [isHost, videoEl, onHostPlay, onHostPause, onHostSeeked, onBufferStart, onBufferEnd]);
 
-    // ── Host: Continuous Heartbeat ───────────────────────────────────────────
+    // ── Host: Adaptive Continuous Heartbeat ──────────────────────────────────
+    const syncIntervalRef = useRef(4000);
+    const driftSamplesRef = useRef([]);
+
+    // 1. Host listens for client drift reports to adapt frequency
+    useEffect(() => {
+        if (!isHost || !socket) return;
+        const onClientDrift = ({ drift }) => {
+            const samples = driftSamplesRef.current;
+            samples.push(drift);
+            if (samples.length > 10) samples.shift(); // Keep last 10 samples
+
+            const avgDrift = samples.reduce((a, b) => a + b, 0) / samples.length;
+            
+            // Adjust interval conservatively
+            if (avgDrift > 1.2) syncIntervalRef.current = 1000;
+            else if (avgDrift > 0.5) syncIntervalRef.current = 2500;
+            else syncIntervalRef.current = 5000;
+        };
+        socket.on('video:client-drift', onClientDrift);
+        return () => socket.off('video:client-drift', onClientDrift);
+    }, [isHost, socket]);
+
+    // 2. Host emits heartbeat using dynamically scaling timeout
     useEffect(() => {
         if (!isHost || !videoEl || !socket || !roomCode) return;
+        let timeoutId;
 
-        const heartbeatInterval = setInterval(() => {
+        const sendHeartbeat = () => {
             if (videoEl.readyState >= 1) {
                 socket.emit('video:heartbeat', {
                     roomCode,
@@ -89,9 +113,13 @@ const useVideoSync = (videoEl) => {
                     timestamp: Date.now() + (window.serverOffset || 0)
                 });
             }
-        }, 2000);
+            // Queue next heartbeat based on current adaptive interval
+            timeoutId = setTimeout(sendHeartbeat, syncIntervalRef.current);
+        };
 
-        return () => clearInterval(heartbeatInterval);
+        // Start heartbeat loop
+        timeoutId = setTimeout(sendHeartbeat, syncIntervalRef.current);
+        return () => clearTimeout(timeoutId);
     }, [isHost, videoEl, socket, roomCode]);
 
     // ── Guest: receive and apply sync events ──────────────────────────────────
@@ -198,6 +226,9 @@ const useVideoSync = (videoEl) => {
                 // Synchronized: Restore natural rate
                 videoEl.playbackRate = 1.0;
             }
+
+            // Emit drift telemetry back to host for adaptive sync adjusting
+            socket.emit('video:drift-report', { roomCode, drift: Math.abs(drift) });
         };
 
         socket.on('video:play', onPlay);
