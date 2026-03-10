@@ -149,6 +149,35 @@ const VideoPlayer = () => {
 
   useVideoSync(videoEl);
 
+  // ── Auto-play for participants when videoEl mounts while host was already playing ──
+  // useVideoSync handles live video:play events, but if the participant's video element
+  // was not yet mounted when the event arrived (e.g., still decrypting), this effect
+  // catches up as soon as the element becomes available.
+  useEffect(() => {
+    if (!videoEl || isHost) return;
+    if (!videoState?.isPlaying) return;
+    if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') return;
+
+    // Compute adjusted target time accounting for elapsed wall-clock time since last update
+    const elapsed = videoState.lastUpdated
+      ? Math.max(0, (Date.now() - videoState.lastUpdated) / 1000)
+      : 0;
+    const targetTime = Math.max(0, (videoState.currentTime || 0) + elapsed);
+
+    const doPlay = () => {
+      if (targetTime > 0) videoEl.currentTime = targetTime;
+      videoEl.play().catch(() => {});
+    };
+
+    if (videoEl.readyState >= 2) {
+      doPlay();
+    } else {
+      videoEl.addEventListener('canplay', doPlay, { once: true });
+      return () => videoEl.removeEventListener('canplay', doPlay);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [videoEl]); // Only re-run when videoEl mounts — videoState is read fresh from closure
+
   // ── Keep participant's live stream video srcObject in sync ─────────────────
   // We use a useEffect bound to the videoEl state. This guarantees no race
   // condition between inline refs setting srcObject but failing to call play().
@@ -418,8 +447,12 @@ const VideoPlayer = () => {
   //   - blobUrl while host is uploading (instant playback)
   //   - decryptedUrl after decryption finishes (for encrypted files)
   //   - currentVideo.url after upload completes or for direct URLs
+  //   - EXCLUDES the fake 'live-stream' placeholder (prevents a broken <video> on participant side)
   const activeSrc = blobUrl || decryptedUrl || (
-    currentVideo && currentVideo.type !== 'youtube' && currentVideo.type !== 'uploading'
+    currentVideo &&
+    currentVideo.type !== 'youtube' &&
+    currentVideo.type !== 'uploading' &&
+    currentVideo.url !== 'live-stream'
       ? currentVideo.url
       : null
   );
@@ -504,7 +537,24 @@ const VideoPlayer = () => {
 
       {/* Main Content Area */}
       <div className="w-full h-full flex items-center justify-center">
-        {!isHost && (remotePremierStream || isStreamAnnounced) ? (
+        {!isHost && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
+          /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
+          <div className="flex flex-col items-center gap-5 p-8 text-center animate-fade-in">
+            <div className="relative w-20 h-20 rounded-full bg-accent-red/10 flex items-center justify-center">
+              <span className="absolute inset-0 rounded-full bg-accent-red/20 animate-ping" />
+              <span className="w-8 h-8 rounded-full bg-accent-red/70" />
+            </div>
+            <div>
+              <h3 className="text-lg font-bold text-text-primary mb-1">Host is Preparing to Stream</h3>
+              <p className="text-text-secondary text-sm">
+                {currentVideo?.title?.replace(/^\(LIVE\)\s*/i, '') || 'Getting the stream ready…'}
+              </p>
+              <p className="text-text-muted text-xs mt-3 flex items-center justify-center gap-1.5">
+                <Clock className="w-3.5 h-3.5" /> The stream will begin automatically when the host goes live
+              </p>
+            </div>
+          </div>
+        ) : !isHost && (remotePremierStream || isStreamAnnounced) ? (
           /* Participant: Show Direct/Premier Feed — only visible once host presses play */
           remotePremierStream ? (
             <div className="relative w-full h-full">
@@ -535,7 +585,7 @@ const VideoPlayer = () => {
               </button>
             </div>
           ) : (
-            /* Waiting UI inside the player */
+            /* Waiting UI inside the player — stream announced but WebRTC not connected yet */
             <div className="flex flex-col items-center gap-4 p-8 text-center animate-pulse">
               <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center text-accent-purple">
                 <CloudUpload className="w-9 h-9" />
@@ -601,9 +651,15 @@ const VideoPlayer = () => {
                 <Play className="w-10 h-10 text-accent-red ml-1" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold text-white mb-2">No Video Loaded</h3>
+                <h3 className="text-2xl font-bold text-white mb-2">
+                  {!isHost && currentVideo?.type === 'uploading' ? 'Upload in Progress' : 'No Video Loaded'}
+                </h3>
                 <p className="text-gray-300 text-sm font-medium">
-                  {isHost ? 'Load a video directly, or use the extension to watch streaming platforms together.' : 'Waiting for host to load a video.'}
+                  {isHost
+                    ? 'Load a video directly, or use the extension to watch streaming platforms together.'
+                    : currentVideo?.type === 'uploading'
+                      ? `Host is uploading "${currentVideo.title}"\u2026 Video will sync automatically when ready.`
+                      : 'Waiting for host to load a video.'}
                 </p>
               </div>
               {isHost && (

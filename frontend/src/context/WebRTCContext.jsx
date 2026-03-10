@@ -56,6 +56,8 @@ export const WebRTCProvider = ({ children }) => {
 
     const createVoicePeerConnection = useCallback((remoteSocketId) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
+        // Set to true by caller when they initiate the offer (prevents both sides re-offering on ICE restart)
+        pc._isOfferer = false;
 
         pc.onicecandidate = async (event) => {
             if (event.candidate && socket && roomKey) {
@@ -94,6 +96,28 @@ export const WebRTCProvider = ({ children }) => {
             }, 150);
         };
 
+        // ICE restart: only the offerer re-creates the offer so only one side drives recovery
+        pc.onnegotiationneeded = async () => {
+            if (!pc._isOfferer || !socket || !roomKey) return;
+            if (pc.signalingState !== 'stable') return;
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                const enc = await encryptData(offer, roomKey);
+                socket.emit('voice:offer', { targetSocketId: remoteSocketId, offer: enc, roomCode, e2ee: true });
+            } catch (e) {
+                console.warn('[Voice] ICE restart offer failed:', e);
+            }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+            const state = pc.iceConnectionState;
+            if (state === 'failed') {
+                console.warn(`[Voice] ICE failed for ${remoteSocketId}, attempting restart...`);
+                pc.restartIce?.();
+            }
+        };
+
         // Only attach the mic track — NO VIDEO TRACKS on voice connections
         if (localStreamRef.current) {
             localStreamRef.current.getAudioTracks().forEach(track =>
@@ -103,7 +127,7 @@ export const WebRTCProvider = ({ children }) => {
 
         peersRef.current[remoteSocketId] = pc;
         return pc;
-    }, [socket, roomKey]);
+    }, [socket, roomKey, roomCode]);
 
     const closeVoicePeer = useCallback((remoteSocketId) => {
         const pc = peersRef.current[remoteSocketId];
@@ -137,6 +161,30 @@ export const WebRTCProvider = ({ children }) => {
             // React's setState ignores it because the object reference === the old one.
             // We MUST create a new MediaStream instance so the <video> element re-binds.
             setRemotePremierStream(new MediaStream(stream.getTracks()));
+        };
+
+        // ICE restart: participant (non-host) is always the offerer for video stream connections,
+        // so on failure it re-creates the offer. The host just answers using the existing handler.
+        pc.onnegotiationneeded = async () => {
+            if (isHostRef.current || !socket || !roomKey) return;
+            if (pc.signalingState !== 'stable') return;
+            try {
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                const enc = await encryptData(offer, roomKey);
+                socket.emit('video-stream:offer', { targetSocketId: remoteSocketId, offer: enc, e2ee: true });
+                console.log(`[VideoStream] ICE restart offer sent to ${remoteSocketId}`);
+            } catch (e) {
+                console.warn('[VideoStream] ICE restart offer failed:', e);
+            }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+            const state = pc.iceConnectionState;
+            if (state === 'failed') {
+                console.warn(`[VideoStream] ICE failed for ${remoteSocketId}, attempting restart...`);
+                pc.restartIce?.();
+            }
         };
 
         videoPeersRef.current[remoteSocketId] = pc;
@@ -302,6 +350,8 @@ export const WebRTCProvider = ({ children }) => {
         const onUserJoined = async ({ socketId }) => {
             if (!roomKey) return;
             const pc = createVoicePeerConnection(socketId);
+            // Mark this side as the offerer so ICE restart logic knows who re-sends the offer
+            pc._isOfferer = true;
             // CRITICAL: always declare audio capability in the offer, even without a mic.
             // Without this, an empty offer (no audio m-line) means the answerer (host)
             // cannot inject their mic audio — the SDP negotiation has no audio section at all.
