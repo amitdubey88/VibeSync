@@ -143,17 +143,28 @@ const RoomPage = () => {
     if (!room) return;
 
     if (room.currentVideo?.type === 'live') {
-      // 1. Warn before refresh/leave
-      // Browsers require e.preventDefault() and returning a string to show the dialog
+      // 1. native beforeunload (catches clicking the browser's refresh button, but requires prior page interaction)
       const handleBeforeUnload = (e) => {
         const msg = 'You are in an active live stream. If you reload, the connection will be lost.';
         e.preventDefault();
         e.returnValue = msg;
         return msg;
       };
-      
-      // We must add it to the window
       window.addEventListener('beforeunload', handleBeforeUnload, { capture: true });
+
+      // 1b. Catch keyboard refresh shortcuts (F5, Ctrl+R, Cmd+R) explicitly using JS confirm()
+      const handleKeyDown = (e) => {
+        const isF5 = e.key === 'F5';
+        const isCtrlCmdR = (e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R');
+        if (isF5 || isCtrlCmdR) {
+          e.preventDefault();
+          if (window.confirm('You are in an active live stream. If you reload, the connection will be lost. Reload anyway?')) {
+            window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true }); // prevent double prompt
+            window.location.reload();
+          }
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown, { capture: true });
 
       // 2. Detect if this specific page load WAS a refresh
       const navEntries = performance.getEntriesByType('navigation');
@@ -173,7 +184,10 @@ const RoomPage = () => {
         sessionStorage.removeItem(redirectKey);
       }
 
-      return () => window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true });
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload, { capture: true });
+        window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      };
     }
   }, [room, code, navigate]);
 
