@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
-import { getInitials, getAvatarColor } from '../../utils/helpers';
+import { getAvatarColor } from '../../utils/helpers';
 import { Crown, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut } from 'lucide-react';
 import ConfirmDialog from '../UI/ConfirmDialog';
+import Avatar from '../UI/Avatar';
 
 const ParticipantsList = () => {
   const { participants, voiceParticipants, room, isHost, transferHost, kickParticipant, muteParticipant, toggleScreenSharePermission } = useRoom();
@@ -72,16 +73,13 @@ const ParticipantsList = () => {
 
           return (
             <div key={p.userId} className="participant-row relative animate-participant-enter">
-              <div className="relative shrink-0">
-                <div 
-                  className={`avatar w-9 h-9 text-sm text-white avatar-ring transition-all ${isSpeaking ? 'trigger-pulse-ring ring-2 ring-accent-green' : ''}`} 
-                  style={{ backgroundColor: avatarBg }}
-                >
-                  {getInitials(p.username)}
-                </div>
-                <span className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-bg-card
-                  ${p.status === 'away' ? 'bg-accent-yellow' : isOnline ? 'bg-accent-green' : 'bg-text-muted'}`} />
-              </div>
+              <Avatar
+                username={p.username}
+                avatarBg={avatarBg}
+                size="md"
+                status={p.status === 'away' ? 'away' : isOnline ? (p.isBuffering ? 'buffering' : 'online') : 'offline'}
+                speaking={isSpeaking}
+              />
 
               {/* Name + badges */}
               <div className="flex-1 min-w-0">

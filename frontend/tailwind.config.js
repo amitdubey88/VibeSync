@@ -74,6 +74,28 @@ export default {
       backdropBlur: {
         xs: '2px',
       },
+      borderRadius: {
+        // Design system radius tokens
+        sm:  '6px',
+        md:  '10px',
+        lg:  '12px',   // standard interactive elements: buttons, inputs
+        xl:  '16px',   // cards, panels, modals
+        '2xl': '20px', // large cards, overlays
+        full: '9999px',
+      },
+      boxShadow: {
+        // Named shadow tokens — use these everywhere, not arbitrary shadows
+        none:     'none',
+        card:     '0 4px 16px rgba(0,0,0,0.4)',
+        floating: '0 8px 32px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.3)',
+        modal:    '0 24px 64px rgba(0,0,0,0.7), 0 4px 16px rgba(0,0,0,0.4)',
+        hover:    '0 4px 15px rgba(139,92,246,0.15)',
+        'glow-red':    '0 0 20px rgba(229,9,20,0.4)',
+        'glow-purple': '0 0 20px rgba(139,92,246,0.4)',
+        'glow-cyan':   '0 0 20px rgba(6,182,212,0.4)',
+        'glow-green':  '0 0 12px rgba(16,185,129,0.5)',
+        inner: 'inset 0 1px 0 rgba(255,255,255,0.05)',
+      },
       screens: {
         xs: '480px',
       },
