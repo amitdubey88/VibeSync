@@ -1,6 +1,6 @@
 import { useRoom } from '../../context/RoomContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
-import { Loader2, Users } from 'lucide-react';
+import { Users } from 'lucide-react';
 
 const VideoPresenceOverlay = ({ visible }) => {
   const { participants, voiceParticipants, reactions } = useRoom();

@@ -136,7 +136,7 @@ const useVideoSync = (videoEl) => {
         // Start heartbeat loop
         timeoutId = setTimeout(sendHeartbeat, syncIntervalRef.current);
         return () => clearTimeout(timeoutId);
-    }, [isHost, videoEl, socket, roomCode]);
+    }, [isHost, videoEl, socket, roomCode, sendSyncMessage]);
 
     // ── Guest: receive and apply sync events ──────────────────────────────────
     useEffect(() => {
@@ -144,6 +144,7 @@ const useVideoSync = (videoEl) => {
 
         const applyTimeIfNeeded = (targetTime) => {
             if (!videoEl) return;
+            const drift = Math.abs(targetTime - videoEl.currentTime);
             if (drift > DRIFT_THRESHOLD) {
                 isSyncingRef.current = true;
                 setSyncStatus('catching-up');

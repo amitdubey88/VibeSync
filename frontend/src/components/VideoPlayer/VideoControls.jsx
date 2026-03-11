@@ -147,7 +147,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
           <div 
             key={clip.id}
             className="absolute top-0 bottom-0 w-0.5 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)] z-10"
-            style={{ left: `${(clip.time / duration) * 100}%` }}
+            style={{ left: `${displayDuration > 0 ? (clip.time / displayDuration) * 100 : 0}%` }}
             title={`Clip by ${clip.username}`}
           />
         ))}

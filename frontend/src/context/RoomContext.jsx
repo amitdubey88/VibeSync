@@ -214,7 +214,6 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onHostChanged = ({ newHostId, newHostUsername }) => {
-      const oldHost = participants.find(p => p.userId === room?.hostId);
       setIsHost(newHostId === user?.id);
       setRoom((prev) => prev ? { ...prev, hostId: newHostId } : prev);
       

@@ -9,20 +9,25 @@ const ReactionBurst = () => {
     if (reactions.length > 0) {
       const newReactions = reactions.filter(r => !localReactions.find(lr => lr.id === r.id));
       if (newReactions.length > 0) {
-        // Check for Reaction Storm (Hype Mode)
-        // If > 5 reactions arrive in a tiny window, we amplify the effect
         const isStorm = newReactions.length > 4;
         
-        const reactionsToSpawn = isStorm 
-          ? [...newReactions, ...Array(15).fill(0).map((_, i) => ({ 
-              ...newReactions[i % newReactions.length], 
-              id: `${newReactions[0].id}-storm-${i}` 
-            }))]
-          : newReactions;
+        // Pre-compute random position/delay at spawn time so they don't thrash on re-render
+        const withPos = (r, suffix = '') => ({
+          ...r,
+          id: suffix ? `${r.id}${suffix}` : r.id,
+          left: 50 + (Math.random() * 40 - 20),
+          delay: Math.random() * (isStorm ? 0.4 : 0.2),
+        });
+
+        const reactionsToSpawn = isStorm
+          ? [
+              ...newReactions.map(r => withPos(r)),
+              ...Array(15).fill(0).map((_, i) => withPos(newReactions[i % newReactions.length], `-storm-${i}`))
+            ]
+          : newReactions.map(r => withPos(r));
 
         setLocalReactions(prev => [...prev, ...reactionsToSpawn]);
         
-        // Remove reaction after animation duration
         reactionsToSpawn.forEach(r => {
           setTimeout(() => {
             setLocalReactions(prev => prev.filter(lr => lr.id !== r.id));
@@ -39,8 +44,8 @@ const ReactionBurst = () => {
           key={r.id}
           className="absolute bottom-20 left-1/2 -translate-x-1/2 text-4xl animate-float-up opacity-0"
           style={{
-            left: `${50 + (Math.random() * 40 - 20)}%`, // Random horizontal spread
-            animationDelay: `${Math.random() * 0.2}s`
+            left: `${r.left ?? 50}%`,
+            animationDelay: `${r.delay ?? 0}s`
           }}
         >
           {r.emoji}

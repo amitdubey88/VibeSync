@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
-import { Crown, Loader2, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut } from 'lucide-react';
+import { Crown, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut } from 'lucide-react';
 import ConfirmDialog from '../UI/ConfirmDialog';
 
 const ParticipantsList = () => {
