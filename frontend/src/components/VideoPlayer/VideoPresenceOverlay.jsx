@@ -3,7 +3,7 @@ import { getInitials, getAvatarColor } from '../../utils/helpers';
 import { Users, Crown } from 'lucide-react';
 
 const VideoPresenceOverlay = ({ visible }) => {
-  const { participants, voiceParticipants, reactions } = useRoom();
+  const { room, participants, voiceParticipants, reactions } = useRoom();
 
   const onlineCount = participants.filter(p => p.isOnline !== false).length;
 
