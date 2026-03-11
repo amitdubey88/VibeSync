@@ -99,7 +99,7 @@ const useSyncDataChannel = () => {
         });
 
         // Cleanup disconnected peers
-        const currentSocketIds = room.participants.map(p => p.socketId);
+        const currentSocketIds = room?.participants?.map(p => p.socketId) || [];
         Object.keys(peersRef.current).forEach(socketId => {
             if (!currentSocketIds.includes(socketId)) {
                 peersRef.current[socketId].close();
