@@ -35,6 +35,7 @@ const corsOriginFn = (origin, cb) => {
     if (!origin) return cb(null, true);
     // Allow explicitly listed origins, Vercel/Koyeb deployments, and browser extensions
     if (allowedOrigins.includes(origin) ||
+        origin === 'http://localhost:5174' ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.koyeb.app') ||
         origin.startsWith('chrome-extension://')) {

@@ -628,7 +628,8 @@ const VideoPlayer = () => {
             <YouTubePlayer 
               key={currentVideo.url}
               videoId={currentVideo.url} 
-              onReady={handlePlayerReady} 
+              onReady={handlePlayerReady}
+              onError={() => setIsLoading(false)}
             />
           </div>
         ) : currentVideo?.type === 'hls' ? (

@@ -157,6 +157,7 @@ class YouTubeVideoProxy extends EventTarget {
 
     switch (event.data) {
       case YT.PlayerState.PLAYING:
+        this.dispatchEvent(new Event('canplay'));
         this.dispatchEvent(new Event('play'));
         this.dispatchEvent(new Event('playing'));
         break;
@@ -203,7 +204,7 @@ const ytErrorMessage = (code) => {
  * Renders the YouTube iframe and emits a `YouTubeVideoProxy` instance via `onReady`.
  * All playback controls, sync logic, and reactions are handled uniformly by VideoPlayer.jsx.
  */
-const YouTubePlayer = ({ videoId: rawVideoId, onReady }) => {
+const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
   const playerRef = useRef(null);
   const containerRef = useRef(null);
   const proxyRef = useRef(null);
@@ -281,6 +282,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady }) => {
               setStatus('error');
               setErrorInfo({ message: msg, code: event.data });
               if (proxyRef.current) proxyRef.current._handleError(event);
+              if (onError) onError(event.data);
             },
           },
         });
@@ -324,12 +326,13 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady }) => {
 
   return (
     <div className="w-full h-full relative bg-black">
-      {/* YouTube iframe container */}
-      <div
-        ref={containerRef}
-        className="w-full h-full"
-        style={{ display: status === 'ready' ? 'block' : 'none' }}
-      />
+      {/* YouTube iframe container wrapper to prevent React diffing issues when YT replaces the node */}
+      <div 
+        className="w-full h-full absolute inset-0 transition-opacity duration-500"
+        style={{ opacity: status === 'ready' ? 1 : 0, pointerEvents: status === 'ready' ? 'auto' : 'none' }}
+      >
+        <div ref={containerRef} className="w-full h-full" />
+      </div>
 
       {/*
         Interaction Blocking Layer:
