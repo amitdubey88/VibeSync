@@ -1,22 +1,23 @@
 import { useRef, useState, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useRoom } from '../../context/RoomContext';
-import { useSocket } from '../../context/SocketContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import useClockSync from '../../hooks/useClockSync';
 import useBufferSync from '../../hooks/useBufferSync';
 import VideoControls from './VideoControls';
 import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
+import DirectVideoPlayer from './DirectVideoPlayer';
+import HLSPlayer from './HLSPlayer';
 import SyncStatusBadge from './SyncStatusBadge';
 import ReactionBurst from './ReactionBurst';
 import QuickReactionBar from './QuickReactionBar';
-import { Play, Upload, Loader2, X, Film, Clock, Puzzle, Zap, Volume2, VolumeX } from 'lucide-react';
+import { Play, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAuth } from '../../context/AuthContext';
 import useWebRTC from '../../hooks/useWebRTC';
 import useHostTransferSync from '../../hooks/useHostTransferSync';
 import { decryptFile } from '../../utils/crypto';
+import { resolveVideoUrl } from '../../utils/videoResolver';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
 const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput }) =>
@@ -88,8 +89,6 @@ const VideoPlayer = () => {
   const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration } = useRoom();
   const { setPremierStream, remotePremierStream, isStreamAnnounced } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
-  const { user } = useAuth();
-  const { socket } = useSocket();
   const videoRef = useRef(null);
 
   // Host-only blob URL — lets host play instantly from local file while uploading
@@ -105,9 +104,6 @@ const VideoPlayer = () => {
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
-  // Live stream audio is muted by default (HTML5 autoplay policy).
-  // Track whether participant has manually unmuted so we can show the button.
-  const [liveAudioMuted, setLiveAudioMuted] = useState(true);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -128,8 +124,13 @@ const VideoPlayer = () => {
     setVideoEl(el);
   }, []);
 
+  const handlePlayerReady = useCallback((playerInstance) => {
+    setVideoRef(playerInstance);
+    setIsLoading(false);
+  }, [setVideoRef]);
+
   useClockSync();
-  const { onBufferStart, onBufferEnd, syncStatus } = useVideoSync(videoEl);
+  const { syncStatus } = useVideoSync(videoEl);
   const { bufferingUsers } = useBufferSync(videoEl);
 
   // ── Auto-play for participants when videoEl mounts while host was already playing ──
@@ -473,34 +474,26 @@ const VideoPlayer = () => {
     const url = urlInput.trim();
     if (!url) return;
 
-    // 1. YouTube Validation
-    const ytMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/))([a-zA-Z0-9_-]{11})/);
-    
-    if (ytMatch) {
-      setVideoSource({ url: ytMatch[1], type: 'youtube', title: 'YouTube Video' }, { isPlaying: false });
-      setShowSourcePicker(false);
-      setUrlInput('');
-      toast.success('YouTube video loaded!');
-      return;
-    }
+    const resolved = resolveVideoUrl(url);
 
-    // 2. Direct Video Link Validation (Extensions)
-    const isDirectVideo = /\.(mp4|webm|ogg|mov|m4v|mkv|avi|wmv|flv|3gp)(\?.*)?$/i.test(url);
-    if (isDirectVideo) {
-      const fileName = url.split('/').pop().split('?')[0] || 'Video';
-      setVideoSource({ url, type: 'url', title: fileName });
-      setShowSourcePicker(false);
-      setUrlInput('');
-      toast.success('Direct video loaded!');
-      return;
-    }
-
-    // 3. Fallback Error
-    if (url.startsWith('http://') || url.startsWith('https://')) {
+    if (!resolved) {
       toast.error('Invalid video link. Use YouTube or a direct video file (.mp4, .mkv, .webm, etc.)');
-    } else {
-      toast.error('Please enter a valid URL starting with http/https');
+      return;
     }
+
+    if (resolved.type === 'unsupported') {
+      toast.error('Unsupported link format or platform.');
+      return;
+    }
+
+    setVideoSource(
+      { url: resolved.url, type: resolved.type, title: resolved.title }, 
+      { isPlaying: false, currentTime: 0 }
+    );
+    
+    setShowSourcePicker(false);
+    setUrlInput('');
+    toast.success(`${resolved.title} loaded!`);
   };
 
   // Determine what src the <video> element actually plays:
@@ -528,31 +521,6 @@ const VideoPlayer = () => {
     />
   );
 
-  // YouTube player remains a separate simplified fallback as it doesn't use the same controls/ref system
-
-  // ── YouTube player ────────────────────────────────────────────────────────
-  if (currentVideo?.type === 'youtube') {
-    return (
-      <div className="relative w-full h-full bg-black">
-        <YouTubePlayer videoId={currentVideo.url} />
-        {/* Transparent overlay blocks non-host clicks */}
-        {!isHost && (
-          <div className="absolute inset-0 z-10 cursor-not-allowed" title="Only the host can control playback" />
-        )}
-        {isHost && (
-          <button
-            onClick={() => setShowSourcePicker(true)}
-            className="absolute top-3 right-3 z-20 flex items-center gap-1.5 bg-black/60 hover:bg-black/80
-                       border border-white/20 hover:border-white/40 text-white text-xs font-semibold
-                       px-3 py-1.5 rounded-lg backdrop-blur-sm transition-all duration-200"
-          >
-            <Upload className="w-3.5 h-3.5" /> Change Video
-          </button>
-        )}
-        {sourcePicker}
-      </div>
-    );
-  }
 
   // Regular / file / URL video / Direct Live Broadcast
 
@@ -577,7 +545,7 @@ const VideoPlayer = () => {
 
 
       {/* Main Content Area */}
-      <div className="w-full h-full flex items-center justify-center">
+      <div className="relative z-0 w-full h-full flex items-center justify-center">
         {!isHost && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
@@ -628,18 +596,35 @@ const VideoPlayer = () => {
               </div>
             </div>
           )
-        ) : activeSrc ? (
-          /* Normal Playback (Host, or Guest with file sync) */
+        ) : currentVideo?.type === 'youtube' ? (
+          /* YouTube Video Proxy Output */
           <div className="relative w-full h-full">
-            <video
-              ref={setVideoRef}
+            <YouTubePlayer 
+              key={currentVideo.url}
+              videoId={currentVideo.url} 
+              onReady={handlePlayerReady} 
+            />
+          </div>
+        ) : currentVideo?.type === 'hls' ? (
+          /* HLS Streaming Video Output */
+          <div className="relative w-full h-full">
+            <HLSPlayer 
+              key={currentVideo.url}
+              src={currentVideo.url}
+              autoPlay={isHost}
+              onCanPlay={() => setIsLoading(false)}
+              onReady={handlePlayerReady} 
+            />
+          </div>
+        ) : activeSrc ? (
+          /* Normal Playback (Host, or Guest with file sync) - MP4/WebM/Decrypted */
+          <div className="relative w-full h-full">
+            <DirectVideoPlayer
               key={activeSrc}
-              className="w-full h-full object-contain"
               src={activeSrc}
-              playsInline
-              preload="auto"
               autoPlay={isHost && !!blobUrl && currentVideo?.type !== 'live'}
               onCanPlay={() => setIsLoading(false)}
+              onReady={handlePlayerReady}
             />
             {/* Start Streaming Overlay for Host */}
             {isHost && (currentVideo?.type === 'live' || isDirectStreaming) && !isLiveStreamingInitialized && (
@@ -712,7 +697,7 @@ const VideoPlayer = () => {
       )}
 
       {/* Controls Overlay - only render if a video is active/loaded */}
-      {(activeSrc || currentVideo?.type === 'youtube' || isDirectStreaming || remotePremierStream) && (
+      {(activeSrc || currentVideo?.type === 'youtube' || currentVideo?.type === 'hls' || isDirectStreaming || remotePremierStream) && (
         <>
           {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
           <VideoPresenceOverlay visible={showControls} />

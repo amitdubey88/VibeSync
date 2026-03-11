@@ -31,7 +31,7 @@ const ReactionBurst = () => {
         reactionsToSpawn.forEach(r => {
           setTimeout(() => {
             setLocalReactions(prev => prev.filter(lr => lr.id !== r.id));
-          }, 3000);
+          }, 3500);
         });
       }
     }
@@ -42,7 +42,7 @@ const ReactionBurst = () => {
       {localReactions.map((r) => (
         <div
           key={r.id}
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 text-4xl animate-float-up opacity-0"
+          className="absolute bottom-20 left-1/2 -translate-x-1/2 text-4xl animate-reaction-rise"
           style={{
             left: `${r.left ?? 50}%`,
             animationDelay: `${r.delay ?? 0}s`

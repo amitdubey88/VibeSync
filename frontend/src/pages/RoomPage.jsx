@@ -11,10 +11,9 @@ import ConfirmDialog from '../components/UI/ConfirmDialog';
 import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
 import Tooltip from '../components/UI/Tooltip';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
-import { createPortal } from 'react-dom';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
 import RoomSkeleton from '../components/UI/RoomSkeleton';
 
@@ -60,7 +59,7 @@ const RoomPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { socket, isConnected } = useSocket();
+  const { isConnected } = useSocket();
   const {
     room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
     joinStatus, joinRequests, requiresApproval, transferHost,
