@@ -66,7 +66,8 @@ const RoomPage = () => {
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
     unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
-    setUserStatus, isLocked, toggleRoomLock, videoState, currentVideo
+    setUserStatus, isLocked, toggleRoomLock, videoState, currentVideo,
+    hostAway,
   } = useRoom();
 
   const onlineCount = participants.filter(p => p.isOnline !== false).length;
@@ -162,11 +163,12 @@ const RoomPage = () => {
     if (hasJoinedRef.current) return;
     hasJoinedRef.current = true;
 
-    // Listen for username conflict error from backend
+    // Remove before adding to ensure idempotency on reconnect cycles (BUG-9)
     const onJoinError = ({ message }) => {
       setError(message);
       setJoining(false);
     };
+    socket.off('room:join-error', onJoinError);
     socket.on('room:join-error', onJoinError);
 
     const init = async () => {
@@ -193,11 +195,6 @@ const RoomPage = () => {
 
     init();
 
-    // Cleanup ONLY removes the error listener.
-    // leaveRoom is handled by the unmount effect below — NOT here.
-    // Previously, having leaveRoom() here caused it to fire on every
-    // reconnect (because isConnected is a dependency), clearing room
-    // state and causing "room not found" errors on reconnect.
     return () => {
       socket.off('room:join-error', onJoinError);
     };
@@ -307,6 +304,15 @@ const RoomPage = () => {
     // If Shift key is pressed, bypass confirmation
     if (e?.shiftKey) {
       executeLeave();
+      return;
+    }
+
+    // BUG-14: Block host from leaving mid-live-stream
+    if (isHost && currentVideo?.type === 'live') {
+      toast.error('Stop your live stream before leaving the room.', {
+        icon: '📡',
+        duration: 3000,
+      });
       return;
     }
 
@@ -524,6 +530,16 @@ const RoomPage = () => {
               <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <WifiOff className="w-4 h-4 animate-pulse" />
                 <span className="text-xs font-bold tracking-wide uppercase">Connection lost. Attempting to reconnect...</span>
+              </div>
+            </div>
+          )}
+
+          {/* Host Away Banner — shown to all participants when host disconnects temporarily (BUG-13) */}
+          {hostAway && !isHost && (
+            <div className="absolute top-0 left-0 right-0 z-40 animate-slide-up">
+              <div className="bg-amber-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
+                <span className="text-base">⚠️</span>
+                <span className="text-xs font-bold tracking-wide uppercase">Host disconnected — Waiting for them to return…</span>
               </div>
             </div>
           )}

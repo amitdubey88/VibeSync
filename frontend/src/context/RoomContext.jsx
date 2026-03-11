@@ -66,6 +66,8 @@ export const RoomProvider = ({ children }) => {
   const [videoState, setVideoState] = useState(null);
   const [currentVideo, setCurrentVideo] = useState(null);
   const [isHost, setIsHost] = useState(false);
+  // Keep isHostRef in sync so stale socket closures always read the correct value
+  useEffect(() => { isHostRef.current = isHost; }, [isHost]);
   const [reactions, setReactions] = useState([]);
   const [isMutedByHost, setIsMutedByHost] = useState(false);
   const [requiresApproval, setRequiresApproval] = useState(false);
@@ -80,7 +82,10 @@ export const RoomProvider = ({ children }) => {
   const [isLocked, setIsLocked] = useState(false);
   const [energy, setEnergy] = useState(0); // 0-100 social energy
   const [clips, setClips] = useState([]); // List of timestamp highlights
+  const [hostAway, setHostAway] = useState(false); // true when host temporarily disconnects
   const participantsRef = useRef([]);
+  // Always-current ref for isHost so socket closures don't go stale (BUG-7)
+  const isHostRef = useRef(false);
 
   const addSystemMessage = useCallback((content) => {
     const sysMsg = {
@@ -282,13 +287,12 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onRoomDeleted = ({ message }) => {
-      // If I'm the host, the deletion was likely my action.
-      // Redirect home quietly without the "Session Ended" alert.
-      if (isHost) {
+      // Use the ref so we always read the CURRENT value, not a stale closure (BUG-7)
+      if (isHostRef.current) {
         sessionStorage.removeItem("vibesync_session");
         setRoom(null); setParticipants([]); setMessages([]);
         setVideoState(null); setCurrentVideo(null); setIsHost(false);
-        window.location.href = '/'; 
+        window.location.href = '/';
         return;
       }
 
@@ -332,6 +336,20 @@ export const RoomProvider = ({ children }) => {
       else toast('The room is now unlocked.', { icon: '🔓', duration: 2000 });
     };
 
+    // ── Host away/back events (BUG-13) ───────────────────────────────────────
+    const onHostAway = ({ message }) => {
+      setHostAway(true);
+      toast(message || 'Host disconnected…', { icon: '⚠️', duration: 4000 });
+    };
+    const onHostBack = ({ message }) => {
+      setHostAway(false);
+      toast.success(message || 'Host reconnected!', { duration: 2000 });
+    };
+    const onHostLeft = ({ message }) => {
+      setHostAway(false);
+      toast(message || 'The host has left.', { icon: '👑', duration: 5000 });
+    };
+
     const onRemotePlay = ({ currentTime }) => {
       if (!isHost) {
         addSystemMessage(`Host resumed the video`);
@@ -368,6 +386,9 @@ export const RoomProvider = ({ children }) => {
     socket.on('video:play', onRemotePlay);
     socket.on('video:pause', onRemotePause);
     socket.on('video:seek', onRemoteSeek);
+    socket.on('room:host-away', onHostAway);
+    socket.on('room:host-back', onHostBack);
+    socket.on('room:host-left', onHostLeft);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -389,16 +410,24 @@ export const RoomProvider = ({ children }) => {
       socket.off('video:play', onRemotePlay);
       socket.off('video:pause', onRemotePause);
       socket.off('video:seek', onRemoteSeek);
+      socket.off('room:host-away', onHostAway);
+      socket.off('room:host-back', onHostBack);
+      socket.off('room:host-left', onHostLeft);
     };
   }, [socket, user, roomKey]);
 
-  // ── Social Energy Decay ──────────────────────────────────────────────────
+  // ── Social Energy Decay — only when inside a room (BUG-11) ─────────────────
   useEffect(() => {
+    if (!room) return; // Don't tick when no room is active
     const timer = setInterval(() => {
       setEnergy(prev => Math.max(prev - 2, 0));
     }, 2000);
     return () => clearInterval(timer);
-  }, []);
+  }, [room]);
+  // Reset energy on room exit
+  useEffect(() => {
+    if (!room) setEnergy(0);
+  }, [room]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (content, replyTo = null) => {
@@ -550,7 +579,8 @@ export const RoomProvider = ({ children }) => {
       chatMuted, setChatMuted,
       setUserStatus,
       energy, setEnergy,
-      clips, sendClip
+      clips, sendClip,
+      hostAway,
     }}>
       {children}
     </RoomContext.Provider>

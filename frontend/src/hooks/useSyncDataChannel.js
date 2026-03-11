@@ -72,7 +72,7 @@ const useSyncDataChannel = () => {
         if (!isHost || !room?.participants || !socket) return;
 
         room.participants.forEach(async (p) => {
-            if (p.id === room.hostId || !p.socketId) return; // Skip self
+            if (p.userId === room.hostId || !p.socketId) return; // Skip self
 
             if (!peersRef.current[p.socketId]) {
                 const pc = createPeer(p.socketId);
@@ -116,22 +116,31 @@ const useSyncDataChannel = () => {
 
         const onOffer = async ({ fromSocketId, offer }) => {
             if (isHost) return; // Only guests receive offers for this channel
+            try {
+                const pc = createPeer(fromSocketId);
+                
+                // Guest accepts the data channel
+                pc.ondatachannel = (event) => {
+                    const channel = event.channel;
+                    channel.onopen = () => console.log(`[DataChannel] Opened to Host (${fromSocketId})`);
+                    channel.onclose = () => console.log(`[DataChannel] Closed with Host (${fromSocketId})`);
+                    channel.onmessage = handleDataChannelMessage;
+                    channelsRef.current[fromSocketId] = channel;
+                };
 
-            const pc = createPeer(fromSocketId);
-            
-            // Guest accepts the data channel
-            pc.ondatachannel = (event) => {
-                const channel = event.channel;
-                channel.onopen = () => console.log(`[DataChannel] Opened to Host (${fromSocketId})`);
-                channel.onclose = () => console.log(`[DataChannel] Closed with Host (${fromSocketId})`);
-                channel.onmessage = handleDataChannelMessage;
-                channelsRef.current[fromSocketId] = channel;
-            };
-
-            await pc.setRemoteDescription(offer);
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('sync-channel:answer', { targetSocketId: fromSocketId, answer });
+                await pc.setRemoteDescription(offer);
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                socket.emit('sync-channel:answer', { targetSocketId: fromSocketId, answer });
+            } catch (err) {
+                console.warn('[DataChannel] Failed to handle offer from', fromSocketId, err);
+                // Graceful fallback: delete failed peer so it can be recreated next round
+                if (peersRef.current[fromSocketId]) {
+                    peersRef.current[fromSocketId].close();
+                    delete peersRef.current[fromSocketId];
+                    delete channelsRef.current[fromSocketId];
+                }
+            }
         };
 
         const onAnswer = async ({ fromSocketId, answer }) => {

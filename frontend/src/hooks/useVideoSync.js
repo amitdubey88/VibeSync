@@ -288,13 +288,24 @@ const useVideoSync = (videoEl) => {
         };
     }, [socket, videoEl, isHost, setVideoState, currentVideo, sendSyncMessage, onSyncMessage]);
 
-    // ── Request sync on mount (for late joiners) ──────────────────────────────
+    // ── Request sync on mount AND after socket reconnect (BUG-12) ────────────
     useEffect(() => {
         if (!socket || !roomCode || isHost) return;
-        const timer = setTimeout(() => {
+
+        const requestSync = () => {
             socket.emit('video:request-sync', { roomCode });
-        }, 800);
-        return () => clearTimeout(timer);
+        };
+
+        // Request sync on mount / on reconnect (800ms delay to let room:state settle first)
+        const timer = setTimeout(requestSync, 800);
+
+        // Re-request sync every time the socket reconnects mid-session
+        socket.on('connect', requestSync);
+
+        return () => {
+            clearTimeout(timer);
+            socket.off('connect', requestSync);
+        };
     }, [socket, roomCode, isHost]);
 
     return { 

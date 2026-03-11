@@ -43,9 +43,9 @@ module.exports = (io, socket, roomStore) => {
         room.currentVideo = video;
         // Preserve playback position if provided (background upload scenario)
         const t = (typeof currentTime === 'number') ? currentTime : 0;
-        const dur = (typeof duration === 'number') ? duration : 0;
+        // Note: duration is synced separately via video:sync-duration — not part of set-source payload
         const playing = isPlaying ?? false;
-        room.videoState = { currentTime: t, duration: dur, isPlaying: playing, lastUpdated: Date.now() };
+        room.videoState = { currentTime: t, duration: room.videoState?.duration || 0, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
         if (video && video.url && (video.type === 'file' || video.type === 'url')) {
@@ -125,8 +125,8 @@ module.exports = (io, socket, roomStore) => {
         const room = roomStore.get(roomCode);
         if (!room) return;
         
-        // Find the host's socket ID
-        const hostParticipant = room.participants.find(p => p.id === room.hostId);
+        // Find the host's socket ID — participants use userId, not id
+        const hostParticipant = room.participants.find(p => p.userId === room.hostId);
         if (hostParticipant && hostParticipant.socketId) {
             io.to(hostParticipant.socketId).emit('video:client-drift', { drift });
         }

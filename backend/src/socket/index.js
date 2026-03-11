@@ -152,6 +152,20 @@ module.exports = (io, roomStore) => {
             if (existing) {
                 existing.socketId = socket.id; // Update socket ID on reconnect
                 existing.isOnline = true;
+
+                // Cancel the pending disconnect/cleanup timer for this user (BUG-3)
+                if (room._disconnectTimers?.[socket.user.id]) {
+                    clearTimeout(room._disconnectTimers[socket.user.id]);
+                    delete room._disconnectTimers[socket.user.id];
+                }
+
+                // If the reconnecting user is the host, clear hostAway and notify room (BUG-13)
+                if (room.hostId === socket.user.id && room.hostAway) {
+                    room.hostAway = false;
+                    io.to(hashedCode).emit('room:host-back', {
+                        message: 'Host has reconnected.'
+                    });
+                }
             } else {
                 // ── Username conflict check ───────────────────────────────────────
                 const nameTaken = room.participants.find(
@@ -276,7 +290,15 @@ module.exports = (io, roomStore) => {
         });
 
         // ────────────────────────────────────────────────────────────────────────
-        /** Handles participant removal and host migration on disconnect/leave */
+        /**
+         * Handles participant removal and host-away notification on disconnect/leave.
+         * 
+         * KEY DESIGN DECISIONS (BUG-3, BUG-4, BUG-13):
+         * - 30s timer re-reads room from roomStore (fixing stale closure ref)
+         * - Timer is stored per-userId so reconnect can cancel it
+         * - No automatic host transfer — participants see a "host away" banner instead
+         * - Leave chat message only broadcasts for explicit permanent leaves
+         */
         const leaveRoom = (code, isDisconnect = false) => {
             const room = roomStore.get(code);
             if (!room) return;
@@ -289,83 +311,110 @@ module.exports = (io, roomStore) => {
                 socket.cleanupVoice(code);
             }
 
-            // Mark participant as offline (keep in list for short-term reconnect)
             const participant = room.participants.find((p) => p.socketId === socket.id);
-            if (participant) {
-                if (isDisconnect) {
-                    // On disconnect, mark offline. Clean up after 30s if they don't reconnect.
+
+            if (isDisconnect) {
+                // ── Temporary disconnect: mark offline, wait 30s for reconnect ──────
+                if (participant) {
                     participant.isOnline = false;
-                    setTimeout(() => {
-                        const stillOffline = room.participants.find(
-                            (p) => p.userId === socket.user.id && !p.isOnline
+                }
+
+                // If host disconnected, broadcast "host away" banner to participants
+                const isHostDisconnect = room.hostId === socket.user.id;
+                if (isHostDisconnect) {
+                    room.hostAway = true;
+                    io.to(hashedCode).emit('room:host-away', {
+                        message: 'Host has temporarily disconnected. Waiting for them to return…'
+                    });
+                }
+
+                // Broadcast updated participant list (show user as offline)
+                io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
+
+                // Track timer so reconnect can cancel it (BUG-3: use roomStore lookup, not closure)
+                if (!room._disconnectTimers) room._disconnectTimers = {};
+                if (room._disconnectTimers[socket.user.id]) {
+                    clearTimeout(room._disconnectTimers[socket.user.id]);
+                }
+
+                room._disconnectTimers[socket.user.id] = setTimeout(() => {
+                    // Re-read room from store — original reference may be stale (BUG-3)
+                    const liveRoom = roomStore.get(code);
+                    if (!liveRoom) return;
+
+                    const stillOffline = liveRoom.participants.find(
+                        (p) => p.userId === socket.user.id && !p.isOnline
+                    );
+
+                    if (stillOffline) {
+                        // Remove participant permanently
+                        liveRoom.participants = liveRoom.participants.filter(
+                            (p) => p.userId !== socket.user.id
                         );
-                        if (stillOffline) {
-                            room.participants = room.participants.filter((p) => p.userId !== socket.user.id);
+                        delete liveRoom._disconnectTimers?.[socket.user.id];
 
-                            // If the disconnected user was the host, migrate now
-                            if (room.hostId === socket.user.id) {
-                                const nextParticipant = room.participants.find((p) => p.isOnline);
-                                if (nextParticipant) {
-                                    room.hostId = nextParticipant.userId;
-                                    io.to(hashedCode).emit('room:host-changed', {
-                                        newHostId: room.hostId,
-                                        newHostUsername: nextParticipant.username,
-                                    });
-                                    const msg = {
-                                        id: `sys_${Date.now()}`,
-                                        userId: 'system', username: 'System', avatar: null,
-                                        content: `${nextParticipant.username} is now the host (automatic migration)`,
-                                        type: 'system',
-                                        createdAt: new Date().toISOString(),
-                                    };
-                                    room.messages.push(msg);
-                                    io.to(hashedCode).emit('chat:message', msg);
-                                }
-                            }
-
-                            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
+                        // BUG-13: No automatic host promotion.
+                        // If host never came back, clear the "host away" flag and
+                        // keep the room in a "no host" state. Remaining participants
+                        // can use the Transfer Host option to pick a new host manually.
+                        if (liveRoom.hostId === socket.user.id) {
+                            liveRoom.hostAway = false;
+                            io.to(hashedCode).emit('room:host-left', {
+                                message: 'The host has left the room. Use the Participants menu to transfer host.'
+                            });
                         }
-                    }, 30000);
-                } else {
+
+                        // Now send the leave message (deferred so it only shows for actual permanent leaves)
+                        const leaveMsg = {
+                            id: `sys_${Date.now()}`,
+                            userId: 'system', username: 'System', avatar: null,
+                            content: `${socket.user.username} left the room`,
+                            type: 'system',
+                            createdAt: new Date().toISOString(),
+                        };
+                        liveRoom.messages = liveRoom.messages || [];
+                        liveRoom.messages.push(leaveMsg);
+                        io.to(hashedCode).emit('chat:message', leaveMsg);
+                        io.to(hashedCode).emit('room:participant-update', { participants: liveRoom.participants });
+                    }
+                }, 30000);
+
+            } else {
+                // ── Explicit leave: remove immediately ──────────────────────────────
+                if (participant) {
                     room.participants = room.participants.filter((p) => p.socketId !== socket.id);
                 }
-            }
 
-            // Host migration: assign new host if original host leaves permanently
-            if (room.hostId === socket.user.id && !isDisconnect) {
-                const nextParticipant = room.participants.find((p) => p.isOnline);
-                if (nextParticipant) {
-                    room.hostId = nextParticipant.userId;
-                    io.to(hashedCode).emit('room:host-changed', {
-                        newHostId: room.hostId,
-                        newHostUsername: nextParticipant.username,
-                    });
-                    const msg = {
-                        id: `sys_${Date.now()}`,
-                        userId: 'system', username: 'System', avatar: null,
-                        content: `${nextParticipant.username} is now the host`,
-                        type: 'system',
-                        createdAt: new Date().toISOString(),
-                    };
-                    room.messages.push(msg);
-                    io.to(hashedCode).emit('chat:message', msg);
+                // Cancel any pending reconnect timer
+                if (room._disconnectTimers?.[socket.user.id]) {
+                    clearTimeout(room._disconnectTimers[socket.user.id]);
+                    delete room._disconnectTimers[socket.user.id];
                 }
-            }
 
-            // Broadcast leave message
-            const leaveMsg = {
-                id: `sys_${Date.now()}`,
-                userId: 'system', username: 'System', avatar: null,
-                content: `${socket.user.username} left the room`,
-                type: 'system',
-                createdAt: new Date().toISOString(),
-            };
-            room.messages.push(leaveMsg);
-            io.to(hashedCode).emit('chat:message', leaveMsg);
-            io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
+                // If host leaves explicitly, notify but DO NOT auto-transfer (BUG-13)
+                if (room.hostId === socket.user.id) {
+                    room.hostAway = false;
+                    io.to(hashedCode).emit('room:host-left', {
+                        message: 'The host has left the room. Use the Participants menu to transfer host.'
+                    });
+                }
+
+                // Broadcast leave message for explicit leaves only (BUG-4)
+                const leaveMsg = {
+                    id: `sys_${Date.now()}`,
+                    userId: 'system', username: 'System', avatar: null,
+                    content: `${socket.user.username} left the room`,
+                    type: 'system',
+                    createdAt: new Date().toISOString(),
+                };
+                room.messages = room.messages || [];
+                room.messages.push(leaveMsg);
+                io.to(hashedCode).emit('chat:message', leaveMsg);
+                io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
+            }
 
             currentRoomCode = null;
-            console.log(`👋 ${socket.user.username} left room ${code}`);
+            console.log(`👋 ${socket.user.username} ${isDisconnect ? 'disconnected from' : 'left'} room ${code}`);
         };
     });
 };
