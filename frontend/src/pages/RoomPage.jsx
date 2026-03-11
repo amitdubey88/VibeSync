@@ -403,7 +403,7 @@ const RoomPage = () => {
   return (
     <div className="h-screen flex flex-col bg-cinematic overflow-hidden">
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2">
+      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0">
             <img src="/favicon.svg" alt="VibeSync Logo" className="w-7 h-7 rounded-md shadow-[0_0_10px_rgba(229,9,20,0.4)]" />
