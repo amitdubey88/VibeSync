@@ -1,6 +1,6 @@
 import { useRoom } from '../../context/RoomContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
-import { Users } from 'lucide-react';
+import { Users, Crown } from 'lucide-react';
 
 const VideoPresenceOverlay = ({ visible }) => {
   const { participants, voiceParticipants, reactions } = useRoom();
@@ -25,7 +25,7 @@ const VideoPresenceOverlay = ({ visible }) => {
       if (!aSpeaking && bSpeaking) return 1;
       return 0;
     })
-    .slice(0, 5);
+    .slice(0, 4);
 
   return (
     <div className={`absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`}>
@@ -68,6 +68,13 @@ const VideoPresenceOverlay = ({ visible }) => {
               {/* Speaking Indicator Dot */}
               {isSpeaking && (
                 <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-accent-green rounded-full border border-bg-card animate-pulse" />
+              )}
+
+              {/* Host Crown Indicator */}
+              {p.userId === room?.hostId && (
+                <div className="absolute -top-2 left-1/2 -translate-x-1/2 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]">
+                  <Crown className="w-3.5 h-3.5 text-accent-yellow fill-accent-yellow" />
+                </div>
               )}
 
               {/* Tooltip */}
