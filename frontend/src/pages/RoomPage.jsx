@@ -483,7 +483,7 @@ const RoomPage = () => {
           </Tooltip>
 
           {/* More Menu Dropdown */}
-          <div className="relative">
+          <div className="relative z-[100]">
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
@@ -495,7 +495,7 @@ const RoomPage = () => {
             </Tooltip>
             
             {isMoreMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-48 bg-bg-card border border-border-dark rounded-xl shadow-modal overflow-hidden z-50 animate-fade-in origin-top-right">
+              <div className="absolute top-full right-0 mt-2 w-48 bg-bg-card border border-border-dark rounded-xl shadow-modal overflow-hidden z-[100] animate-fade-in origin-top-right">
                 <div className="flex flex-col py-1">
                   <button
                     onClick={() => setShowShortcutsHelp(true)}
