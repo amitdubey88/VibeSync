@@ -59,7 +59,7 @@ const RoomPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, isAuthenticated } = useAuth();
-  const { isConnected } = useSocket();
+  const { socket, isConnected } = useSocket();
   const {
     room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
     joinStatus, joinRequests, requiresApproval, transferHost,
