@@ -71,7 +71,7 @@ const ParticipantsList = () => {
           const canControl = isHost && !isMe && !isRoomHost;
 
           return (
-            <div key={p.userId} className="participant-row relative">
+            <div key={p.userId} className="participant-row relative animate-participant-enter">
               <div className="relative shrink-0">
                 <div 
                   className={`avatar w-9 h-9 text-sm text-white avatar-ring transition-all ${isSpeaking ? 'trigger-pulse-ring ring-2 ring-accent-green' : ''}`} 

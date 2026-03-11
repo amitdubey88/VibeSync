@@ -10,6 +10,7 @@ import VoiceControls from '../components/Voice/VoiceControls';
 import ConfirmDialog from '../components/UI/ConfirmDialog';
 import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
+import Tooltip from '../components/UI/Tooltip';
 import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Trash2, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
@@ -454,60 +455,66 @@ const RoomPage = () => {
               ? <><Wifi className="w-3.5 h-3.5" /> Live</>
               : <><WifiOff className="w-3.5 h-3.5" /> Reconnecting…</>}
           </div>
-          <button
-            onClick={copyRoomCode}
-            className="flex items-center gap-1.5 bg-bg-hover hover:bg-bg-card border border-border-dark
-                       rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-text-primary transition-all"
-            title="Click to copy room code"
-          >
-            <span className="text-text-muted hidden xs:inline">CODE</span>
-            <span className="text-accent-purple tracking-widest">{code}</span>
-            <Copy className="w-3 h-3 text-text-muted" />
-          </button>
-          <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
-            Share
-          </button>
+          <Tooltip text="Copy room code" position="bottom">
+            <button
+              onClick={copyRoomCode}
+              className="flex items-center gap-1.5 bg-bg-hover hover:bg-bg-card border border-border-dark
+                         rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-text-primary transition-all active:scale-95"
+            >
+              <span className="text-text-muted hidden xs:inline">CODE</span>
+              <span className="text-accent-purple tracking-widest">{code}</span>
+              <Copy className="w-3 h-3 text-text-muted" />
+            </button>
+          </Tooltip>
+          <Tooltip text="Copy invite link" position="bottom">
+            <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
+              Share
+            </button>
+          </Tooltip>
 
           {/* Toggle Sidebar */}
-          <button
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-            className="btn-ghost text-xs py-1.5 px-2.5 hidden md:flex items-center gap-1.5 text-text-muted hover:text-white"
-            title={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
-          >
-            {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-          </button>
+          <Tooltip text={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'} position="bottom">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="btn-ghost text-xs py-1.5 px-2.5 hidden md:flex items-center gap-1.5 text-text-muted hover:text-white"
+            >
+              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+            </button>
+          </Tooltip>
 
-          {/* BRB / Away Toggle */}
           {/* Shortcuts Help */}
-          <button
-            onClick={() => setShowShortcutsHelp(true)}
-            className="btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-accent-purple transition-all"
-            title="Keyboard Shortcuts (?)"
-          >
-            <Clock className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Help</span>
-          </button>
+          <Tooltip text="Keyboard Shortcuts (?)" position="bottom">
+            <button
+              onClick={() => setShowShortcutsHelp(true)}
+              className="btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-accent-purple transition-all"
+            >
+              <Clock className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Help</span>
+            </button>
+          </Tooltip>
 
           {/* Leave Room */}
-          <button
-            onClick={(e) => handleLeave(e)}
-            className="flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-red-400 transition-colors"
-            title="Leave room (Shift + Click to bypass)"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Leave</span>
-          </button>
+          <Tooltip text="Leave Room (Shift+Click to skip confirm)" position="bottom">
+            <button
+              onClick={(e) => handleLeave(e)}
+              className="flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-red-400 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Leave</span>
+            </button>
+          </Tooltip>
 
           {/* Delete Room (host only) */}
           {isHost && (
-            <button
-              onClick={handleDeleteRoom}
-              className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all"
-              title="Delete room"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Delete</span>
-            </button>
+            <Tooltip text="Delete Room for everyone" position="bottom">
+              <button
+                onClick={handleDeleteRoom}
+                className="flex items-center gap-1.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 text-red-400 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            </Tooltip>
           )}
         </div>
       </header>
@@ -595,7 +602,10 @@ const RoomPage = () => {
                 <Icon className="w-4 h-4" />
                 <span className="hidden xl:inline">{label}</span>
                 {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
-                  <span className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)]">
+                  <span
+                    key={unreadChatCount}
+                    className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
+                  >
                     {unreadChatCount > 9 ? '9+' : unreadChatCount}
                   </span>
                 )}
@@ -606,13 +616,13 @@ const RoomPage = () => {
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Tab Logic: Hybrid Mobile/Desktop */}
             {(sidebarTab === 'chat' || (activeMobileTab === 'chat' && window.innerWidth < 768)) ? (
-              <div className={`flex-1 flex flex-col overflow-hidden ${(window.innerWidth < 768 && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(window.innerWidth < 768 && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
                 <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />
               </div>
             ) : null}
             
             {(sidebarTab === 'participants' || (activeMobileTab === 'people' && window.innerWidth < 768)) ? (
-              <div className={`flex-1 flex flex-col overflow-hidden ${(window.innerWidth < 768 && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(window.innerWidth < 768 && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
                 {/* Host: controls sidebar block */}
                 {isHost && (
                   <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">
