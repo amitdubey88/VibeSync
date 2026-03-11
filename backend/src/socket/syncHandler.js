@@ -159,12 +159,22 @@ module.exports = (io, socket, roomStore) => {
         if (!room) return;
 
         const { videoState, currentVideo } = room;
-        let adjustedTime = videoState.currentTime;
+
+        // Guard: videoState may be null if no video has been loaded in this room yet
+        if (!videoState) {
+            socket.emit('video:sync-state', {
+                currentVideo: currentVideo || null,
+                videoState: { currentTime: 0, duration: 0, isPlaying: false, lastUpdated: Date.now() },
+            });
+            return;
+        }
+
+        let adjustedTime = videoState.currentTime || 0;
 
         // If video was playing, account for time elapsed since last update
-        if (videoState.isPlaying) {
+        if (videoState.isPlaying && videoState.lastUpdated) {
             const elapsedSec = (Date.now() - videoState.lastUpdated) / 1000;
-            adjustedTime = videoState.currentTime + elapsedSec;
+            adjustedTime = (videoState.currentTime || 0) + elapsedSec;
         }
 
         socket.emit('video:sync-state', {

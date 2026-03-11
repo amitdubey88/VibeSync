@@ -453,10 +453,13 @@ export const RoomProvider = ({ children }) => {
   }, [socket, room, roomKey]);
 
   const setVideoSource = useCallback(async (video, opts = {}) => {
-    if (!socket || !room || !roomKey) return;
+    if (!socket || !room) return;
+
+    // Derive key inline if not yet available (fast-submit race condition)
+    const key = roomKey || (await deriveKey(room.code));
     
-    const encryptedUrl = await encryptData(video.url, roomKey);
-    const encryptedTitle = await encryptData(video.title, roomKey);
+    const encryptedUrl = await encryptData(video.url, key);
+    const encryptedTitle = await encryptData(video.title, key);
     
     const encryptedVideo = {
         ...video,

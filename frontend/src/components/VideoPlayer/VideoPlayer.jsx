@@ -20,7 +20,7 @@ import { decryptFile } from '../../utils/crypto';
 import { resolveVideoUrl } from '../../utils/videoResolver';
 
 // ── Full-screen portal modal ─────────────────────────────────────────────────
-const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput }) =>
+const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUrlInput, urlValidationResult }) =>
   createPortal(
     <div
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
@@ -60,7 +60,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
           <hr className="flex-1 border-border-dark" />
         </div>
 
-        {/* URL input */}
+        {/* URL input with live validation feedback */}
         <form onSubmit={onUrlSubmit}>
           <label className="block text-xs font-semibold text-text-secondary mb-2 uppercase tracking-wide">
             YouTube / Direct URL
@@ -76,6 +76,27 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
             />
             <button type="submit" className="btn-primary px-5">Go</button>
           </div>
+          {/* Live type indicator */}
+          {urlInput.trim() && urlValidationResult && (
+            <div className={`mt-2 flex items-center gap-1.5 text-xs font-medium ${
+              urlValidationResult.type === 'unsupported'
+                ? 'text-orange-400'
+                : urlValidationResult.type === 'youtube'
+                  ? 'text-accent-red'
+                  : urlValidationResult.type === 'hls'
+                    ? 'text-blue-400'
+                    : 'text-green-400'
+            }`}>
+              <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+              {urlValidationResult.type === 'youtube' && '▶ YouTube Video'}
+              {urlValidationResult.type === 'direct' && '📁 Direct Video'}
+              {urlValidationResult.type === 'hls' && '📡 HLS Stream'}
+              {urlValidationResult.type === 'unsupported' && '⚠ Unsupported link'}
+            </div>
+          )}
+          {urlInput.trim() && !urlValidationResult && (
+            <p className="mt-2 text-xs text-orange-400">⚠ Invalid or unrecognized URL</p>
+          )}
         </form>
 
         <button className="btn-ghost w-full mt-4 text-sm" onClick={onClose}>Cancel</button>
@@ -110,6 +131,9 @@ const VideoPlayer = () => {
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
+
+  // Live URL validation result — drives inline type feedback in the source picker modal
+  const urlValidationResult = urlInput.trim() ? resolveVideoUrl(urlInput.trim()) : null;
 
   // Live ref so the callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
@@ -499,11 +523,12 @@ const VideoPlayer = () => {
   // Determine what src the <video> element actually plays:
   //   - blobUrl while host is uploading (instant playback)
   //   - decryptedUrl after decryption finishes (for encrypted files)
-  //   - currentVideo.url after upload completes or for direct URLs
-  //   - EXCLUDES the fake 'live-stream' placeholder (prevents a broken <video> on participant side)
+  //   - currentVideo.url for direct or hls-fallback types
+  //   - EXCLUDES youtube (handled by YouTubePlayer), uploading, and 'live-stream' placeholder
   const activeSrc = blobUrl || decryptedUrl || (
     currentVideo &&
     currentVideo.type !== 'youtube' &&
+    currentVideo.type !== 'hls' &&
     currentVideo.type !== 'uploading' &&
     currentVideo.url !== 'live-stream'
       ? currentVideo.url
@@ -518,6 +543,7 @@ const VideoPlayer = () => {
       onFileUpload={handleFileUpload}
       urlInput={urlInput}
       setUrlInput={setUrlInput}
+      urlValidationResult={urlValidationResult}
     />
   );
 
@@ -696,15 +722,15 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls Overlay - only render if a video is active/loaded */}
-      {(activeSrc || currentVideo?.type === 'youtube' || currentVideo?.type === 'hls' || isDirectStreaming || remotePremierStream) && (
+      {/* Controls Overlay - only render if a video is active/loaded AND (for YouTube) the proxy is ready */}
+      {(activeSrc || (currentVideo?.type === 'youtube' && videoEl !== null) || currentVideo?.type === 'hls' || isDirectStreaming || remotePremierStream) && (
         <>
           {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
           <VideoPresenceOverlay visible={showControls} />
           <ReactionBurst />
           <QuickReactionBar visible={showControls} />
 
-          {/* Sync Status Badge (Phase 5) */}
+          {/* Sync Status Badge */}
           {!isHost && currentVideo && currentVideo.type !== 'live' && (
             <div className="absolute top-4 right-4 z-40 pointer-events-none">
               <SyncStatusBadge status={syncStatus} />
