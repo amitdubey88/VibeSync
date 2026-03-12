@@ -14,30 +14,32 @@ try { Message = require('../models/Message'); } catch (_) { }
 
 module.exports = (io, socket, roomStore) => {
     const getRoomAndValidateHost = (roomCode) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return { error: 'Room not found' };
+        const room = roomStore.get(code);
         if (!room) return { error: 'Room not found' };
         if (socket.user?.id !== room.hostId) return { error: 'Only the host can control playback' };
-        return { room };
+        return { room, code };
     };
 
     // ── video:set-uploading ───────────────────────────────────────────────────
     // Host started a local upload — participants see a "waiting" state.
     socket.on('video:set-uploading', ({ roomCode, title }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         room.currentVideo = { type: 'uploading', title, url: null };
         // Keep videoState running (host is playing locally)
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:uploading', { title });
-        console.log(`[sync] Upload started in ${roomCode}: ${title}`);
+        console.log(`[sync] Upload started in ${code}: ${title}`);
     });
 
     // ── video:set-source ─────────────────────────────────────────────────────
     // Host sets or changes the video source. When called after a background upload,
     // currentTime + isPlaying are passed so participants join at the right position.
     socket.on('video:set-source', ({ roomCode, video, currentTime, isPlaying }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         room.currentVideo = video;
@@ -61,60 +63,60 @@ module.exports = (io, socket, roomStore) => {
             room.messages.push(systemMsg);
         }
 
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('video:source-changed', { video, videoState: room.videoState });
-        console.log(`[sync] Source changed in ${roomCode}: ${video?.title} @${t.toFixed(2)}s`);
+        console.log(`[sync] Source changed in ${code}: ${video?.title} @${t.toFixed(2)}s`);
     });
 
     // ── video:play ────────────────────────────────────────────────────────────
     socket.on('video:play', ({ roomCode, currentTime }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         room.videoState = { ...room.videoState, currentTime, isPlaying: true, lastUpdated: Date.now() };
 
         // Broadcast to all OTHER clients (host already played locally)
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:play', { currentTime, timestamp: Date.now() });
-        console.log(`[sync] PLAY @${currentTime.toFixed(2)}s in room ${roomCode}`);
+        console.log(`[sync] PLAY @${currentTime.toFixed(2)}s in room ${code}`);
     });
 
     // ── video:pause ───────────────────────────────────────────────────────────
     socket.on('video:pause', ({ roomCode, currentTime }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         room.videoState = { ...room.videoState, currentTime, isPlaying: false, lastUpdated: Date.now() };
 
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:pause', { currentTime });
-        console.log(`[sync] PAUSE @${currentTime.toFixed(2)}s in room ${roomCode}`);
+        console.log(`[sync] PAUSE @${currentTime.toFixed(2)}s in room ${code}`);
     });
 
     // ── video:seek ────────────────────────────────────────────────────────────
     socket.on('video:seek', ({ roomCode, currentTime }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         room.videoState.currentTime = currentTime;
         room.videoState.lastUpdated = Date.now();
 
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:seek', { currentTime });
-        console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${roomCode}`);
+        console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${code}`);
     });
 
     // ── video:heartbeat ───────────────────────────────────────────────────────
     // Host continuously transmits authority playback timestamp
     socket.on('video:heartbeat', ({ roomCode, currentTime, isPlaying, rate, timestamp }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return; // Silent fail for heartbeats to prevent log spam
 
         room.videoState.currentTime = currentTime;
         room.videoState.isPlaying = isPlaying;
         room.videoState.lastUpdated = Date.now();
 
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:sync', { currentTime, isPlaying, rate, timestamp });
     });
 
@@ -122,7 +124,9 @@ module.exports = (io, socket, roomStore) => {
     // Guests report their current drift. Server routes this telemetry to the host
     // to drive adaptive sync frequency scaling.
     socket.on('video:drift-report', ({ roomCode, drift }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
         
         // Find the host's socket ID — participants use userId, not id
@@ -135,7 +139,7 @@ module.exports = (io, socket, roomStore) => {
     // ── video:sync-duration ───────────────────────────────────────────────────
     // Host reports the duration of a newly loaded video/stream.
     socket.on('video:sync-duration', ({ roomCode, duration }) => {
-        const { room, error } = getRoomAndValidateHost(roomCode);
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         // Update the duration without causing a full source change event
@@ -145,17 +149,19 @@ module.exports = (io, socket, roomStore) => {
             room.videoState = { currentTime: 0, isPlaying: false, duration, lastUpdated: Date.now() };
         }
 
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         // We can just blast out a state update request. Clients handle onSyncState
         io.to(hashedCode).emit('video:source-changed', { video: room.currentVideo, videoState: room.videoState });
-        console.log(`[sync] Duration synced @${duration.toFixed(2)}s in room ${roomCode}`);
+        console.log(`[sync] Duration synced @${duration.toFixed(2)}s in room ${code}`);
     });
 
     // ── video:request-sync ────────────────────────────────────────────────────
     // Called by late joiners or reconnecting clients to get current state.
     // Server calculates the adjusted currentTime based on elapsed wall-clock time.
     socket.on('video:request-sync', ({ roomCode }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
 
         const { videoState, currentVideo } = room;
@@ -189,24 +195,28 @@ module.exports = (io, socket, roomStore) => {
     // ── video:buffer-start ────────────────────────────────────────────────────
     // Client notifies others that they are buffering. Host can choose to pause.
     socket.on('video:buffer-start', ({ roomCode }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
         const participant = room.participants.find((p) => p.socketId === socket.id);
         if (participant) {
             participant.isBuffering = true;
-            const hashedCode = hashRoomCode(roomCode);
+            const hashedCode = hashRoomCode(code);
             io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         }
     });
 
     // ── video:buffer-end ──────────────────────────────────────────────────────
     socket.on('video:buffer-end', ({ roomCode }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
         const participant = room.participants.find((p) => p.socketId === socket.id);
         if (participant) {
             participant.isBuffering = false;
-            const hashedCode = hashRoomCode(roomCode);
+            const hashedCode = hashRoomCode(code);
             io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
         }
     });

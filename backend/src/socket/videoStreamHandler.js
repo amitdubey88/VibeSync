@@ -18,9 +18,11 @@ module.exports = (io, socket, roomStore) => {
     // Host emits this when starting a live stream, or when a new user joins.
     // Server relays to ALL room members (or a specific target) so they auto-connect.
     socket.on('video-stream:announce', ({ roomCode, targetSocketId }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
 
         if (targetSocketId) {
             // Tell a specific new socket to initiate a video connection
@@ -35,18 +37,22 @@ module.exports = (io, socket, roomStore) => {
     // Late-joining participant asks the host to re-announce the stream.
     // Broadcast to the room — the host's onRequestAnnounce handler picks it up.
     socket.on('video-stream:request-announce', ({ roomCode }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video-stream:request-announce', { fromSocketId: socket.id });
     });
 
     // ── video-stream:ended ─────────────────────────────────────────────────────
     // Host emits this when the live stream stops.
     socket.on('video-stream:ended', ({ roomCode }) => {
-        const room = roomStore.get(roomCode);
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
         if (!room) return;
-        const hashedCode = hashRoomCode(roomCode);
+        const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video-stream:ended');
     });
 

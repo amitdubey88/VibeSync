@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState } from 'react';
-import { getSocket, connectSocket } from '../services/socket';
+import { connectSocket, disconnectSocket, getSocket } from '../services/socket';
 import { useAuth } from './AuthContext';
 
 const SocketContext = createContext(null);
@@ -10,7 +10,13 @@ export const SocketProvider = ({ children }) => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    if (!token) return;
+    // Token cleared (logout) — tear down socket and reset state.
+    if (!token) {
+      disconnectSocket();
+      setSocket(null);
+      setIsConnected(false);
+      return;
+    }
 
     const s = connectSocket(token);
     setSocket(s);

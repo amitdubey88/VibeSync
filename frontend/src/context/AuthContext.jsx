@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { loginAsGuest, verifyOtp, sendOtp } from '../services/api';
-import { connectSocket, disconnectSocket } from '../services/socket';
+import { disconnectSocket } from '../services/socket';
 
 const AuthContext = createContext(null);
 
@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('vibesync_token', t);
     setToken(t);
     setUser(u);
-    connectSocket(t);
   }, []);
 
   const guestLogin = useCallback(async (username) => {

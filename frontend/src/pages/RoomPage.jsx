@@ -85,6 +85,29 @@ const RoomPage = () => {
   const [showRoomInfo, setShowRoomInfo] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const hasJoinedRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : window.innerWidth < 768;
+  });
+
+  // Keep mobile/desktop layout reactive on resize/orientation changes
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const mql = window.matchMedia ? window.matchMedia('(max-width: 767px)') : null;
+
+    const update = () => {
+      setIsMobile(mql ? mql.matches : window.innerWidth < 768);
+    };
+
+    update();
+    if (mql && typeof mql.addEventListener === 'function') {
+      mql.addEventListener('change', update);
+      return () => mql.removeEventListener('change', update);
+    }
+
+    window.addEventListener('resize', update);
+    return () => window.removeEventListener('resize', update);
+  }, []);
 
   // ── Keyboard Shortcuts ──
   useEffect(() => {
@@ -150,10 +173,11 @@ const RoomPage = () => {
   // Reset join guard when socket changes or disconnects (e.g. laptop wakes up)
   // so we can re-verify and re-join the room upon reconnection.
   useEffect(() => {
+    // Reset join guard when socket changes/disconnects OR room code changes
     if (!socket || !isConnected) {
       hasJoinedRef.current = false;
     }
-  }, [socket, isConnected]);
+  }, [socket, isConnected, code]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -199,7 +223,17 @@ const RoomPage = () => {
     return () => {
       socket.off('room:join-error', onJoinError);
     };
-  }, [socket, isConnected, isAuthenticated]);
+  }, [
+    socket,
+    isConnected,
+    isAuthenticated,
+    code,
+    location.state?.password,
+    socketJoin,
+    refreshParticipants,
+    navigate,
+    user?.username,
+  ]);
 
   // Leave room on component unmount (page navigation away).
   // Kept separate so it only fires once when the component truly unmounts,
@@ -631,14 +665,14 @@ const RoomPage = () => {
 
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Tab Logic: Hybrid Mobile/Desktop */}
-            {(sidebarTab === 'chat' || (activeMobileTab === 'chat' && window.innerWidth < 768)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(window.innerWidth < 768 && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
+            {(sidebarTab === 'chat' || (activeMobileTab === 'chat' && isMobile)) ? (
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
                 <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />
               </div>
             ) : null}
             
-            {(sidebarTab === 'participants' || (activeMobileTab === 'people' && window.innerWidth < 768)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(window.innerWidth < 768 && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
+            {(sidebarTab === 'participants' || (activeMobileTab === 'people' && isMobile)) ? (
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
                 {/* Host: controls sidebar block */}
                 {isHost && (
                   <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">

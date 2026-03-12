@@ -25,7 +25,9 @@ const useBufferSync = (videoEl) => {
         }
 
         // Filter out the host, we only care if guests are struggling to keep up
-        const currentlyBuffering = room.participants.filter(p => p.isBuffering && p.id !== room.hostId);
+        const currentlyBuffering = room.participants.filter(
+            (p) => p.isBuffering && String(p.userId) !== String(room.hostId)
+        );
         setBufferingUsers(currentlyBuffering);
 
         if (!isHost) return;
