@@ -704,22 +704,11 @@ const VideoPlayer = () => {
                   </p>
                   <button
                     onClick={() => {
-                      // Update BOTH state (for UI overlay) and ref (read synchronously in onPlayingEv)
+                      // Set ref synchronously BEFORE play() so the 'playing' handler
+                      // sees the updated value without a stale-closure race.
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
-                      if (videoEl) {
-                        // If the video is already playing (paused=false), capture stream immediately —
-                        // play() is a no-op in this case and 'playing' won't fire again.
-                        if (!videoEl.paused && !videoEl.ended && videoEl.captureStream && !isStreamingActiveRef.current) {
-                          try {
-                            const stream = videoEl.captureStream(50);
-                            isStreamingActiveRef.current = true;
-                            setPremierStream(stream);
-                          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
-                        } else {
-                          videoEl.play().catch(() => {});
-                        }
-                      }
+                      if (videoEl) videoEl.play().catch(() => {});
                     }}
                     className="flexItems-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
                   >
