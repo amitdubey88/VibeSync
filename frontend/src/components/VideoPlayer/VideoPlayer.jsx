@@ -199,15 +199,19 @@ const VideoPlayer = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoEl]); // Only re-run when videoEl mounts — videoState is read fresh from closure
 
-  // ── Keep participant's live stream video srcObject in sync ─────────────────
-  // We use a useEffect bound to the videoEl state. This guarantees no race
-  // condition between inline refs setting srcObject but failing to call play().
   useEffect(() => {
     if (isHost || !videoEl) return;
     if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
+      console.log('[VideoPlayer] Attaching remote live stream to video element.');
       videoEl.srcObject = remotePremierStream;
-      videoEl.play().catch(err => console.error('[Participant Live] AutoPlay blocked:', err));
+      videoEl.play().catch(err => {
+        console.error('[Participant Live] AutoPlay blocked or failed:', err);
+        // Fallback: the spinner might be showing because of a block. 
+        // We set isLoading to false if play() fails to at least show the black screen/controls
+        setIsLoading(false);
+      });
     } else if (!remotePremierStream && videoEl.srcObject) {
+      console.log('[VideoPlayer] Clearing remote live stream.');
       videoEl.srcObject = null;
     }
   }, [remotePremierStream, videoEl, isHost]);
@@ -224,12 +228,27 @@ const VideoPlayer = () => {
     const onPlayEv = () => {
       isPlayingRef.current = true;
     };
+    const startBroadcast = useCallback(() => {
+      if (!isHost || !videoEl || !videoEl.captureStream) return;
+      if (isStreamingActiveRef.current) return;
+
+      console.log('[VideoPlayer] Starting WebRTC broadcast capture...');
+      // Delay captureStream slightly to ensure the video has actually painted a frame.
+      setTimeout(() => {
+        try {
+          if (isStreamingActiveRef.current) return;
+          const stream = videoEl.captureStream(60); 
+          isStreamingActiveRef.current = true;
+          setPremierStream(stream);
+          console.log('[VideoPlayer] Stream captured and set to WebRTC context.');
+        } catch (e) {
+          console.error('[VideoPlayer] captureStream failed:', e);
+        }
+      }, 150);
+    }, [isHost, videoEl, setPremierStream]);
+
     const onPlayingEv = () => {
       // BUGFIX: Clear the loading spinner when we know frames are actually rendering.
-      // 'canplay' alone is not enough — for large video files the browser may wait
-      // until it estimates it has enough data for the *entire* video before firing,
-      // which can take many seconds. 'playing' fires as soon as the first frame
-      // is painted, giving immediate feedback that buffering is done.
       setIsLoading(false);
 
       // For uploads, start broadcast immediately on play.
@@ -239,18 +258,8 @@ const VideoPlayer = () => {
         (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitializedRef.current
       );
       
-      if (shouldBroadcast && videoEl.captureStream) {
-        // Guard: 'playing' fires after every seek; only capture stream ONCE.
-        if (isStreamingActiveRef.current) return;
-
-        // Delay captureStream slightly to ensure the video has actually painted a frame.
-        setTimeout(() => {
-          try {
-            const stream = videoEl.captureStream(50);
-            isStreamingActiveRef.current = true;
-            setPremierStream(stream);
-          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
-        }, 150);
+      if (shouldBroadcast) {
+        startBroadcast();
       }
     };
     const onPauseEv = () => {
@@ -702,15 +711,20 @@ const VideoPlayer = () => {
                   <p className="text-gray-300 text-sm mb-8 px-4">
                     Your video is loaded locally. Click below when you're ready to start broadcasting to all participants.
                   </p>
-                  <button
+                   <button
                     onClick={() => {
                       // Set ref synchronously BEFORE play() so the 'playing' handler
                       // sees the updated value without a stale-closure race.
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
-                      if (videoEl) videoEl.play().catch(() => {});
+                      // If already playing, trigger capture immediately because 'playing' event won't fire
+                      if (videoEl && !videoEl.paused) {
+                        startBroadcast();
+                      } else if (videoEl) {
+                        videoEl.play().catch(() => {});
+                      }
                     }}
-                    className="flexItems-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
+                    className="flex items-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
                   >
                     ▶ Start Streaming
                   </button>
