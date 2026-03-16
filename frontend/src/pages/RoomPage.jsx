@@ -518,8 +518,8 @@ const RoomPage = () => {
             </button>
           </Tooltip>
 
-          {/* More Menu Dropdown */}
-          <div className="relative z-[100]">
+          {/* More Menu Dropdown - Hidden on Mobile */}
+          <div className="hidden md:block relative z-[100]">
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
@@ -561,7 +561,18 @@ const RoomPage = () => {
             )}
           </div>
 
-          {/* Leave Room */}
+          {/* Direct End Room for host on Mobile */}
+          {isHost && (
+            <Tooltip text="End Session" position="bottom">
+              <button
+                onClick={handleDeleteRoom}
+                className="flex md:hidden items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-red-500 hover:bg-red-500/10 transition-colors"
+              >
+                <Trash className="w-3.5 h-3.5" />
+                <span className="xs:inline">End</span>
+              </button>
+            </Tooltip>
+          )}
           <Tooltip text="Leave Room (Shift+Click to skip)" position="bottom">
             <button
               onClick={(e) => handleLeave(e)}

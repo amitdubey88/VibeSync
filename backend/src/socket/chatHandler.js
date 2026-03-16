@@ -43,6 +43,7 @@ module.exports = (io, socket, roomStore) => {
         const hashedCode = hashRoomCode(code);
         if (Message) {
             Message.create({
+                id: message.id,
                 roomId: hashedCode,
                 userId,
                 username,
@@ -50,6 +51,7 @@ module.exports = (io, socket, roomStore) => {
                 content: trimmed,
                 type: 'text',
                 replyTo: replyTo || null,
+                e2ee: !!e2ee,
             }).catch((err) => console.error('[chat:persist]', err.message));
         }
 
@@ -89,11 +91,51 @@ module.exports = (io, socket, roomStore) => {
 
     // ── chat:message-reaction ─────────────────────────────────────────────────
     // Reaction to a specific chat message (WhatsApp style)
-    socket.on('chat:message-reaction', ({ roomCode, messageId, emoji, e2ee }) => {
+    socket.on('chat:message-reaction', async ({ roomCode, messageId, emoji, e2ee }) => {
         const code = roomCode?.toUpperCase();
-        if (!roomStore.has(code)) return;
+        const room = roomStore.get(code);
+        if (!room) return;
         const hashedCode = hashRoomCode(code);
         
+        // Update in-memory store
+        if (room.messages) {
+            const msg = room.messages.find(m => m.id === messageId);
+            if (msg) {
+                msg.reactions = msg.reactions || {};
+                const users = msg.reactions[emoji] || [];
+                if (users.includes(socket.user.username)) {
+                    msg.reactions[emoji] = users.filter(u => u !== socket.user.username);
+                    if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
+                } else {
+                    msg.reactions[emoji] = [...users, socket.user.username];
+                }
+            }
+        }
+
+        // Persist to DB
+        if (Message) {
+            try {
+                const msg = await Message.findOne({ id: messageId });
+                if (msg) {
+                    const currentReactions = msg.reactions || new Map();
+                    let users = currentReactions.get(emoji) || [];
+                    
+                    if (users.includes(socket.user.username)) {
+                        users = users.filter(u => u !== socket.user.username);
+                        if (users.length === 0) currentReactions.delete(emoji);
+                        else currentReactions.set(emoji, users);
+                    } else {
+                        currentReactions.set(emoji, [...users, socket.user.username]);
+                    }
+                    
+                    msg.reactions = currentReactions;
+                    await msg.save();
+                }
+            } catch (err) {
+                console.error('[chat:reaction-persist]', err.message);
+            }
+        }
+
         // Broadcast to everyone in the room
         io.to(hashedCode).emit('chat:message-reaction', {
             messageId,

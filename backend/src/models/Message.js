@@ -31,6 +31,24 @@ const messageSchema = new mongoose.Schema(
             enum: Object.values(MESSAGE_TYPE),
             default: MESSAGE_TYPE.TEXT,
         },
+        replyTo: {
+            type: mongoose.Schema.Types.Mixed,
+            default: null,
+        },
+        e2ee: {
+            type: Boolean,
+            default: false,
+        },
+        reactions: {
+            type: Map,
+            of: [String],
+            default: {},
+        },
+        id: {
+            type: String,
+            required: true,
+            unique: true,
+        }
     },
     { timestamps: true }
 );

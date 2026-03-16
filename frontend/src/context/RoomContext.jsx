@@ -124,7 +124,7 @@ export const RoomProvider = ({ children }) => {
       const decryptedHistory = await Promise.all((history || []).map(async (m) => {
         let content = m.content;
         let replyTo = m.replyTo;
-        const isE2EE = m.e2ee || (typeof m.content === 'string' && m.content.length > 40 && !m.content.includes(' '));
+        const isE2EE = m.e2ee === true || (m.e2ee !== false && typeof m.content === 'string' && m.content.length > 30 && !m.content.includes(' '));
 
         if (isE2EE && typeof m.content === 'string') {
           try { content = await decryptData(m.content, key); } catch (_) {}
@@ -137,7 +137,13 @@ export const RoomProvider = ({ children }) => {
           } catch (_) {}
         }
 
-        return { ...m, content, replyTo };
+        // Ensure reactions is a plain object for the UI
+        let reactions = m.reactions || {};
+        if (reactions instanceof Map) {
+          reactions = Object.fromEntries(reactions);
+        }
+
+        return { ...m, content, replyTo, reactions };
       }));
       setMessages(decryptedHistory);
     } catch (_) {}

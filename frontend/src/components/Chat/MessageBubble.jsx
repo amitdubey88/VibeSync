@@ -8,13 +8,14 @@ const SWIPE_THRESHOLD = 55;
 // Maximum visual translation so the bubble doesn't fly offscreen
 const MAX_DRAG = 70;
 // Emojis for quick reactions
-const REACTION_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+const REACTION_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏','💀','🔥',' 🤡'];
 
 const MessageBubble = ({ message, isOwn, onReply }) => {
   const { reactToMessage } = useRoom();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [showActions, setShowActions] = useState(false);
   const startXRef = useRef(null);
   const isDraggingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
@@ -89,7 +90,10 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
     <div
       id={`msg-${message.id}`}
       ref={rowRef}
-      className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-4 relative select-none`}
+      role="button"
+      tabIndex={0}
+      onClick={() => setShowActions(!showActions)}
+      className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-4 relative select-none cursor-pointer outline-none`}
       style={{ touchAction: 'pan-y' }}
       // ── Touch (mobile) ─────────────────────────────────────────
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}
@@ -186,22 +190,23 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
         </span>
       </div>
 
-      {/* Desktop hover actions: Reply & React */}
-      <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-20
+      {/* Desktop/Mobile actions: Reply & React */}
+      <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 transition-all z-20
         ${isOwn ? 'right-[calc(100%+0.5rem)] flex-row-reverse' : 'left-[calc(100%+0.5rem)]'}
+        ${showActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'}
       `}>
         {onReply && (
           <button
-            onClick={(e) => { e.stopPropagation(); onReply(message); }}
-            className="p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-purple hover:bg-bg-hover transition-all"
+            onClick={(e) => { e.stopPropagation(); onReply(message); setShowActions(false); }}
+            className="p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-purple hover:bg-bg-hover transition-all active:scale-90"
             title="Reply"
           >
             <Reply className="w-3.5 h-3.5" />
           </button>
         )}
         <button
-          onClick={() => setShowReactionPicker(!showReactionPicker)}
-          className={`p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-yellow hover:bg-bg-hover transition-all ${showReactionPicker ? 'text-accent-yellow bg-bg-hover' : ''}`}
+          onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
+          className={`p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-yellow hover:bg-bg-hover transition-all active:scale-90 ${showReactionPicker ? 'text-accent-yellow bg-bg-hover' : ''}`}
           title="React"
         >
           <Smile className="w-3.5 h-3.5" />
@@ -215,11 +220,13 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
             {REACTION_OPTIONS.map(emoji => (
               <button
                 key={emoji}
-                onClick={() => {
+                onClick={(e) => {
+                  e.stopPropagation();
                   reactToMessage(message.id, emoji);
                   setShowReactionPicker(false);
+                  setShowActions(false);
                 }}
-                className="text-lg hover:scale-125 transition-transform p-1"
+                className="text-lg hover:scale-125 transition-transform p-1 active:scale-150"
               >
                 {emoji}
               </button>
