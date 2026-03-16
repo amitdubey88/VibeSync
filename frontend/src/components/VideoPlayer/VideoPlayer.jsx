@@ -335,8 +335,13 @@ const VideoPlayer = () => {
           break;
         case 'KeyF':
           e.preventDefault();
-          const container = videoEl.closest('.video-reaction-host');
-          if (!container) return;
+          let container = null;
+          if (videoEl instanceof Element) {
+            container = videoEl.closest('.video-reaction-host');
+          }
+          if (!container) {
+            container = document.querySelector('.video-reaction-host') || document.body;
+          }
           if (!document.fullscreenElement) {
             if (container.requestFullscreen) container.requestFullscreen();
           } else {

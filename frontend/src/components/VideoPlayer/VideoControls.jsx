@@ -43,10 +43,15 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
   }, [videoRef, isHost]);
 
   const handleSeek = useCallback((e) => {
-    if (!isHost || !videoRef.current || !duration) return;
+    // For YouTube Proxy, duration is available but it's an EventTarget, not a DOM element
+    const video = videoRef.current;
+    if (!isHost || !video || !duration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
-    videoRef.current.currentTime = ratio * duration;
+    const targetTime = ratio * duration;
+    
+    // The setter exists on both HTMLVideoElement and YouTubeVideoProxy
+    video.currentTime = targetTime;
   }, [videoRef, isHost, duration]);
 
   // Sync mute state from keyboard shortcuts (KeyM)
@@ -78,8 +83,16 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
   }, [videoRef, isMutedLocal]);
 
   const toggleFullscreen = useCallback(async () => {
-    const container = videoRef.current?.closest('.video-reaction-host');
-    if (!container) return;
+    // BUGFIX: videoRef.current might be a YouTubeVideoProxy (not a DOM element),
+    // which doesn't have a .closest() method. We should search the DOM directly
+    // for the main container or fall back to the document body.
+    let container = null;
+    if (videoRef.current instanceof Element) {
+      container = videoRef.current.closest('.video-reaction-host');
+    }
+    if (!container) {
+      container = document.querySelector('.video-reaction-host') || document.body;
+    }
 
     try {
       if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {

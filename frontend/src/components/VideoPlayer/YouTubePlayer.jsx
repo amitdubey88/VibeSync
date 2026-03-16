@@ -340,7 +340,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
         Users interact with the transparent VideoPlayer overlay instead.
       */}
       {status === 'ready' && (
-        <div className="absolute inset-0 z-10 touch-manipulation select-none" />
+        <div className="absolute inset-0 z-0 touch-manipulation select-none" />
       )}
 
       {/* Loading State */}
