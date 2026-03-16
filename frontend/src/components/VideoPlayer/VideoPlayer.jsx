@@ -347,12 +347,20 @@ const VideoPlayer = () => {
             container = videoEl.closest('.video-reaction-host');
           }
           if (!container) {
-            container = document.querySelector('.video-reaction-host') || document.body;
+            container = document.querySelector('.video-reaction-host') || document.documentElement;
           }
           if (!document.fullscreenElement) {
-            if (container.requestFullscreen) container.requestFullscreen();
+            if (container.requestFullscreen) {
+              container.requestFullscreen().catch(() => {});
+            } else if (container.webkitRequestFullscreen) {
+              container.webkitRequestFullscreen();
+            }
           } else {
-            if (document.exitFullscreen) document.exitFullscreen();
+            if (document.exitFullscreen) {
+              document.exitFullscreen().catch(() => {});
+            } else if (document.webkitExitFullscreen) {
+              document.webkitExitFullscreen();
+            }
           }
           break;
         default:

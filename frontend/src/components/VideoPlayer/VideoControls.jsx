@@ -54,13 +54,21 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
   const handleSeek = useCallback((e) => {
     // For YouTube Proxy, duration is available but it's an EventTarget, not a DOM element
     const video = videoRef.current;
-    if (!isHost || !video || !displayDuration) return;
+    
+    // Fallback: try to grab duration directly from the element/proxy if displayDuration failed (is 0)
+    const effectiveDuration = displayDuration > 0 ? displayDuration : (video?.duration || 0);
+
+    if (!isHost || !video || effectiveDuration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
-    const targetTime = ratio * displayDuration;
+    const targetTime = ratio * effectiveDuration;
     
     // The setter exists on both HTMLVideoElement and YouTubeVideoProxy
-    video.currentTime = targetTime;
+    try {
+      video.currentTime = targetTime;
+    } catch(err) {
+      console.error('[VideoControls] handleSeek failed setting currentTime:', err);
+    }
   }, [videoRef, isHost, displayDuration]);
 
   // Sync mute state from keyboard shortcuts (KeyM)
@@ -91,7 +99,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     setIsMutedLocal(newMuted);
   }, [videoRef, isMutedLocal]);
 
-  const toggleFullscreen = useCallback(async () => {
+  const toggleFullscreen = useCallback(() => {
     // BUGFIX: videoRef.current might be a YouTubeVideoProxy (not a DOM element),
     // which doesn't have a .closest() method. We should search the DOM directly
     // for the main container or fall back to the document body.
@@ -99,36 +107,34 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     if (videoRef.current instanceof Element) {
       container = videoRef.current.closest('.video-reaction-host');
     }
+    // Deep fallback: grab the wrapper by class. If not found, use document.documentElement
+    // (document.documentElement is standard for full-page fullscreen, body often fails on Safari/iOS)
     if (!container) {
-      container = document.querySelector('.video-reaction-host') || document.body;
+      container = document.querySelector('.video-reaction-host') || document.documentElement;
     }
 
     try {
       if (!document.fullscreenElement && !document.webkitFullscreenElement && !document.msFullscreenElement) {
         if (container.requestFullscreen) {
-          await container.requestFullscreen();
+          container.requestFullscreen().catch(err => console.warn(err));
         } else if (container.webkitRequestFullscreen) {
-          await container.webkitRequestFullscreen();
+          container.webkitRequestFullscreen();
         } else if (container.msRequestFullscreen) {
-          await container.msRequestFullscreen();
+          container.msRequestFullscreen();
         }
         setIsFullscreen(true);
         
         // Lock orientation to landscape on mobile if supported
         if (window.screen?.orientation?.lock) {
-          try {
-            await window.screen.orientation.lock('landscape');
-          } catch (err) {
-            console.warn('Orientation lock failed:', err);
-          }
+          window.screen.orientation.lock('landscape').catch(() => {});
         }
       } else {
         if (document.exitFullscreen) {
-          await document.exitFullscreen();
+          document.exitFullscreen().catch(err => console.warn(err));
         } else if (document.webkitExitFullscreen) {
-          await document.webkitExitFullscreen();
+          document.webkitExitFullscreen();
         } else if (document.msExitFullscreen) {
-          await document.msExitFullscreen();
+          document.msExitFullscreen();
         }
         setIsFullscreen(false);
         

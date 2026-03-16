@@ -83,13 +83,22 @@ class YouTubeVideoProxy extends EventTarget {
   // --- HTML5 Media API Getters ---
 
   get currentTime() {
+    if (this._pendingSeekTime !== undefined && this._pendingSeekTime !== null) {
+      return this._pendingSeekTime;
+    }
     try { return this.ytPlayer.getCurrentTime() || 0; } catch { return 0; }
   }
 
   set currentTime(time) {
+    this._pendingSeekTime = time;
     try {
       this.ytPlayer.seekTo(time, true);
-      this.dispatchEvent(new Event('seeked'));
+      // Give YouTube API a delay to update its internal clock before firing the event,
+      // ensuring useVideoSync reads the new target time, not the old unmodified time.
+      setTimeout(() => {
+        this.dispatchEvent(new Event('seeked'));
+        this._pendingSeekTime = null;
+      }, 50);
     } catch {}
   }
 
