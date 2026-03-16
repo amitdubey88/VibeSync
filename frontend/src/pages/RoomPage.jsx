@@ -538,7 +538,7 @@ const RoomPage = () => {
                 <div className="flex flex-col py-1">
                   <button
                     onClick={() => setShowShortcutsHelp(true)}
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                    className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
                   >
                     <Clock className="w-3.5 h-3.5" />
                     Keyboard Shortcuts

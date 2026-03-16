@@ -224,11 +224,6 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Time */}
         <span className="text-white/70 text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
           {formatTime(safeTime)} / {formatTime(safeDuration)}
-          {showRemaining && (
-            <span className="opacity-60 ml-1.5">
-              (-{formatTime(timeLeft)})
-            </span>
-          )}
         </span>
 
         {/* Mic toggle */}

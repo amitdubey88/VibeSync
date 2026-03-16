@@ -1,15 +1,20 @@
-import { useRef, useState, useCallback } from 'react';
+import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
-import { Reply } from 'lucide-react';
+import { Reply, Smile, Plus } from 'lucide-react';
+import { useRoom } from '../../context/RoomContext';
 
 // Swipe threshold — how many px to drag before triggering reply
 const SWIPE_THRESHOLD = 55;
 // Maximum visual translation so the bubble doesn't fly offscreen
 const MAX_DRAG = 70;
+// Emojis for quick reactions
+const REACTION_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
 const MessageBubble = ({ message, isOwn, onReply }) => {
+  const { reactToMessage } = useRoom();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
   const startXRef = useRef(null);
   const isDraggingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
@@ -57,7 +62,7 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
 
   if (message.type === 'system') {
     return (
-      <div className="flex justify-center my-2">
+      <div id={`msg-${message.id}`} className="flex justify-center my-2">
         <span className="text-xs text-text-muted bg-bg-hover px-3 py-1 rounded-full">
           {message.content}
         </span>
@@ -65,14 +70,26 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
     );
   }
 
+  const scrollToOriginal = () => {
+    if (message.replyTo?.id) {
+      const el = document.getElementById(`msg-${message.replyTo.id}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('animate-pulse-ring');
+        setTimeout(() => el.classList.remove('animate-pulse-ring'), 2000);
+      }
+    }
+  };
+
   const avatarBg = message.avatar || getAvatarColor(message.username);
   // How visible the reply hint is (0 → 1 as user swipes)
   const swipeProgress = Math.min(dragX / SWIPE_THRESHOLD, 1);
 
   return (
     <div
+      id={`msg-${message.id}`}
       ref={rowRef}
-      className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-2 relative select-none`}
+      className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-4 relative select-none`}
       style={{ touchAction: 'pan-y' }}
       // ── Touch (mobile) ─────────────────────────────────────────
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}
@@ -129,7 +146,9 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
             }`}
         >
           {message.replyTo && (
-            <div className={`mb-1.5 pl-2 py-1 pr-2 rounded text-xs border-l-2 truncate cursor-pointer opacity-90
+            <div 
+              onClick={scrollToOriginal}
+              className={`mb-1.5 pl-2 py-1 pr-2 rounded text-xs border-l-2 truncate cursor-pointer opacity-90 transition-all hover:bg-white/10
               ${isOwn
                 ? 'bg-white/10 border-white/40 text-white'
                 : 'bg-bg-secondary border-accent-purple text-text-secondary'}`}
@@ -140,7 +159,26 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
               <div className="truncate opacity-80">{message.replyTo.content}</div>
             </div>
           )}
-          <span>{message.content}</span>
+          <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere">{message.content}</span>
+          
+          {/* Reaction display */}
+          {message.reactions && Object.keys(message.reactions).length > 0 && (
+            <div className={`flex flex-wrap gap-1 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+              {Object.entries(message.reactions).map(([emoji, users]) => (
+                <button
+                  key={emoji}
+                  onClick={() => reactToMessage(message.id, emoji)}
+                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all border
+                    ${users.includes(useRoom().user?.username)
+                      ? 'bg-accent-purple/20 border-accent-purple/40 text-accent-purple' 
+                      : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}`}
+                >
+                  <span>{emoji}</span>
+                  {users.length > 1 && <span>{users.length}</span>}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         <span className="text-[10px] text-text-muted">
@@ -148,18 +186,47 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
         </span>
       </div>
 
-      {/* Desktop hover reply button (still available on non-touch) */}
-      {onReply && (
+      {/* Desktop hover actions: Reply & React */}
+      <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all z-20
+        ${isOwn ? 'right-[calc(100%+0.5rem)] flex-row-reverse' : 'left-[calc(100%+0.5rem)]'}
+      `}>
+        {onReply && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onReply(message); }}
+            className="p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-purple hover:bg-bg-hover transition-all"
+            title="Reply"
+          >
+            <Reply className="w-3.5 h-3.5" />
+          </button>
+        )}
         <button
-          onClick={(e) => { e.stopPropagation(); onReply(message); }}
-          className={`absolute top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-purple hover:bg-bg-hover transition-all opacity-0 group-hover:opacity-100 focus:opacity-100 z-10
-            ${isOwn ? 'right-[calc(100%+0.5rem)]' : 'left-[calc(100%+0.5rem)]'}
-          `}
-          title="Reply (or swipe right)"
+          onClick={() => setShowReactionPicker(!showReactionPicker)}
+          className={`p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-yellow hover:bg-bg-hover transition-all ${showReactionPicker ? 'text-accent-yellow bg-bg-hover' : ''}`}
+          title="React"
         >
-          <Reply className="w-3.5 h-3.5" />
+          <Smile className="w-3.5 h-3.5" />
         </button>
-      )}
+
+        {/* Reaction Picker Overlay */}
+        {showReactionPicker && (
+          <div className={`absolute bottom-full mb-2 bg-bg-card border border-border-dark rounded-full px-2 py-1 shadow-xl flex items-center gap-1.5 animate-bounce-in
+            ${isOwn ? 'right-0' : 'left-0'}
+          `}>
+            {REACTION_OPTIONS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => {
+                  reactToMessage(message.id, emoji);
+                  setShowReactionPicker(false);
+                }}
+                className="text-lg hover:scale-125 transition-transform p-1"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

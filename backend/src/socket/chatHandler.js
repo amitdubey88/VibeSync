@@ -74,6 +74,36 @@ module.exports = (io, socket, roomStore) => {
         });
     });
 
+    // ── chat:typing ───────────────────────────────────────────────────────────
+    // Notifies others that a user is typing (volatile, not persisted)
+    socket.on('chat:typing', ({ roomCode }) => {
+        const code = roomCode?.toUpperCase();
+        if (!code) return;
+        const hashedCode = hashRoomCode(code);
+        // Broadcast to everyone ELSE in the room
+        socket.to(hashedCode).emit('chat:typing', {
+            username: socket.user.username,
+            timestamp: Date.now()
+        });
+    });
+
+    // ── chat:message-reaction ─────────────────────────────────────────────────
+    // Reaction to a specific chat message (WhatsApp style)
+    socket.on('chat:message-reaction', ({ roomCode, messageId, emoji, e2ee }) => {
+        const code = roomCode?.toUpperCase();
+        if (!roomStore.has(code)) return;
+        const hashedCode = hashRoomCode(code);
+        
+        // Broadcast to everyone in the room
+        io.to(hashedCode).emit('chat:message-reaction', {
+            messageId,
+            emoji,
+            username: socket.user.username,
+            timestamp: Date.now(),
+            e2ee: !!e2ee
+        });
+    });
+
     /**
      * Broadcasts a system notification to the room (join/leave/host change).
      * Called externally from the main socket index.

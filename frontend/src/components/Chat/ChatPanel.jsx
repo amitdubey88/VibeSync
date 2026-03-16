@@ -15,7 +15,7 @@ const EMOJI_SETS = [
 const QUICK_REACTIONS = ['👍','❤️','😂','✋','🔥', '🎉', '🤯', '💀'];
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
-  const { messages, sendMessage, sendReaction, room, currentVideo } = useRoom();
+  const { messages, sendMessage, sendReaction, room, currentVideo, typingUsers, broadcastTyping } = useRoom();
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
@@ -232,7 +232,12 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             className="input flex-1 py-2 text-sm"
             placeholder="Send a message…"
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              if (e.target.value.trim()) {
+                broadcastTyping();
+              }
+            }}
             onKeyDown={handleKeyDown}
             maxLength={2000}
             autoComplete="off"
@@ -246,6 +251,22 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             <Send className="w-4 h-4" />
           </button>
         </form>
+        
+        {/* Typing Indicator */}
+        {Object.keys(typingUsers).length > 0 && (
+          <div className="px-4 py-1.5 flex items-center gap-2 animate-fade-in bg-white/5 border-t border-border-dark/30">
+            <div className="flex gap-1 h-3 items-center">
+              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-1" />
+              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-2" />
+              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-3" />
+            </div>
+            <span className="text-[10px] text-accent-purple font-medium italic">
+              {Object.keys(typingUsers).length === 1 
+                ? `${Object.keys(typingUsers)[0]} is typing...`
+                : `${Object.keys(typingUsers).length} people are typing...`}
+            </span>
+          </div>
+        )}
       </div>
 
     </div>

@@ -75,6 +75,7 @@ export const RoomProvider = ({ children }) => {
   const [joinStatus, setJoinStatus] = useState('joined');
   // roomEndedByHost: set when host deletes the room, shows a persistent modal
   const [roomEndedByHost, setRoomEndedByHost] = useState(null); // null | { message }
+  const [typingUsers, setTypingUsers] = useState({}); // { username: timestamp }
 
   // Chat notifications state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -121,11 +122,19 @@ export const RoomProvider = ({ children }) => {
       const { messages: history } = await getRoomMessages(roomCode);
       // Decrypt history if encrypted (heuristic: content is an object or base64)
       const decryptedHistory = await Promise.all((history || []).map(async (m) => {
+        let content = m.content;
         if (m.type === 'text' && typeof m.content === 'string' && m.content.length > 20) {
-           const decrypted = await decryptData(m.content, key);
-           return { ...m, content: decrypted };
+           content = await decryptData(m.content, key);
         }
-        return m;
+        
+        // Decrypt replyTo content if exists
+        let replyTo = m.replyTo;
+        if (replyTo && replyTo.content && typeof replyTo.content === 'string' && replyTo.content.length > 20) {
+          const decryptedReplyContent = await decryptData(replyTo.content, key);
+          replyTo = { ...replyTo, content: decryptedReplyContent };
+        }
+
+        return { ...m, content, replyTo };
       }));
       setMessages(decryptedHistory);
     } catch (_) {}
@@ -148,6 +157,7 @@ export const RoomProvider = ({ children }) => {
     setIsHost(false);
     setVoiceParticipants([]);
     setIsMutedByHost(false);
+    setTypingUsers({});
   }, [socket, room]);
 
   // ── Smooth Video Time Stepping ──────────────────────────────────────────────
@@ -236,7 +246,13 @@ export const RoomProvider = ({ children }) => {
         displayContent = await decryptData(msg.content, roomKey);
       }
       
-      const decryptedMsg = { ...msg, content: displayContent };
+      let replyTo = msg.replyTo;
+      if (replyTo && msg.e2ee && roomKey && replyTo.content) {
+        const decryptedReplyContent = await decryptData(replyTo.content, roomKey);
+        replyTo = { ...replyTo, content: decryptedReplyContent };
+      }
+
+      const decryptedMsg = { ...msg, content: displayContent, replyTo };
       setMessages((prev) => [...prev, decryptedMsg]);
       
       // If it's not my message, check if we need to notify
@@ -358,6 +374,41 @@ export const RoomProvider = ({ children }) => {
       toast(message || 'The host has left.', { icon: '👑', duration: 5000 });
     };
 
+    const onTyping = ({ username, timestamp }) => {
+      setTypingUsers(prev => ({
+        ...prev,
+        [username]: timestamp
+      }));
+    };
+
+    const onMessageReaction = async ({ messageId, emoji, username, e2ee }) => {
+      let displayEmoji = emoji;
+      if (e2ee && roomKey) {
+        try { displayEmoji = await decryptData(emoji, roomKey); } catch (_) {}
+      }
+
+      setMessages(prev => prev.map(m => {
+        if (m.id === messageId) {
+          const reactions = m.reactions || {};
+          const users = reactions[displayEmoji] || [];
+          
+          if (users.includes(username)) {
+            // Remove reaction if already present (toggle)
+            const nextUsers = users.filter(u => u !== username);
+            const nextReactions = { ...reactions };
+            if (nextUsers.length === 0) delete nextReactions[displayEmoji];
+            else nextReactions[displayEmoji] = nextUsers;
+            return { ...m, reactions: nextReactions };
+          } else {
+            // Add reaction
+            const nextReactions = { ...reactions, [displayEmoji]: [...users, username] };
+            return { ...m, reactions: nextReactions };
+          }
+        }
+        return m;
+      }));
+    };
+
     const onRemotePlay = ({ currentTime }) => {
       if (!isHost) {
         addSystemMessage(`Host resumed the video`);
@@ -397,6 +448,8 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:host-away', onHostAway);
     socket.on('room:host-back', onHostBack);
     socket.on('room:host-left', onHostLeft);
+    socket.on('chat:typing', onTyping);
+    socket.on('chat:message-reaction', onMessageReaction);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -421,6 +474,8 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:host-away', onHostAway);
       socket.off('room:host-back', onHostBack);
       socket.off('room:host-left', onHostLeft);
+      socket.off('chat:typing', onTyping);
+      socket.off('chat:message-reaction', onMessageReaction);
     };
   }, [socket, user, roomKey]);
 
@@ -435,6 +490,26 @@ export const RoomProvider = ({ children }) => {
   // Reset energy on room exit
   useEffect(() => {
     if (!room) setEnergy(0);
+  }, [room]);
+
+  // ── Typing Indicator Cleanup ──
+  useEffect(() => {
+    if (!room) return;
+    const timer = setInterval(() => {
+      const now = Date.now();
+      setTypingUsers(prev => {
+        const next = { ...prev };
+        let changed = false;
+        Object.keys(next).forEach(username => {
+          if (now - next[username] > 5000) {
+            delete next[username];
+            changed = true;
+          }
+        });
+        return changed ? next : prev;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
   }, [room]);
 
   // ── Chat actions ──────────────────────────────────────────────────────────
@@ -457,6 +532,28 @@ export const RoomProvider = ({ children }) => {
         roomCode: room.code, 
         emoji: encryptedEmoji,
         e2ee: true
+    });
+  }, [socket, room, roomKey]);
+
+  const lastTypingEmitRef = useRef(0);
+  const broadcastTyping = useCallback(() => {
+    if (!socket || !room) return;
+    const now = Date.now();
+    // Throttle typing emissions to once every 3.5s to minimize server load
+    if (now - lastTypingEmitRef.current > 3500) {
+      lastTypingEmitRef.current = now;
+      socket.emit('chat:typing', { roomCode: room.code });
+    }
+  }, [socket, room]);
+
+  const reactToMessage = useCallback(async (messageId, emoji) => {
+    if (!socket || !room || !roomKey) return;
+    const encryptedEmoji = await encryptData(emoji, roomKey);
+    socket.emit('chat:message-reaction', {
+      roomCode: room.code,
+      messageId,
+      emoji: encryptedEmoji,
+      e2ee: true
     });
   }, [socket, room, roomKey]);
 
@@ -590,6 +687,8 @@ export const RoomProvider = ({ children }) => {
       energy, setEnergy,
       clips, sendClip,
       hostAway,
+      typingUsers, broadcastTyping,
+      reactToMessage
     }}>
       {children}
     </RoomContext.Provider>
