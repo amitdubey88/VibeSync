@@ -208,10 +208,9 @@ const VideoPlayer = () => {
     if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
       videoEl.srcObject = remotePremierStream;
+      setIsLoading(false); // Explicitly clear loading state when stream is attached
       videoEl.play().catch(err => {
         console.error('[Participant Live] AutoPlay blocked or failed:', err);
-        // Fallback: the spinner might be showing because of a block. 
-        // We set isLoading to false if play() fails to at least show the black screen/controls
         setIsLoading(false);
       });
     } else if (!remotePremierStream && videoEl.srcObject) {
@@ -247,8 +246,12 @@ const VideoPlayer = () => {
       updateBuffered();
     };
     const onWaiting = () => {
-      // Only show spinner if we aren't already ready to play (reduces flickers)
-      if (videoEl.readyState < 2) setIsLoading(true);
+      // Defensive: Only show spinner if we aren't a guest watching a live stream
+      // or if the element is genuinely not ready to play anything.
+      const isLiveGuest = !isHost && (currentVideo?.type === 'live' || remotePremierStream);
+      if (videoEl.readyState < 2 && !isLiveGuest) {
+        setIsLoading(true);
+      }
     };
     const onCanPlay = () => setIsLoading(false);
     const onProgress = () => updateBuffered();
@@ -303,6 +306,15 @@ const VideoPlayer = () => {
       onLoadedMetadata();
     }
 
+    // Safety fallback for participants in live mode:
+    // If we're stuck in loading for more than 4s while a live stream is active, clear it.
+    let safetyTimer;
+    if (!isHost && (currentVideo?.type === 'live' || remotePremierStream)) {
+      safetyTimer = setTimeout(() => {
+        setIsLoading(false);
+      }, 4000);
+    }
+
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
     videoEl.addEventListener('waiting', onWaiting);
@@ -314,6 +326,7 @@ const VideoPlayer = () => {
     videoEl.addEventListener('ended', onPauseEv);
 
     return () => {
+      if (safetyTimer) clearTimeout(safetyTimer);
       videoEl.removeEventListener('timeupdate', onTimeUpdate);
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
       videoEl.removeEventListener('waiting', onWaiting);
