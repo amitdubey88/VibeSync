@@ -123,15 +123,18 @@ export const RoomProvider = ({ children }) => {
       // Decrypt history if encrypted (heuristic: content is an object or base64)
       const decryptedHistory = await Promise.all((history || []).map(async (m) => {
         let content = m.content;
-        if (m.type === 'text' && typeof m.content === 'string' && m.content.length > 20) {
-           content = await decryptData(m.content, key);
+        let replyTo = m.replyTo;
+        const isE2EE = m.e2ee || (typeof m.content === 'string' && m.content.length > 40 && !m.content.includes(' '));
+
+        if (isE2EE && typeof m.content === 'string') {
+          try { content = await decryptData(m.content, key); } catch (_) {}
         }
         
-        // Decrypt replyTo content if exists
-        let replyTo = m.replyTo;
-        if (replyTo && replyTo.content && typeof replyTo.content === 'string' && replyTo.content.length > 20) {
-          const decryptedReplyContent = await decryptData(replyTo.content, key);
-          replyTo = { ...replyTo, content: decryptedReplyContent };
+        if (replyTo && isE2EE && replyTo.content && typeof replyTo.content === 'string') {
+          try {
+            const decryptedReplyContent = await decryptData(replyTo.content, key);
+            replyTo = { ...replyTo, content: decryptedReplyContent };
+          } catch (_) {}
         }
 
         return { ...m, content, replyTo };
@@ -517,10 +520,18 @@ export const RoomProvider = ({ children }) => {
     if (!socket || !room || !roomKey) return;
     
     const encryptedContent = await encryptData(content, roomKey);
+    let finalReplyTo = replyTo;
+    
+    // Also encrypt the context being replied to so it doesn't fail decryption on load
+    if (replyTo && replyTo.content) {
+      const encryptedReplyContent = await encryptData(replyTo.content, roomKey);
+      finalReplyTo = { ...replyTo, content: encryptedReplyContent };
+    }
+
     socket.emit('chat:send', { 
         roomCode: room.code, 
         content: encryptedContent, 
-        replyTo,
+        replyTo: finalReplyTo,
         e2ee: true 
     });
   }, [socket, room, roomKey]);
