@@ -124,9 +124,11 @@ const RoomPage = () => {
           window.dispatchEvent(new CustomEvent('video:toggle-play'));
           break;
         case 'f':
+          e.preventDefault();
           window.dispatchEvent(new CustomEvent('video:toggle-fullscreen'));
           break;
         case 'm':
+          e.preventDefault();
           window.dispatchEvent(new CustomEvent('video:toggle-mute'));
           break;
         case 'c':
@@ -521,8 +523,11 @@ const RoomPage = () => {
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className="btn-ghost text-xs p-1.5 text-text-muted hover:text-white"
-                onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 200)}
+                className={`btn-ghost text-xs p-1.5 transition-colors ${isMoreMenuOpen ? 'text-white bg-white/10' : 'text-text-muted hover:text-white'}`}
+                onBlur={() => {
+                  // Small delay to allow clicking on menu items
+                  setTimeout(() => setIsMoreMenuOpen(false), 250);
+                }}
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
@@ -776,7 +781,11 @@ const RoomPage = () => {
         message="This will end the session for all participants and cannot be undone."
         confirmLabel="Delete Room"
         danger
-        onConfirm={() => { deleteRoom(); navigate('/', { replace: true }); }}
+        onConfirm={() => {
+          deleteRoom();
+          setShowDeleteConfirm(false);
+          // Redirect is handled by onRoomDeleted in RoomContext
+        }}
         onCancel={() => setShowDeleteConfirm(false)}
       />
 

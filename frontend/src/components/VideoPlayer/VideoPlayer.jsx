@@ -330,14 +330,6 @@ const VideoPlayer = () => {
       if (!videoEl) return;
 
       switch(e.code) {
-        case 'Space':
-        case 'KeyK':
-          e.preventDefault();
-          if (isHost) {
-            if (videoEl.paused) videoEl.play().catch(() => {});
-            else videoEl.pause();
-          }
-          break;
         case 'ArrowLeft':
         case 'KeyJ':
           if (isHost) {
@@ -350,36 +342,6 @@ const VideoPlayer = () => {
           if (isHost) {
             e.preventDefault();
             videoEl.currentTime = Math.min(videoEl.duration || 0, videoEl.currentTime + 10);
-          }
-          break;
-        case 'KeyM':
-          e.preventDefault();
-          // Toggle mute locally (works for both host and guest)
-          videoEl.muted = !videoEl.muted;
-          // Dispatch a custom event so VideoControls can sync its UI state
-          window.dispatchEvent(new CustomEvent('video:toggle-mute', { detail: videoEl.muted }));
-          break;
-        case 'KeyF':
-          e.preventDefault();
-          let container = null;
-          if (videoEl instanceof Element) {
-            container = videoEl.closest('.video-reaction-host');
-          }
-          if (!container) {
-            container = document.querySelector('.video-reaction-host') || document.documentElement;
-          }
-          if (!document.fullscreenElement) {
-            if (container.requestFullscreen) {
-              container.requestFullscreen().catch(() => {});
-            } else if (container.webkitRequestFullscreen) {
-              container.webkitRequestFullscreen();
-            }
-          } else {
-            if (document.exitFullscreen) {
-              document.exitFullscreen().catch(() => {});
-            } else if (document.webkitExitFullscreen) {
-              document.webkitExitFullscreen();
-            }
           }
           break;
         default:

@@ -541,9 +541,7 @@ export const RoomProvider = ({ children }) => {
     if (!socket || !room) return;
     sessionStorage.removeItem("vibesync_session"); // Clear immediately to prevent auto-rejoin
     socket.emit('room:delete', { roomCode: room.code });
-    // Local cleanup
-    setRoom(null);
-    window.location.href = '/';
+    // Cleanup will be handled by onRoomDeleted socket listener for both host and participants
   }, [socket, room]);
 
   const transferHost = useCallback((targetUserId) => {
