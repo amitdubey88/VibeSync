@@ -11,8 +11,6 @@ const EMOJI_SETS = [
   ['🎉','🍿','👀','🤣','😭','💀','🫶','✨'],
 ];
 
-// The quick-access video reaction emojis shown inline above the input bar
-const QUICK_REACTIONS = ['👍','❤️','😂','✋','🔥', '🎉', '🤯', '💀'];
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const { messages, sendMessage, sendReaction, room, currentVideo, typingUsers, broadcastTyping } = useRoom();
@@ -157,19 +155,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               </div>
             ))}
           </div>
-          <div className="border-t border-border-dark pt-2">
-            <p className="text-xs text-text-muted mb-1.5 font-semibold uppercase tracking-wide">React on video 🎬</p>
-            <div className="flex gap-1">
-              {['👍','❤️','😂','😮','😢','✋','👏','🔥','🎉','🤩'].map((e) => (
-                <button
-                  key={e}
-                  className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-accent-purple/20 border border-transparent hover:border-accent-purple/30 transition-all hover:scale-125"
-                  onClick={() => handleEmojiReaction(e)}
-                  title="Send video reaction"
-                >{e}</button>
-              ))}
-            </div>
-          </div>
         </div>
       )}
 
@@ -200,21 +185,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </div>
         )}
 
-        {/* Quick-access video reactions row — above the input (hidden if no video) */}
-        {currentVideo && (
-          <div className="flex items-center gap-1 px-3 py-1.5 border-b border-border-dark/50">
-            <span className="text-[10px] text-text-muted font-semibold uppercase tracking-wider mr-1">React</span>
-            {QUICK_REACTIONS.map(e => (
-              <button
-                key={e}
-                type="button"
-                onClick={() => handleEmojiReaction(e)}
-                title="React on video"
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-lg hover:bg-accent-purple/20 hover:scale-125 transition-all duration-150"
-              >{e}</button>
-            ))}
-          </div>
-        )}
 
         <form onSubmit={handleSend} className="flex items-center gap-2 px-3 py-2">
           <button

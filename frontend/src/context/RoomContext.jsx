@@ -262,7 +262,11 @@ export const RoomProvider = ({ children }) => {
       }
 
       const decryptedMsg = { ...msg, content: displayContent, replyTo };
-      setMessages((prev) => [...prev, decryptedMsg]);
+      setMessages((prev) => {
+        // Deduplicate: Don't add if ID already exists (fixes race condition between history and live event)
+        if (prev.some(m => m.id === decryptedMsg.id)) return prev;
+        return [...prev, decryptedMsg];
+      });
       
       // If it's not my message, check if we need to notify
       if (msg.userId !== user?.id && msg.username !== user?.username) {

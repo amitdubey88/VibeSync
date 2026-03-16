@@ -243,22 +243,25 @@ module.exports = (io, roomStore) => {
 
             // Notify everyone about updated participant list
             io.to(hashedCode).emit('room:participant-update', { participants: room.participants });
-
-            // Send join system message
-            const systemMsg = {
-                id: `sys_${Date.now()}`,
-                userId: 'system',
-                username: 'System',
-                avatar: null,
-                content: `${socket.user.username} joined the room`,
-                type: 'system',
-                createdAt: new Date().toISOString(),
-            };
-            room.messages = room.messages || [];
-            room.messages.push(systemMsg);
-            io.to(hashedCode).emit('chat:message', systemMsg);
-
-            console.log(`👥 ${socket.user.username} joined room ${code} (${room.participants.length} participants)`);
+            
+            // Send join system message ONLY for new participants (BUGFIX: avoid dupe on reconnect)
+            if (!existing) {
+                const systemMsg = {
+                    id: `sysJoin_${socket.user.id}_${Date.now()}`,
+                    userId: 'system',
+                    username: 'System',
+                    avatar: null,
+                    content: `${socket.user.username} joined the room`,
+                    type: 'system',
+                    createdAt: new Date().toISOString(),
+                };
+                room.messages = room.messages || [];
+                room.messages.push(systemMsg);
+                io.to(hashedCode).emit('chat:message', systemMsg);
+                console.log(`👥 ${socket.user.username} joined room ${code} (${room.participants.length} participants)`);
+            } else {
+                console.log(`🔄 ${socket.user.username} reconnected to room ${code}`);
+            }
         });
 
         // ── room:set-status ───────────────────────────────────────────────────
