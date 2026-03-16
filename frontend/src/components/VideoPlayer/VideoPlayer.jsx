@@ -157,31 +157,41 @@ const VideoPlayer = () => {
   const { syncStatus } = useVideoSync(videoEl);
   const { bufferingUsers } = useBufferSync(videoEl);
 
-  // ── Auto-play for participants when videoEl mounts while host was already playing ──
-  // useVideoSync handles live video:play events, but if the participant's video element
-  // was not yet mounted when the event arrived (e.g., still decrypting), this effect
-  // catches up as soon as the element becomes available.
+  // ── Auto-play/seek for participants when videoEl mounts ───────────────────
+  // useVideoSync handles live video:play events, but if the participant's video
+  // element was not yet mounted when the event arrived (e.g. still decrypting or
+  // waiting for currentVideo state to propagate), this effect catches up as soon
+  // as the element becomes available.
+  //
+  // BUGFIX: Previously only ran when videoState.isPlaying was true — so participants
+  // joining while the host had the video paused would always start from 0:00 instead
+  // of the paused position. Now we always seek to the correct server timestamp on
+  // mount, regardless of play/pause state.
   useEffect(() => {
     if (!videoEl || isHost) return;
-    if (!videoState?.isPlaying) return;
+    if (!videoState) return;
     if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') return;
 
     // Compute adjusted target time accounting for elapsed wall-clock time since last update
-    const elapsed = videoState.lastUpdated
+    const elapsed = videoState.isPlaying && videoState.lastUpdated
       ? Math.max(0, (Date.now() - videoState.lastUpdated) / 1000)
       : 0;
     const targetTime = Math.max(0, (videoState.currentTime || 0) + elapsed);
 
-    const doPlay = () => {
-      if (targetTime > 0) videoEl.currentTime = targetTime;
-      videoEl.play().catch(() => {});
+    const doSync = () => {
+      // Always seek to the correct position
+      if (targetTime > 0.5) videoEl.currentTime = targetTime;
+      // Only start playing if the host was playing
+      if (videoState.isPlaying) {
+        videoEl.play().catch(() => {});
+      }
     };
 
     if (videoEl.readyState >= 2) {
-      doPlay();
+      doSync();
     } else {
-      videoEl.addEventListener('canplay', doPlay, { once: true });
-      return () => videoEl.removeEventListener('canplay', doPlay);
+      videoEl.addEventListener('canplay', doSync, { once: true });
+      return () => videoEl.removeEventListener('canplay', doSync);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoEl]); // Only re-run when videoEl mounts — videoState is read fresh from closure

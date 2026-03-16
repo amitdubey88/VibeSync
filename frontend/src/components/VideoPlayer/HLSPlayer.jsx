@@ -41,6 +41,11 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           if (!active) return;
           if (onCanPlay) onCanPlay();
+          // BUGFIX: call onReady here — AFTER hls.js has fully attached to the video
+          // element and parsed the manifest. Calling it before (synchronously after
+          // initHLS()) handed an uninitialised element to VideoPlayer, causing
+          // captureStream() to capture black frames and participants to see nothing.
+          if (onReady) onReady(video);
           if (autoPlay) {
             video.play().catch(() => {});
           }
@@ -71,6 +76,8 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
         video.addEventListener('loadedmetadata', () => {
           if (!active) return;
           if (onCanPlay) onCanPlay();
+          // BUGFIX: same as above — notify parent only once the element is ready
+          if (onReady) onReady(video);
           if (autoPlay) {
             video.play().catch(() => {});
           }
@@ -80,9 +87,9 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
 
     initHLS();
 
-    if (onReady) {
-      onReady(video);
-    }
+    // NOTE: onReady is intentionally NOT called here anymore.
+    // It is now called inside MANIFEST_PARSED / loadedmetadata above,
+    // so VideoPlayer only gets the element once hls.js is fully attached.
 
     return () => {
       active = false;

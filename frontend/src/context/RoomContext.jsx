@@ -260,10 +260,18 @@ export const RoomProvider = ({ children }) => {
 
     const onSourceChanged = async ({ video, videoState: vs }) => {
       let displayVideo = video;
-      if (video?.e2ee && roomKey) {
-        const decryptedUrl = await decryptData(video.url, roomKey);
-        const decryptedTitle = await decryptData(video.title, roomKey);
-        displayVideo = { ...video, url: decryptedUrl, title: decryptedTitle };
+      if (video?.e2ee) {
+        // BUGFIX: roomKey may still be null when the first video:source-changed event
+        // arrives (deriveKey is async and can take 200-500 ms). Using the stale null
+        // key causes decryptData to throw, leaving participants with an encrypted blob
+        // as their video URL → no video visible. Derive on-demand if not yet ready,
+        // mirroring the same defensive pattern in setVideoSource().
+        const key = roomKey || (await deriveKey(room?.code));
+        if (key) {
+          const decryptedUrl = await decryptData(video.url, key);
+          const decryptedTitle = await decryptData(video.title, key);
+          displayVideo = { ...video, url: decryptedUrl, title: decryptedTitle };
+        }
       }
       setCurrentVideo(displayVideo);
       setVideoState(vs);

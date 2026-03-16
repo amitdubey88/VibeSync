@@ -43,6 +43,11 @@ export const WebRTCProvider = ({ children }) => {
     // actively broadcasting (not just because currentVideo.type === 'live').
     const [isStreamAnnounced, setIsStreamAnnounced] = useState(false);
 
+    // BUGFIX: Buffer the hostSocketId when video-stream:announced arrives before
+    // roomKey is derived. A useEffect below retries the connection once roomKey
+    // becomes available, preventing a silent no-op due to the early return.
+    const pendingStreamHostRef = useRef(null);
+
     // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
         document.querySelectorAll('audio[data-socket-id]').forEach(a => { a.muted = !isInVoice; });
@@ -458,9 +463,14 @@ export const WebRTCProvider = ({ children }) => {
         // Participant receives this when the host starts a live stream.
         // Create a video-only peer connection and send an offer to the host.
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
-            if (!roomKey) return;
-            console.log('[VideoStream] Host announced stream — connecting for video');
             setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
+            if (!roomKey) {
+                // roomKey not yet derived — buffer and retry when it becomes available
+                console.warn('[VideoStream] roomKey not ready — buffering announce for retry');
+                pendingStreamHostRef.current = hostSocketId;
+                return;
+            }
+            console.log('[VideoStream] Host announced stream — connecting for video');
             closeVideoPeer(hostSocketId);
             const pc = createVideoPeerConnection(hostSocketId);
             pc.addTransceiver('video', { direction: 'recvonly' });
@@ -538,6 +548,33 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('video-stream:request-announce', onRequestAnnounce);
         };
     }, [socket, roomCode, roomKey, createVideoPeerConnection, closeVideoPeer]);
+
+    // BUGFIX: Retry pending stream connection once roomKey becomes available.
+    // This handles the race where video-stream:announced fires before deriveKey()
+    // completes — onVideoStreamAnnounced buffers the hostSocketId and this effect
+    // completes the WebRTC handshake as soon as RoomContext provides the key.
+    useEffect(() => {
+        if (!roomKey || !socket || isHostRef.current) return;
+        const hostSocketId = pendingStreamHostRef.current;
+        if (!hostSocketId) return;
+        pendingStreamHostRef.current = null; // consume
+
+        console.log('[VideoStream] Retrying buffered announce with roomKey now available');
+        (async () => {
+            try {
+                closeVideoPeer(hostSocketId);
+                const pc = createVideoPeerConnection(hostSocketId);
+                pc.addTransceiver('video', { direction: 'recvonly' });
+                pc.addTransceiver('audio', { direction: 'recvonly' });
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                const enc = await encryptData(offer, roomKey);
+                socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
+            } catch (e) {
+                console.error('[VideoStream] Retry failed:', e);
+            }
+        })();
+    }, [roomKey, socket, closeVideoPeer, createVideoPeerConnection]);
 
     // Late-joiner fallback: if participant detects a live stream but hasn't
     // received the video feed, request announce from host with retries.
