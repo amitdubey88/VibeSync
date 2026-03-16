@@ -463,6 +463,7 @@ export const WebRTCProvider = ({ children }) => {
         // Participant receives this when the host starts a live stream.
         // Create a video-only peer connection and send an offer to the host.
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
+            console.log(`[VideoStream] Host ${hostSocketId} announced a live stream. Attempting to connect...`);
             setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
             if (!roomKey) {
                 // roomKey not yet derived — buffer and retry when it becomes available
@@ -470,7 +471,6 @@ export const WebRTCProvider = ({ children }) => {
                 pendingStreamHostRef.current = hostSocketId;
                 return;
             }
-            console.log('[VideoStream] Host announced stream — connecting for video');
             closeVideoPeer(hostSocketId);
             const pc = createVideoPeerConnection(hostSocketId);
             pc.addTransceiver('video', { direction: 'recvonly' });
@@ -479,6 +479,7 @@ export const WebRTCProvider = ({ children }) => {
             await pc.setLocalDescription(offer);
             const enc = await encryptData(offer, roomKey);
             socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
+            console.log('[VideoStream] Sent video-stream:offer to host.');
         };
 
         // Host receives offer from a participant → answer with video stream
@@ -581,12 +582,14 @@ export const WebRTCProvider = ({ children }) => {
     useEffect(() => {
         if (!socket || !roomCode || isHostRef.current) return;
         if (currentVideo?.type !== 'live') return;
-        // Already have the stream — nothing to do
+        
+        // If the stream is announced but we haven't received a remote stream yet, 
+        // we should be more aggressive about requesting an update.
         if (remotePremierStream) return;
 
         let attempt = 0;
-        const maxAttempts = 3;
-        const baseDelay = 2000; // 2s, 4s, 6s
+        const maxAttempts = 5; // Increased attempts
+        const baseDelay = 3000; // Increased delay to allow handshake to potentially finish
 
         const tryRequest = () => {
             attempt++;
