@@ -222,6 +222,13 @@ const VideoPlayer = () => {
       isPlayingRef.current = true;
     };
     const onPlayingEv = () => {
+      // BUGFIX: Clear the loading spinner when we know frames are actually rendering.
+      // 'canplay' alone is not enough — for large video files the browser may wait
+      // until it estimates it has enough data for the *entire* video before firing,
+      // which can take many seconds. 'playing' fires as soon as the first frame
+      // is painted, giving immediate feedback that buffering is done.
+      setIsLoading(false);
+
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
       const shouldBroadcast = isHost && (
@@ -229,15 +236,10 @@ const VideoPlayer = () => {
       );
       
       if (shouldBroadcast && videoEl.captureStream) {
-        // BUGFIX: 'playing' fires after every seek (video resumes from new position).
-        // Without this guard, every seek would call captureStream() again → setPremierStream()
-        // which closes ALL existing video peer connections → blank screen + no audio for participants.
-        // The captureStream API automatically tracks the video element's output across seeks,
-        // so we only need to capture it ONCE when streaming starts.
+        // Guard: 'playing' fires after every seek; only capture stream ONCE.
         if (isStreamingActiveRef.current) return;
 
-        // Delay captureStream slightly to ensure the video has actually painted a frame,
-        // otherwise captureStream might return a stream of black frames.
+        // Delay captureStream slightly to ensure the video has actually painted a frame.
         setTimeout(() => {
           try {
             const stream = videoEl.captureStream(50);
@@ -605,10 +607,12 @@ const VideoPlayer = () => {
             <div className="relative w-full h-full">
               <video 
                 autoPlay 
-                playsInline 
+                playsInline
+                muted
                 className="w-full h-full object-contain"
                 ref={setVideoRef}
                 onCanPlay={() => setIsLoading(false)}
+                onPlaying={() => setIsLoading(false)}
               />
             </div>
           ) : (
