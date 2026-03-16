@@ -637,6 +637,13 @@ const RoomPage = () => {
             <span>PEOPLE ({onlineCount})</span>
             {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
           </button>
+          <button 
+            onClick={() => setActiveMobileTab('activity')}
+            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+          >
+            <Activity className="w-4.5 h-4.5 mb-1" />
+            <span>ACTIVITY</span>
+          </button>
         </div>
 
         {/* ── Sidebar ── */}
@@ -704,6 +711,12 @@ const RoomPage = () => {
                   </div>
                 )}
                 <ParticipantsList />
+              </div>
+            ) : null}
+
+            {(sidebarTab === 'activity' || (activeMobileTab === 'activity' && isMobile)) ? (
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'activity') ? 'hidden' : 'flex'}`}>
+                <ActivityFeed />
               </div>
             ) : null}
           </div>

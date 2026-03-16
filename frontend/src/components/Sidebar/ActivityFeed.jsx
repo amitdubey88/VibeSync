@@ -38,7 +38,7 @@ const ActivityFeed = () => {
               {m.content}
             </p>
             <span className="text-[9px] text-text-muted font-mono uppercase">
-              {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              {new Date(m.createdAt || m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         </div>
