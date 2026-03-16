@@ -103,7 +103,26 @@ class YouTubeVideoProxy extends EventTarget {
   }
 
   get duration() {
-    try { return this.ytPlayer.getDuration() || Infinity; } catch { return Infinity; }
+    try {
+      const d = this.ytPlayer.getDuration();
+      return (d && d > 0) ? d : 0;
+    } catch { return 0; }
+  }
+
+  get buffered() {
+    try {
+      const fraction = this.ytPlayer.getVideoLoadedFraction() || 0;
+      const d = this.duration;
+      if (d > 0) {
+        // Return a TimeRanges-like object structure for compatibility
+        return {
+          length: 1,
+          start: () => 0,
+          end: (i) => fraction * d
+        };
+      }
+    } catch {}
+    return { length: 0, start: () => 0, end: () => 0 };
   }
 
   get paused() {

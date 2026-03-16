@@ -8,7 +8,7 @@ import {
   Mic, MicOff, Phone, Pin
 } from 'lucide-react';
 
-const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoadClick, visible }) => {
+const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isHost, onLoadClick, visible }) => {
   const { videoState, currentVideo, clips, sendClip } = useRoom();
   const { isMuted, toggleMute, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
@@ -161,6 +161,9 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
 
   
   const progress = safeDuration > 0 ? (safeTime / safeDuration) * 100 : 0;
+  const bufferedProgress = safeDuration > 0 ? (buffered / safeDuration) * 100 : 0;
+  const showRemaining = safeDuration > 0 && safeDuration !== Infinity && !isLive;
+  const timeLeft = safeDuration - safeTime;
 
   return (
     <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
@@ -170,7 +173,11 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
         onClick={isHost ? handleSeek : undefined}
       >
         <div
-          className="h-full rounded-full bg-accent-red transition-all duration-150"
+          className="absolute h-full rounded-full bg-white/20 transition-all duration-300"
+          style={{ width: `${Math.min(bufferedProgress, 100)}%` }}
+        />
+        <div
+          className="relative h-full rounded-full bg-accent-red transition-all duration-150 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
           style={{ width: `${progress}%` }}
         />
         {/* Clip Markers */}
@@ -217,6 +224,11 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
         {/* Time */}
         <span className="text-white/70 text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
           {formatTime(safeTime)} / {formatTime(safeDuration)}
+          {showRemaining && (
+            <span className="opacity-60 ml-1.5">
+              (-{formatTime(timeLeft)})
+            </span>
+          )}
         </span>
 
         {/* Mic toggle */}

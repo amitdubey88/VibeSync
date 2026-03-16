@@ -131,6 +131,7 @@ const VideoPlayer = () => {
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
+  const [buffered, setBuffered] = useState(0);
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
@@ -221,16 +222,36 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     if (!videoEl) return;
+    const updateBuffered = () => {
+      if (!videoEl || !videoEl.buffered || videoEl.buffered.length === 0) return;
+      const duration = videoEl.duration;
+      if (duration > 0) {
+        // Find the buffer range that contains current time
+        let end = 0;
+        for (let i = 0; i < videoEl.buffered.length; i++) {
+          if (videoEl.buffered.start(i) <= videoEl.currentTime) {
+            end = Math.max(end, videoEl.buffered.end(i));
+          }
+        }
+        setBuffered(end);
+      }
+    };
+
     const onTimeUpdate = () => {
       setCurrentTime(videoEl.currentTime);
       currentTimeRef.current = videoEl.currentTime;
+      updateBuffered();
     };
-    const onLoadedMetadata = () => setDuration(videoEl.duration);
+    const onLoadedMetadata = () => {
+      setDuration(videoEl.duration);
+      updateBuffered();
+    };
     const onWaiting = () => {
       // Only show spinner if we aren't already ready to play (reduces flickers)
       if (videoEl.readyState < 2) setIsLoading(true);
     };
     const onCanPlay = () => setIsLoading(false);
+    const onProgress = () => updateBuffered();
     const onPlayEv = () => {
       isPlayingRef.current = true;
     };
@@ -286,6 +307,7 @@ const VideoPlayer = () => {
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
     videoEl.addEventListener('waiting', onWaiting);
     videoEl.addEventListener('canplay', onCanPlay);
+    videoEl.addEventListener('progress', onProgress);
     videoEl.addEventListener('play', onPlayEv);
     videoEl.addEventListener('playing', onPlayingEv);
     videoEl.addEventListener('pause', onPauseEv);
@@ -296,6 +318,7 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('loadedmetadata', onLoadedMetadata);
       videoEl.removeEventListener('waiting', onWaiting);
       videoEl.removeEventListener('canplay', onCanPlay);
+      videoEl.removeEventListener('progress', onProgress);
       videoEl.removeEventListener('play', onPlayEv);
       videoEl.removeEventListener('playing', onPlayingEv);
       videoEl.removeEventListener('pause', onPauseEv);
@@ -768,6 +791,7 @@ const VideoPlayer = () => {
               videoEl={videoEl}
               currentTime={currentTime}
               duration={duration}
+              buffered={buffered}
               isHost={isHost}
               visible={showControls}
               onLoadClick={() => setShowSourcePicker(true)}
