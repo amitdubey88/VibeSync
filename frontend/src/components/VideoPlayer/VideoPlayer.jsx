@@ -228,7 +228,7 @@ const VideoPlayer = () => {
     const onPlayEv = () => {
       isPlayingRef.current = true;
     };
-    const startBroadcast = useCallback(() => {
+    const startBroadcast = () => {
       if (!isHost || !videoEl || !videoEl.captureStream) return;
       if (isStreamingActiveRef.current) return;
 
@@ -245,7 +245,7 @@ const VideoPlayer = () => {
           console.error('[VideoPlayer] captureStream failed:', e);
         }
       }, 150);
-    }, [isHost, videoEl, setPremierStream]);
+    };
 
     const onPlayingEv = () => {
       // BUGFIX: Clear the loading spinner when we know frames are actually rendering.
