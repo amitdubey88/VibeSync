@@ -148,7 +148,7 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
           {message.replyTo && (
             <div 
               onClick={scrollToOriginal}
-              className={`mb-1.5 pl-2 py-1 pr-2 rounded text-xs border-l-2 truncate cursor-pointer opacity-90 transition-all hover:bg-white/10
+              className={`mb-1.5 pl-2 py-1 pr-2 rounded text-xs border-l-2 cursor-pointer opacity-90 transition-all hover:bg-white/10 overflow-hidden
               ${isOwn
                 ? 'bg-white/10 border-white/40 text-white'
                 : 'bg-bg-secondary border-accent-purple text-text-secondary'}`}
@@ -156,7 +156,7 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
               <div className={`font-bold truncate ${isOwn ? 'text-white' : 'text-accent-purple'}`}>
                 {message.replyTo.username}
               </div>
-              <div className="truncate opacity-80">{message.replyTo.content}</div>
+              <div className="line-clamp-2 break-all overflow-wrap-anywhere opacity-80">{message.replyTo.content}</div>
             </div>
           )}
           <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere">{message.content}</span>
