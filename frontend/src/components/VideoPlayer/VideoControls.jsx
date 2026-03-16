@@ -42,14 +42,24 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     else video.pause();
   }, [videoRef, isHost]);
 
-  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || (currentVideo?.type === 'live' || currentVideo?.type === 'uploading');
+  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || currentVideo?.type === 'live' || currentVideo?.type === 'uploading';
   
-  // For participants in live mode, use the synced time/duration from host
-  const displayTime = (!isHost && isLive && videoState?.currentTime !== undefined) ? videoState.currentTime : currentTime;
-  // For live streams, prefer synced duration from host; fall back to local duration
-  const displayDuration = (duration > 0 && duration !== Infinity)
-    ? duration
-    : (videoState?.duration > 0 ? videoState.duration : (videoEl?.duration > 0 && videoEl.duration !== Infinity ? videoEl.duration : 0));
+  // For participants in live mode, use the synced time/duration from host accurately
+  const displayTime = (!isHost && isLive) 
+    ? (videoState?.currentTime || 0) 
+    : currentTime;
+
+  // For live streams, prefer synced duration from host; fall back to local element duration
+  let displayDuration = duration > 0 && duration !== Infinity ? duration : 0;
+  if (isLive && videoState?.duration > 0) {
+    displayDuration = videoState.duration;
+  } else if (videoEl?.duration > 0 && videoEl.duration !== Infinity) {
+    displayDuration = videoEl.duration;
+  }
+
+  // Final fallback to prevent 0/0 or NaN
+  const safeDuration = Math.max(displayDuration, 0);
+  const safeTime = Math.min(Math.max(displayTime, 0), safeDuration || Infinity);
 
   const handleSeek = useCallback((e) => {
     // For YouTube Proxy, duration is available but it's an EventTarget, not a DOM element
@@ -150,7 +160,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
 
 
   
-  const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
+  const progress = safeDuration > 0 ? (safeTime / safeDuration) * 100 : 0;
 
   return (
     <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
@@ -168,7 +178,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
           <div 
             key={clip.id}
             className="absolute top-0 bottom-0 w-0.5 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)] z-10"
-            style={{ left: `${displayDuration > 0 ? (clip.time / displayDuration) * 100 : 0}%` }}
+            style={{ left: `${safeDuration > 0 ? (clip.time / safeDuration) * 100 : 0}%` }}
             title={`Clip by ${clip.username}`}
           />
         ))}
@@ -205,8 +215,8 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
         />
 
         {/* Time */}
-        <span className="text-white/70 text-xs font-mono select-none ml-1">
-          {formatTime(displayTime)} / {formatTime(displayDuration)}
+        <span className="text-white/70 text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
+          {formatTime(safeTime)} / {formatTime(safeDuration)}
         </span>
 
         {/* Mic toggle */}

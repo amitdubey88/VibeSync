@@ -352,18 +352,17 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
         <div className="absolute inset-0 z-0 touch-manipulation select-none" />
       )}
 
-      {/* Loading State */}
+      {/* Loading State - only show if status is 'loading' to prevent double spinners with parent */}
       {status === 'loading' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20">
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20 transition-opacity duration-300">
           <div className="relative">
-            <div className="w-16 h-16 rounded-full bg-accent-red/10 flex items-center justify-center">
-              <Loader2 className="w-8 h-8 text-accent-red animate-spin" />
+            <div className="w-12 h-12 rounded-full bg-accent-red/10 flex items-center justify-center">
+              <Loader2 className="w-6 h-6 text-accent-red animate-spin" />
             </div>
-            <div className="absolute inset-0 rounded-full bg-accent-red/20 animate-ping" />
           </div>
           <div className="text-center">
-            <p className="text-white font-semibold text-sm">Loading YouTube Video</p>
-            <p className="text-white/40 text-xs mt-1">Preparing playback…</p>
+            <p className="text-white/90 font-bold text-xs">Loading YouTube Video</p>
+            <p className="text-white/40 text-[10px] mt-1">Preparing playback…</p>
           </div>
         </div>
       )}

@@ -25,6 +25,9 @@ const useVideoSync = (videoEl) => {
     const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'catching-up' | 'buffering'
     const roomCode = room?.code;
 
+    // Cache the latest sync state if videoEl isn't ready yet
+    const cachedSyncStateRef = useRef(null);
+
     // ── Host: emit events ────────────────────────────────────────────────────
     const onHostPlay = useCallback(() => {
         if (!socket || !roomCode) return;
@@ -191,7 +194,13 @@ const useVideoSync = (videoEl) => {
         };
 
         const onSyncState = ({ videoState: vs, currentVideo: remoteVideo }) => {
-            if (!videoEl || isHost) return;
+            if (isHost) return;
+            
+            if (!videoEl) {
+                // Cache for when element mounts
+                cachedSyncStateRef.current = { videoState: vs, currentVideo: remoteVideo };
+                return;
+            }
 
             // Bypass drift correction for Live Streams (WebRTC) to prevent flickering
             const videoType = remoteVideo?.type || currentVideo?.type;
@@ -287,6 +296,26 @@ const useVideoSync = (videoEl) => {
             cleanupDataChannel();
         };
     }, [socket, videoEl, isHost, setVideoState, currentVideo, sendSyncMessage, onSyncMessage]);
+
+    // Apply cached sync state once videoEl becomes available
+    useEffect(() => {
+        if (videoEl && cachedSyncStateRef.current && !isHost) {
+            const { videoState: vs, currentVideo: remoteVideo } = cachedSyncStateRef.current;
+            console.log('[useVideoSync] Applying cached sync state to newly mounted video element');
+            
+            const videoType = remoteVideo?.type || currentVideo?.type;
+            if (videoType !== 'live' && videoType !== 'uploading') {
+                if (vs.isPlaying) {
+                    videoEl.currentTime = vs.currentTime;
+                    videoEl.play().catch(() => {});
+                } else {
+                    videoEl.currentTime = vs.currentTime;
+                    videoEl.pause();
+                }
+            }
+            cachedSyncStateRef.current = null;
+        }
+    }, [videoEl, isHost, currentVideo]);
 
     // ── Request sync on mount AND after socket reconnect (BUG-12) ────────────
     useEffect(() => {

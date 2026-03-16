@@ -181,6 +181,9 @@ const VideoPlayer = () => {
       : 0;
     const targetTime = Math.max(0, (videoState.currentTime || 0) + elapsed);
 
+    // Instant sync for source changes: if element exists and we have state, sync it.
+    // Separately, if this is a fresh mount, the canplay listener handles it.
+
     const doSync = () => {
       // Always seek to the correct position
       if (targetTime > 0.5) videoEl.currentTime = targetTime;
@@ -197,7 +200,7 @@ const VideoPlayer = () => {
       return () => videoEl.removeEventListener('canplay', doSync);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoEl]); // Only re-run when videoEl mounts — videoState is read fresh from closure
+  }, [videoEl, currentVideo?.url]); // Re-run when videoEl mounts OR when video source URL changes
 
   useEffect(() => {
     if (isHost || !videoEl) return;
@@ -223,7 +226,10 @@ const VideoPlayer = () => {
       currentTimeRef.current = videoEl.currentTime;
     };
     const onLoadedMetadata = () => setDuration(videoEl.duration);
-    const onWaiting = () => setIsLoading(true);
+    const onWaiting = () => {
+      // Only show spinner if we aren't already ready to play (reduces flickers)
+      if (videoEl.readyState < 2) setIsLoading(true);
+    };
     const onCanPlay = () => setIsLoading(false);
     const onPlayEv = () => {
       isPlayingRef.current = true;
