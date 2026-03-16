@@ -124,6 +124,9 @@ const VideoPlayer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
+  // Ref mirrors the state above so onPlayingEv always reads the latest value without a
+  // stale closure — critical because play() fires 'playing' before React commits the state.
+  const isLiveStreamingInitializedRef = useRef(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
@@ -231,8 +234,9 @@ const VideoPlayer = () => {
 
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
+      // NOTE: Read from ref (not state) — 'playing' fires before React commits the state update.
       const shouldBroadcast = isHost && (
-        (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitialized
+        (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitializedRef.current
       );
       
       if (shouldBroadcast && videoEl.captureStream) {
@@ -282,7 +286,7 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('pause', onPauseEv);
       videoEl.removeEventListener('ended', onPauseEv);
     };
-  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream, isLiveStreamingInitialized]);
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
@@ -700,8 +704,22 @@ const VideoPlayer = () => {
                   </p>
                   <button
                     onClick={() => {
+                      // Update BOTH state (for UI overlay) and ref (read synchronously in onPlayingEv)
+                      isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
-                      if (videoEl) videoEl.play().catch(() => {});
+                      if (videoEl) {
+                        // If the video is already playing (paused=false), capture stream immediately —
+                        // play() is a no-op in this case and 'playing' won't fire again.
+                        if (!videoEl.paused && !videoEl.ended && videoEl.captureStream && !isStreamingActiveRef.current) {
+                          try {
+                            const stream = videoEl.captureStream(50);
+                            isStreamingActiveRef.current = true;
+                            setPremierStream(stream);
+                          } catch (e) { console.error('[VideoPlayer] captureStream failed:', e); }
+                        } else {
+                          videoEl.play().catch(() => {});
+                        }
+                      }
                     }}
                     className="flexItems-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
                   >
