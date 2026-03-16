@@ -185,8 +185,8 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
           )}
 
           {/* Internal Timestamp */}
-          <div className={`mt-0.5 flex justify-end ${isOwn ? 'opacity-70' : 'opacity-40'}`}>
-            <span className="text-[9px] select-none font-medium">
+          <div className={`mt-0.5 flex justify-end ${isOwn ? 'opacity-60' : 'opacity-40'}`}>
+            <span className="text-[8px] select-none font-medium tracking-tight">
               {formatMessageTime(message.createdAt)}
             </span>
           </div>
