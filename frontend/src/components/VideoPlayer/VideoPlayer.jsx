@@ -124,6 +124,9 @@ const VideoPlayer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
+  // Ref mirrors the state above so onPlayingEv always reads the latest value without a
+  // stale closure — critical because play() fires 'playing' before React commits the state.
+  const isLiveStreamingInitializedRef = useRef(false);
   const [showSourcePicker, setShowSourcePicker] = useState(false);
   const [urlInput, setUrlInput] = useState('');
   const [duration, setDuration] = useState(0);
@@ -250,8 +253,9 @@ const VideoPlayer = () => {
 
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
+      // NOTE: Read from ref (not state) — 'playing' fires before React commits the state update.
       const shouldBroadcast = isHost && (
-        (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitialized
+        (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitializedRef.current
       );
       
       if (shouldBroadcast) {
@@ -291,7 +295,7 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('pause', onPauseEv);
       videoEl.removeEventListener('ended', onPauseEv);
     };
-  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, startBroadcast, isLiveStreamingInitialized]);
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
@@ -709,6 +713,9 @@ const VideoPlayer = () => {
                   </p>
                    <button
                     onClick={() => {
+                      // Set ref synchronously BEFORE play() so the 'playing' handler
+                      // sees the updated value without a stale-closure race.
+                      isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
                       // If already playing, trigger capture immediately because 'playing' event won't fire
                       if (videoEl && !videoEl.paused) {
