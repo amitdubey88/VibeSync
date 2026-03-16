@@ -256,6 +256,13 @@ const VideoPlayer = () => {
       // see the paused frame rather than the 'Connecting to Feed...' screen.
       // Stream is only fully stopped on 'ended' or source change.
     };
+
+    // If metadata was already loaded (e.g. YouTube proxy fires it synchronously on creation),
+    // grab the duration immediately before listening for future updates
+    if (videoEl.readyState >= 1) {
+      onLoadedMetadata();
+    }
+
     videoEl.addEventListener('timeupdate', onTimeUpdate);
     videoEl.addEventListener('loadedmetadata', onLoadedMetadata);
     videoEl.addEventListener('waiting', onWaiting);

@@ -42,17 +42,26 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     else video.pause();
   }, [videoRef, isHost]);
 
+  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || (currentVideo?.type === 'live' || currentVideo?.type === 'uploading');
+  
+  // For participants in live mode, use the synced time/duration from host
+  const displayTime = (!isHost && isLive && videoState?.currentTime !== undefined) ? videoState.currentTime : currentTime;
+  // For live streams, prefer synced duration from host; fall back to local duration
+  const displayDuration = (duration > 0 && duration !== Infinity)
+    ? duration
+    : (videoState?.duration > 0 ? videoState.duration : (videoEl?.duration > 0 && videoEl.duration !== Infinity ? videoEl.duration : 0));
+
   const handleSeek = useCallback((e) => {
     // For YouTube Proxy, duration is available but it's an EventTarget, not a DOM element
     const video = videoRef.current;
-    if (!isHost || !video || !duration) return;
+    if (!isHost || !video || !displayDuration) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
-    const targetTime = ratio * duration;
+    const targetTime = ratio * displayDuration;
     
     // The setter exists on both HTMLVideoElement and YouTubeVideoProxy
     video.currentTime = targetTime;
-  }, [videoRef, isHost, duration]);
+  }, [videoRef, isHost, displayDuration]);
 
   // Sync mute state from keyboard shortcuts (KeyM)
   useEffect(() => {
@@ -133,14 +142,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, isHost, onLoa
     }
   }, [videoRef]);
 
-  const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || (currentVideo?.type === 'live' || currentVideo?.type === 'uploading');
-  
-  // For participants in live mode, use the synced time/duration from host
-  const displayTime = (!isHost && isLive && videoState?.currentTime !== undefined) ? videoState.currentTime : currentTime;
-  // For live streams, prefer synced duration from host; fall back to local duration
-  const displayDuration = (duration > 0 && duration !== Infinity)
-    ? duration
-    : (videoState?.duration > 0 ? videoState.duration : (videoEl?.duration > 0 && videoEl.duration !== Infinity ? videoEl.duration : 0));
+
   
   const progress = displayDuration > 0 ? (displayTime / displayDuration) * 100 : 0;
 
