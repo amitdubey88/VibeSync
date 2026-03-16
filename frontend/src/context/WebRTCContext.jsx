@@ -341,6 +341,7 @@ export const WebRTCProvider = ({ children }) => {
             socket.emit('video-stream:announce', { roomCode });
             console.log('[VideoStream] Announced live stream to room');
         } else {
+            console.log('[VideoStream] Stopping live stream.');
             // Stream stopped — close all video connections and notify participants
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
             socket.emit('video-stream:ended', { roomCode });

@@ -262,19 +262,20 @@ const VideoPlayer = () => {
       if (!isHost || !videoEl || !videoEl.captureStream) return;
       if (isStreamingActiveRef.current) return;
 
-      console.log('[VideoPlayer] Starting WebRTC broadcast capture...');
+      console.log('[DirectStream] Starting WebRTC broadcast capture...');
+      isStreamingActiveRef.current = true; // Set IMMEDIATELY to prevent race conditions
+
       // Delay captureStream slightly to ensure the video has actually painted a frame.
       setTimeout(() => {
         try {
-          if (isStreamingActiveRef.current) return;
           const stream = videoEl.captureStream(60); 
-          isStreamingActiveRef.current = true;
           setPremierStream(stream);
-          console.log('[VideoPlayer] Stream captured and set to WebRTC context.');
+          console.log('[DirectStream] Stream captured and announced to room.');
         } catch (e) {
-          console.error('[VideoPlayer] captureStream failed:', e);
+          console.error('[DirectStream] captureStream failed:', e);
+          isStreamingActiveRef.current = false;
         }
-      }, 150);
+      }, 300); // Increased delay for stability
     };
 
     const onPlayingEv = () => {
@@ -342,11 +343,18 @@ const VideoPlayer = () => {
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
     if (!isHost) return;
-    setPremierStream(null);
-    isStreamingActiveRef.current = false; // Reset so next stream start re-captures correctly
-    setIsLiveStreamingInitialized(false);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideo?.url]);
+    
+    // Only reset if the video is NOT a live stream placeholder, or if it was cleared.
+    // If we're already in a live stream and the room state updates (but URL stays 'live-stream'),
+    // do NOT reset the initialized flag or the premier stream.
+    if (!currentVideo?.url || (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current)) {
+      console.log('[VideoPlayer] Video source changed. Resetting live stream state.');
+      setPremierStream(null);
+      isStreamingActiveRef.current = false;
+      setIsLiveStreamingInitialized(false);
+      isLiveStreamingInitializedRef.current = false;
+    }
+  }, [currentVideo?.url, isHost, setPremierStream]);
 
   // Reset local streaming state when host changes (driven by useHostTransferSync hook)
   useEffect(() => {
@@ -538,7 +546,7 @@ const VideoPlayer = () => {
         { currentTime: 0, isPlaying: false }
       );
     }
-    toast.success('⚡ Live Stream Started! Participants are watching you directly.', { duration: 4000 });
+    toast.success('⚡ Video Loaded! Click "Start Streaming" to go live.', { duration: 4000 });
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
@@ -717,15 +725,14 @@ const VideoPlayer = () => {
                   </p>
                    <button
                     onClick={() => {
-                      // Set ref synchronously BEFORE play() so the 'playing' handler
-                      // sees the updated value without a stale-closure race.
+                      console.log('[DirectStream] User clicked Start Streaming.');
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
-                      // If already playing, trigger capture immediately because 'playing' event won't fire
+                      
                       if (videoEl && !videoEl.paused) {
                         startBroadcast();
                       } else if (videoEl) {
-                        videoEl.play().catch(() => {});
+                        videoEl.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
                       }
                     }}
                     className="flex items-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
