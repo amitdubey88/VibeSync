@@ -212,23 +212,7 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onParticipantUpdate = ({ participants: pts }) => {
-      const prev = participantsRef.current;
       const current = pts || [];
-      
-      // Detect joins
-      current.forEach(p => {
-        if (!prev.find(old => old.userId === p.userId) && p.userId !== user?.id) {
-          addSystemMessage(`${p.username} joined the room`);
-        }
-      });
-      
-      // Detect leaves
-      prev.forEach(p => {
-        if (!current.find(curr => curr.userId === p.userId)) {
-          addSystemMessage(`${p.username} left the room`);
-        }
-      });
-      
       participantsRef.current = current;
       setParticipants(current);
     };
