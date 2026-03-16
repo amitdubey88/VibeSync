@@ -483,11 +483,11 @@ const RoomPage = () => {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <div className={`flex items-center gap-1.5 text-xs
+          <div className={`flex items-center gap-1.5 text-xs shrink-0
             ${isConnected ? 'text-accent-green' : 'text-red-400'}`}>
             {isConnected
-              ? <><Wifi className="w-3.5 h-3.5" /> Live</>
-              : <><WifiOff className="w-3.5 h-3.5" /> Reconnecting…</>}
+              ? <><Wifi className="w-3.5 h-3.5" /> <span>Live</span></>
+              : <><WifiOff className="w-3.5 h-3.5 animate-pulse" /> <span className="hidden sm:inline">Reconnecting…</span></>}
           </div>
           <Tooltip text="Copy room code" position="bottom">
             <button
