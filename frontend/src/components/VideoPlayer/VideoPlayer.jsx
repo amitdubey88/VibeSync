@@ -346,21 +346,15 @@ const VideoPlayer = () => {
     
     // Only reset if the video is NOT a live stream placeholder, or if it was cleared.
     // If we're already in a live stream and the room state updates (but URL stays 'live-stream'),
-    // do NOT reset the initialized flag or the premier stream UNLESS the local blob actually changed.
-    const urlChanged = currentVideo?.url !== 'live-stream' && currentVideo?.url !== blobUrlRef.current;
-    const isLivePlaceholder = currentVideo?.url === 'live-stream';
-    const blobChanged = blobUrl !== blobUrlRef.current;
-
-    if (!currentVideo?.url || (urlChanged) || (isLivePlaceholder && blobChanged)) {
-      console.log('[VideoPlayer] Video source changed or local file swapped. Resetting live stream state.');
+    // do NOT reset the initialized flag or the premier stream.
+    if (!currentVideo?.url || (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current)) {
+      console.log('[VideoPlayer] Video source changed. Resetting live stream state.');
       setPremierStream(null);
       isStreamingActiveRef.current = false;
       setIsLiveStreamingInitialized(false);
       isLiveStreamingInitializedRef.current = false;
-      // Mirror current blob to ref for next comparison
-      blobUrlRef.current = blobUrl;
     }
-  }, [currentVideo?.url, isHost, setPremierStream, blobUrl]);
+  }, [currentVideo?.url, isHost, setPremierStream]);
 
   // Reset local timing when video source changes
   useEffect(() => {

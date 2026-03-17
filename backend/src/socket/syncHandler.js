@@ -24,14 +24,14 @@ module.exports = (io, socket, roomStore) => {
 
     // ── video:set-uploading ───────────────────────────────────────────────────
     // Host started a local upload — participants see a "waiting" state.
-    socket.on('video:set-uploading', (data) => {
-        const { roomCode, title } = data;
+    socket.on('video:set-uploading', ({ roomCode, title }) => {
         const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
-        room.currentVideo = { type: 'uploading', title, url: null, e2ee: data.e2ee };
+        room.currentVideo = { type: 'uploading', title, url: null };
+        // Keep videoState running (host is playing locally)
         const hashedCode = hashRoomCode(code);
-        socket.to(hashedCode).emit('video:uploading', data);
+        socket.to(hashedCode).emit('video:uploading', { title });
         console.log(`[sync] Upload started in ${code}: ${title}`);
     });
 
@@ -50,17 +50,12 @@ module.exports = (io, socket, roomStore) => {
         room.videoState = { currentTime: t, duration: 0, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
-        const isE2EE = video && video.e2ee;
-        const isRegularVideo = video && video.url && (video.type === 'file' || video.type === 'url' || video.type === 'direct' || video.type === 'hls');
-
-        if (isE2EE || isRegularVideo) {
+        if (video && video.url && (video.type === 'file' || video.type === 'url')) {
             const systemMsg = {
                 id: `vsys_${Date.now()}`,
                 userId: 'system', username: 'System', avatar: null,
-                content: isE2EE ? video.title : `Video set to: ${video.title || 'Untitled'}`,
+                content: `Video set to: ${video.title || 'Untitled'}`,
                 type: 'system',
-                systemType: isE2EE ? 'video-source' : undefined,
-                e2ee: isE2EE ? true : undefined,
                 videoUrl: video.url, // Hidden field used for deep cleanup
                 createdAt: new Date().toISOString(),
             };
@@ -239,26 +234,23 @@ module.exports = (io, socket, roomStore) => {
     // WebRTC DataChannel Signaling (P2P Sync Fallback/Override)
     // ═══════════════════════════════════════════════════════════════════════════
 
-    socket.on('sync-channel:offer', (data) => {
-        const { targetSocketId } = data;
+    socket.on('sync-channel:offer', ({ targetSocketId, offer }) => {
         socket.to(targetSocketId).emit('sync-channel:offer', {
-            ...data,
+            offer,
             fromSocketId: socket.id
         });
     });
 
-    socket.on('sync-channel:answer', (data) => {
-        const { targetSocketId } = data;
+    socket.on('sync-channel:answer', ({ targetSocketId, answer }) => {
         socket.to(targetSocketId).emit('sync-channel:answer', {
-            ...data,
+            answer,
             fromSocketId: socket.id
         });
     });
 
-    socket.on('sync-channel:ice', (data) => {
-        const { targetSocketId } = data;
+    socket.on('sync-channel:ice', ({ targetSocketId, candidate }) => {
         socket.to(targetSocketId).emit('sync-channel:ice', {
-            ...data,
+            candidate,
             fromSocketId: socket.id
         });
     });
