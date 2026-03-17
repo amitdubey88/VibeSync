@@ -164,11 +164,15 @@ export const WebRTCProvider = ({ children }) => {
             // This connection only carries the premier video stream
             const stream = event.streams[0];
             console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
-            // CRITICAL FIX: WebRTC fires ontrack twice (audio, then video) but passes
-            // the exact same MediaStream reference, just mutates it by adding the track.
-            // React's setState ignores it because the object reference === the old one.
-            // We MUST create a new MediaStream instance so the <video> element re-binds.
-            setRemotePremierStream(new MediaStream(stream.getTracks()));
+            
+            // Re-wrap the stream to ensure React detects the change and re-binds the video element
+            // We use a small delay or a check to avoid double-flashes when audio and video tracks arrive closely.
+            setRemotePremierStream(prev => {
+                if (prev && prev.id === stream.id && prev.getTracks().length === stream.getTracks().length) {
+                    return prev;
+                }
+                return new MediaStream(stream.getTracks());
+            });
         };
 
         // ICE restart: participant (non-host) is always the offerer for video stream connections,

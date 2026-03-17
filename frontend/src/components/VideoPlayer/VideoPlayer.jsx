@@ -744,7 +744,6 @@ const VideoPlayer = () => {
               <video 
                 autoPlay 
                 playsInline
-                muted
                 className="w-full h-full object-contain"
                 ref={setVideoRef}
                 onCanPlay={() => setIsLoading(false)}
