@@ -146,7 +146,7 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
 
       {/* Avatar with subtle glow/ring */}
       <div
-        className="avatar w-8 h-8 text-[10px] text-white shrink-0 mt-0.5 shadow-lg border border-white/10 ring-2 ring-white/5"
+        className="avatar w-7 h-7 text-[9px] text-white shrink-0 mt-0.5 shadow-md border border-white/5"
         style={{ backgroundColor: avatarBg }}
       >
         {getInitials(message.username)}
@@ -168,29 +168,29 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
         )}
 
         <div
-          className={`flex flex-col px-3 py-1.5 rounded-2xl text-[13px] leading-[1.4] break-words relative overflow-hidden shadow-md transition-shadow group-hover:shadow-lg
+          className={`flex flex-col px-3.5 py-2 rounded-[18px] text-[14px] leading-[1.3] break-words relative shadow-sm transition-all
             ${isOwn
-              ? 'bg-[#2b2b40] text-white rounded-tr-sm border border-white/10'
-              : 'bg-[#1a1a2e] text-text-primary rounded-tl-sm border border-white/5'
+              ? 'bg-gradient-to-br from-accent-purple to-accent-purpleHover text-white rounded-tr-[4px]'
+              : 'bg-bg-hover text-text-primary rounded-tl-[4px] border border-white/5'
             }`}
         >
           {message.replyTo && (
             <div 
               onClick={scrollToOriginal}
-              className={`mb-2 pl-2.5 py-1.5 pr-2.5 rounded-xl border-l-4 cursor-pointer transition-all hover:brightness-110 overflow-hidden relative
+              className={`mb-1.5 pl-2 py-1 pr-2 rounded-lg border-l-2 cursor-pointer transition-all hover:brightness-110 overflow-hidden relative text-[12px]
               ${isOwn
-                ? 'bg-black/20 border-white/30 text-white/90'
-                : 'bg-white/5 border-accent-purple text-text-secondary shadow-inner'}`}
+                ? 'bg-black/15 border-white/40 text-white/90'
+                : 'bg-white/5 border-accent-purple/50 text-text-secondary'}`}
             >
-              <div className={`text-[10px] font-black uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-accent-purple/80'}`}>
+              <div className={`text-[9px] font-black uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/80' : 'text-accent-purple/80'}`}>
                 {message.replyTo.username}
               </div>
-              <div className="text-[11px] line-clamp-2 break-all overflow-wrap-anywhere opacity-70 leading-normal italic">
+              <div className="line-clamp-1 break-all opacity-70 leading-tight">
                 {message.replyTo.content}
               </div>
             </div>
           )}
-          <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere font-medium tracking-tight">
+          <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere tracking-tight">
             {message.content}
           </span>
           
@@ -220,11 +220,11 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
           )}
 
           {/* Internal Timestamp & E2EE indicator */}
-          <div className={`mt-1.5 flex items-center justify-end gap-1.5 ${isOwn ? 'opacity-70' : 'opacity-40'}`}>
+          <div className={`mt-1 flex items-center justify-end gap-1 ${isOwn ? 'opacity-60' : 'opacity-30'}`}>
             {message.e2ee && (
-              <ShieldCheck className="w-2.5 h-2.5 text-current" title="End-to-end encrypted" />
+              <ShieldCheck className="w-2 h-2 text-current" title="End-to-end encrypted" />
             )}
-            <span className="text-[9px] select-none font-bold tracking-tighter uppercase">
+            <span className="text-[8px] select-none font-bold tracking-tight uppercase">
               {formatMessageTime(message.createdAt)}
             </span>
           </div>
