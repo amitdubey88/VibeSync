@@ -50,14 +50,12 @@ module.exports = (io, socket, roomStore) => {
         room.videoState = { currentTime: t, duration: 0, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
-        if (video && video.url && (video.type === 'file' || video.type === 'url' || video.url === 'live-stream')) {
+        if (video && video.url && (video.type === 'file' || video.type === 'url')) {
             const systemMsg = {
                 id: `vsys_${Date.now()}`,
                 userId: 'system', username: 'System', avatar: null,
-                content: video.title || 'Untitled',
+                content: `Video set to: ${video.title || 'Untitled'}`,
                 type: 'system',
-                systemType: 'video-source',
-                e2ee: !!video.e2ee,
                 videoUrl: video.url, // Hidden field used for deep cleanup
                 createdAt: new Date().toISOString(),
             };
