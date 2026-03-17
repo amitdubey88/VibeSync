@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
-import { Reply, Smile, Plus, ShieldCheck } from 'lucide-react';
+import { Reply, SmilePlus, Plus, ShieldCheck } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 
 // Swipe threshold — how many px to drag before triggering reply
@@ -8,7 +8,7 @@ const SWIPE_THRESHOLD = 55;
 // Maximum visual translation so the bubble doesn't fly offscreen
 const MAX_DRAG = 70;
 // Emojis for quick reactions
-const REACTION_OPTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏','💀','🔥',' 🤡'];
+const REACTION_OPTIONS = ['👍', '❤️', '😆', '😮', '😢', '🙏'];
 
 const MessageBubble = ({ message, isOwn, onReply }) => {
   const { reactToMessage } = useRoom();
@@ -16,6 +16,8 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
   const [isSnapping, setIsSnapping] = useState(false);
   const [showReactionPicker, setShowReactionPicker] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [hoveredReaction, setHoveredReaction] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
   const startXRef = useRef(null);
   const isDraggingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
@@ -92,9 +94,11 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
       ref={rowRef}
       role="button"
       tabIndex={0}
-      onClick={() => setShowActions(!showActions)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => { setIsHovered(false); setShowReactionPicker(false); setShowActions(false); endDrag(); }}
       className={`group flex gap-2 items-start animate-message-slide ${isOwn ? 'flex-row-reverse' : ''} mb-4 relative select-none cursor-pointer outline-none`}
       style={{ touchAction: 'pan-y' }}
+      onClick={() => setShowActions(!showActions)}
       // ── Touch (mobile) ─────────────────────────────────────────
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}
       onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
@@ -104,7 +108,6 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
       onMouseDown={(e) => { if (e.button === 0) startDrag(e.clientX); }}
       onMouseMove={(e) => { if (e.buttons === 1) moveDrag(e.clientX); }}
       onMouseUp={endDrag}
-      onMouseLeave={endDrag}
     >
       {/* Reply icon that appears behind the bubble as user swipes */}
       <div
@@ -146,10 +149,10 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
         )}
 
         <div
-          className={`flex flex-col px-3.5 py-2.5 rounded-2xl text-[14px] leading-[1.5] break-words relative overflow-hidden shadow-md transition-shadow group-hover:shadow-lg
+          className={`flex flex-col px-3 py-1.5 rounded-2xl text-[13px] leading-[1.4] break-words relative overflow-hidden shadow-md transition-shadow group-hover:shadow-lg
             ${isOwn
-              ? 'bg-gradient-to-br from-accent-purple via-[#7c3aed] to-[#6d28d9] text-white rounded-tr-sm border border-white/10'
-              : 'bg-white/[0.03] backdrop-blur-md text-text-primary rounded-tl-sm border border-white/5 ring-1 ring-white/[0.02]'
+              ? 'bg-[#2b2b40] text-white rounded-tr-sm border border-white/10'
+              : 'bg-[#1a1a2e] text-text-primary rounded-tl-sm border border-white/5'
             }`}
         >
           {message.replyTo && (
@@ -174,19 +177,25 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
           
           {/* Reaction display */}
           {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div className={`flex flex-wrap gap-1 mt-1.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex flex-wrap gap-1 mt-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
               {Object.entries(message.reactions).map(([emoji, users]) => (
-                <button
-                  key={emoji}
-                  onClick={() => reactToMessage(message.id, emoji)}
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all border
-                    ${users.includes(useRoom().user?.username)
-                      ? 'bg-accent-purple/20 border-accent-purple/40 text-accent-purple' 
-                      : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}`}
-                >
-                  <span>{emoji}</span>
-                  {users.length > 1 && <span>{users.length}</span>}
-                </button>
+                <div key={emoji} className="relative group/rxn">
+                  <button
+                    onClick={() => reactToMessage(message.id, emoji)}
+                    className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all border
+                      ${users.includes(useRoom().user?.username)
+                        ? 'bg-accent-purple/20 border-accent-purple/40 text-accent-purple' 
+                        : 'bg-white/5 border-white/10 text-text-muted hover:bg-white/10'}`}
+                  >
+                    <span>{emoji}</span>
+                    {users.length > 1 && <span>{users.length}</span>}
+                  </button>
+                  
+                  {/* Reactor tooltip */}
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-black/90 text-white text-[9px] rounded whitespace-nowrap opacity-0 group-hover/rxn:opacity-100 pointer-events-none transition-opacity z-50 shadow-xl border border-white/10">
+                    {users.join(', ')}
+                  </div>
+                </div>
               ))}
             </div>
           )}
@@ -204,50 +213,90 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
 
       </div>
 
-      {/* Desktop/Mobile actions: Reply & React */}
-      <div className={`absolute top-1/2 -translate-y-1/2 flex items-center gap-1 transition-all z-20
-        ${isOwn ? 'right-[calc(100%+0.5rem)] flex-row-reverse' : 'left-[calc(100%+0.5rem)]'}
-        ${showActions ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto'}
-      `}>
-        {onReply && (
-          <button
-            onClick={(e) => { e.stopPropagation(); onReply(message); setShowActions(false); }}
-            className="p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-purple hover:bg-bg-hover transition-all active:scale-90"
-            title="Reply"
-          >
-            <Reply className="w-3.5 h-3.5" />
-          </button>
-        )}
-        <button
-          onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
-          className={`p-1.5 rounded-full bg-bg-secondary border border-border-dark text-text-muted shadow-sm hover:text-accent-yellow hover:bg-bg-hover transition-all active:scale-90 ${showReactionPicker ? 'text-accent-yellow bg-bg-hover' : ''}`}
-          title="React"
-        >
-          <Smile className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Reaction Picker Overlay */}
-        {showReactionPicker && (
-          <div className={`absolute bottom-full mb-2 bg-bg-card border border-border-dark rounded-full px-2 py-1 shadow-xl flex items-center gap-1.5 animate-bounce-in
+      {/* Hover Action / Reaction Bar */}
+      {(isHovered || showActions) && (
+        <div 
+          className={`absolute -top-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e1e2d] border border-white/10 shadow-2xl z-40 animate-bounce-in
             ${isOwn ? 'right-0' : 'left-0'}
-          `}>
-            {REACTION_OPTIONS.map(emoji => (
-              <button
-                key={emoji}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  reactToMessage(message.id, emoji);
-                  setShowReactionPicker(false);
-                  setShowActions(false);
-                }}
-                className="text-lg hover:scale-125 transition-transform p-1 active:scale-150"
-              >
-                {emoji}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {REACTION_OPTIONS.map(emoji => (
+            <button
+              key={emoji}
+              onClick={(e) => {
+                e.stopPropagation();
+                reactToMessage(message.id, emoji);
+                setShowActions(false);
+              }}
+              className="text-lg hover:scale-125 transition-transform active:scale-150 p-1"
+            >
+              {emoji}
+            </button>
+          ))}
+          
+          <div className="w-px h-4 bg-white/10 mx-1" />
+          
+          <button
+            onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
+            className={`p-1.5 rounded-lg text-text-muted hover:text-accent-yellow transition-all ${showReactionPicker ? 'text-accent-yellow bg-white/5' : ''}`}
+            title="Add Reaction"
+          >
+            <SmilePlus className="w-3.5 h-3.5" />
+          </button>
+
+          {onReply && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onReply(message); setShowActions(false); }}
+              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
+              title="Reply"
+            >
+              <Reply className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {isOwn && (
+            <button
+              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
+              title="Edit"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+          )}
+          
+          <button
+            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
+            title="More"
+          >
+            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
+          </button>
+        </div>
+      )}
+
+      {/* Extended Reaction Picker */}
+      {showReactionPicker && (
+        <div 
+          className={`absolute -top-24 flex flex-wrap max-w-[200px] gap-1 px-3 py-2 rounded-2xl bg-[#13131f] border border-white/10 shadow-2xl z-50 animate-bounce-in
+            ${isOwn ? 'right-0' : 'left-0'}
+          `}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {['😂','💀','🔥','🤡','😢','🙏','💯','✨','🎉'].map(emoji => (
+            <button
+              key={emoji}
+              onClick={(e) => {
+                e.stopPropagation();
+                reactToMessage(message.id, emoji);
+                setShowReactionPicker(false);
+                setShowActions(false);
+              }}
+              className="text-lg hover:scale-125 transition-transform p-1"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 };
