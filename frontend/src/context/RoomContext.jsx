@@ -126,15 +126,19 @@ export const RoomProvider = ({ children }) => {
         let replyTo = m.replyTo;
         const isE2EE = m.e2ee === true || (m.e2ee !== false && typeof m.content === 'string' && m.content.length > 30 && !m.content.includes(' '));
 
-        if (isE2EE && typeof m.content === 'string') {
-          try { content = await decryptData(m.content, key); } catch (_) {}
+        if (isE2EE && roomKey) {
+          try { content = await decryptData(content, roomKey); } catch (_) {}
         }
         
         if (replyTo && isE2EE && replyTo.content && typeof replyTo.content === 'string') {
           try {
-            const decryptedReplyContent = await decryptData(replyTo.content, key);
+            const decryptedReplyContent = await decryptData(replyTo.content, roomKey);
             replyTo = { ...replyTo, content: decryptedReplyContent };
           } catch (_) {}
+        }
+
+        if (isE2EE && m.systemType === 'video-source') {
+          content = `Video set to: ${content}`;
         }
 
         // Ensure reactions is a plain object for the UI
@@ -196,11 +200,25 @@ export const RoomProvider = ({ children }) => {
       setVideoState(r.videoState);
       
       // Decrypt video source if needed
-      if (r.currentVideo && r.currentVideo.e2ee) {
+      if (r.currentVideo \u0026\u0026 r.currentVideo.e2ee) {
         const key = await deriveKey(r.code);
-        const decryptedUrl = await decryptData(r.currentVideo.url, key);
-        const decryptedTitle = await decryptData(r.currentVideo.title, key);
-        setCurrentVideo({ ...r.currentVideo, url: decryptedUrl, title: decryptedTitle });
+        try {
+          const decryptedUrl = await decryptData(r.currentVideo.url, key);
+          const decryptedTitle = await decryptData(r.currentVideo.title, key);
+          const decryptedType = r.currentVideo.encryptedType 
+            ? await decryptData(r.currentVideo.type, key) 
+            : r.currentVideo.type;
+            
+          setCurrentVideo({ 
+            ...r.currentVideo, 
+            url: decryptedUrl, 
+            title: decryptedTitle, 
+            type: decryptedType 
+          });
+        } catch (err) {
+          console.error('[E2EE] Room state video decryption failed:', err);
+          setCurrentVideo(r.currentVideo);
+        }
       } else {
         setCurrentVideo(r.currentVideo);
       }
@@ -246,6 +264,13 @@ export const RoomProvider = ({ children }) => {
       }
 
       const decryptedMsg = { ...msg, content: displayContent, replyTo };
+      
+      // Decrypt system messages that use systemType: 'video-source'
+      if (decryptedMsg.e2ee && decryptedMsg.systemType === 'video-source' && roomKey) {
+        // displayContent is already the decrypted title (since it was decrypted above)
+        decryptedMsg.content = `Video set to: ${displayContent}`;
+      }
+
       setMessages((prev) => {
         // Deduplicate: Don't add if ID already exists (fixes race condition between history and live event)
         if (prev.some(m => m.id === decryptedMsg.id)) return prev;
@@ -281,9 +306,16 @@ export const RoomProvider = ({ children }) => {
         // mirroring the same defensive pattern in setVideoSource().
         const key = roomKey || (await deriveKey(room?.code));
         if (key) {
-          const decryptedUrl = await decryptData(video.url, key);
-          const decryptedTitle = await decryptData(video.title, key);
-          displayVideo = { ...video, url: decryptedUrl, title: decryptedTitle };
+          try {
+            const decryptedUrl = await decryptData(video.url, key);
+            const decryptedTitle = await decryptData(video.title, key);
+            const decryptedType = video.encryptedType 
+              ? await decryptData(video.type, key) 
+              : video.type;
+            displayVideo = { ...video, url: decryptedUrl, title: decryptedTitle, type: decryptedType };
+          } catch (err) {
+            console.error('[E2EE] Source changed video decryption failed:', err);
+          }
         }
       }
       setCurrentVideo(displayVideo);
@@ -570,11 +602,14 @@ export const RoomProvider = ({ children }) => {
     
     const encryptedUrl = await encryptData(video.url, key);
     const encryptedTitle = await encryptData(video.title, key);
+    const encryptedType = await encryptData(video.type, key);
     
     const encryptedVideo = {
         ...video,
         url: encryptedUrl,
         title: encryptedTitle,
+        type: encryptedType,
+        encryptedType: true,
         e2ee: true
     };
 

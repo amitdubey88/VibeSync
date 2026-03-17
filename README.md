@@ -45,29 +45,6 @@
 - Chat history persisted in MongoDB (last 100 messages per room).
 - Notification sounds + unread badge for missed messages.
 
-### 🧩 Chrome Extension (Netflix, Prime, Hotstar Sync)
-- Injects a draggable live-chat overlay directly onto streaming platform pages.
-- Syncs playback events (play, pause, seek) bidirectionally with the VibeSync room.
-- Voice call support within the extension overlay.
-
----
-
-## 📽️ Browser Extension
-
-Since streaming platforms use DRM, they can't be embedded. The extension syncs your native browser tabs instead.
-
-### Setup
-1. Every participant needs their **own subscription** for the platform.
-2. Download or clone this repo.
-3. In Chrome, open `chrome://extensions` → enable **Developer mode**.
-4. Click **Load unpacked** and select the `extension/` folder.
-5. Click the VibeSync extension icon, enter your **Room Code**, and hit Connect.
-6. Open Netflix/Prime — playback will sync for everyone!
-
-> 💡 The extension overlays a live chat and voice panel directly onto the streaming page.
-
----
-
 ## 🚀 Quick Start (Local)
 
 ### Prerequisites

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
+import { encryptData, decryptData } from '../utils/crypto';
 
 const ICE_SERVERS = {
     iceServers: [
@@ -21,7 +22,7 @@ const ICE_SERVERS = {
  */
 const useSyncDataChannel = () => {
     const { socket } = useSocket();
-    const { room, isHost } = useRoom();
+    const { room, isHost, roomKey } = useRoom();
 
     // Map of targetSocketId -> RTCPeerConnection
     const peersRef = useRef({});
@@ -51,9 +52,10 @@ const useSyncDataChannel = () => {
     const createPeer = useCallback((targetSocketId) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
         
-        pc.onicecandidate = (event) => {
-            if (event.candidate && socket) {
-                socket.emit('sync-channel:ice', { targetSocketId, candidate: event.candidate });
+        pc.onicecandidate = async (event) => {
+            if (event.candidate && socket && roomKey) {
+                const enc = await encryptData(event.candidate, roomKey);
+                socket.emit('sync-channel:ice', { targetSocketId, candidate: enc, e2ee: true });
             }
         };
 
@@ -91,7 +93,8 @@ const useSyncDataChannel = () => {
                 try {
                     const offer = await pc.createOffer();
                     await pc.setLocalDescription(offer);
-                    socket.emit('sync-channel:offer', { targetSocketId: p.socketId, offer });
+                    const enc = await encryptData(offer, roomKey);
+                    socket.emit('sync-channel:offer', { targetSocketId: p.socketId, offer: enc, e2ee: true });
                 } catch (err) {
                     console.error('[DataChannel] Offer creation failed', err);
                 }
@@ -131,7 +134,8 @@ const useSyncDataChannel = () => {
                 await pc.setRemoteDescription(offer);
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
-                socket.emit('sync-channel:answer', { targetSocketId: fromSocketId, answer });
+                const enc = await encryptData(answer, roomKey);
+                socket.emit('sync-channel:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
             } catch (err) {
                 console.warn('[DataChannel] Failed to handle offer from', fromSocketId, err);
                 // Graceful fallback: delete failed peer so it can be recreated next round
@@ -143,15 +147,19 @@ const useSyncDataChannel = () => {
             }
         };
 
-        const onAnswer = async ({ fromSocketId, answer }) => {
+        const onAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc) await pc.setRemoteDescription(answer);
+            if (pc && roomKey) {
+                const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            }
         };
 
-        const onIce = async ({ fromSocketId, candidate }) => {
+        const onIce = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && pc.remoteDescription) {
-                await pc.addIceCandidate(candidate).catch(e => console.warn('[DataChannel] Error adding ICE', e));
+            if (pc && pc.remoteDescription && roomKey) {
+                const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
+                await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(e => console.warn('[DataChannel] Error adding ICE', e));
             }
         };
 
@@ -164,7 +172,7 @@ const useSyncDataChannel = () => {
             socket.off('sync-channel:answer', onAnswer);
             socket.off('sync-channel:ice', onIce);
         };
-    }, [socket, isHost, createPeer, handleDataChannelMessage]);
+    }, [socket, isHost, createPeer, handleDataChannelMessage, roomKey]);
 
     // ── Cleanup on unmount ────────────────────────────────────────────────────
     useEffect(() => {

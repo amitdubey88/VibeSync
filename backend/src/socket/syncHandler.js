@@ -28,10 +28,9 @@ module.exports = (io, socket, roomStore) => {
         const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
-        room.currentVideo = { type: 'uploading', title, url: null };
-        // Keep videoState running (host is playing locally)
+        room.currentVideo = { type: 'uploading', title, url: null, e2ee: data.e2ee };
         const hashedCode = hashRoomCode(code);
-        socket.to(hashedCode).emit('video:uploading', { title });
+        socket.to(hashedCode).emit('video:uploading', data);
         console.log(`[sync] Upload started in ${code}: ${title}`);
     });
 
@@ -50,12 +49,17 @@ module.exports = (io, socket, roomStore) => {
         room.videoState = { currentTime: t, duration: 0, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
-        if (video && video.url && (video.type === 'file' || video.type === 'url')) {
+        const isE2EE = video && video.e2ee;
+        const isRegularVideo = video && video.url && (video.type === 'file' || video.type === 'url' || video.type === 'direct' || video.type === 'hls');
+
+        if (isE2EE || isRegularVideo) {
             const systemMsg = {
                 id: `vsys_${Date.now()}`,
                 userId: 'system', username: 'System', avatar: null,
-                content: `Video set to: ${video.title || 'Untitled'}`,
+                content: isE2EE ? video.title : `Video set to: ${video.title || 'Untitled'}`,
                 type: 'system',
+                systemType: isE2EE ? 'video-source' : undefined,
+                e2ee: isE2EE ? true : undefined,
                 videoUrl: video.url, // Hidden field used for deep cleanup
                 createdAt: new Date().toISOString(),
             };
@@ -234,23 +238,26 @@ module.exports = (io, socket, roomStore) => {
     // WebRTC DataChannel Signaling (P2P Sync Fallback/Override)
     // ═══════════════════════════════════════════════════════════════════════════
 
-    socket.on('sync-channel:offer', ({ targetSocketId, offer }) => {
+    socket.on('sync-channel:offer', (data) => {
+        const { targetSocketId } = data;
         socket.to(targetSocketId).emit('sync-channel:offer', {
-            offer,
+            ...data,
             fromSocketId: socket.id
         });
     });
 
-    socket.on('sync-channel:answer', ({ targetSocketId, answer }) => {
+    socket.on('sync-channel:answer', (data) => {
+        const { targetSocketId } = data;
         socket.to(targetSocketId).emit('sync-channel:answer', {
-            answer,
+            ...data,
             fromSocketId: socket.id
         });
     });
 
-    socket.on('sync-channel:ice', ({ targetSocketId, candidate }) => {
+    socket.on('sync-channel:ice', (data) => {
+        const { targetSocketId } = data;
         socket.to(targetSocketId).emit('sync-channel:ice', {
-            candidate,
+            ...data,
             fromSocketId: socket.id
         });
     });
