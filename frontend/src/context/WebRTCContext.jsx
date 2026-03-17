@@ -322,6 +322,13 @@ export const WebRTCProvider = ({ children }) => {
         if (socket && roomCode) socket.emit('voice:mute-toggle', { roomCode, isMuted: newMuted });
     }, [isMuted, joinVoice, socket, roomCode]);
 
+    // FIX: Reset passive-join guard when socket reconnects (gets a new instance).
+    // Without this, hasJoinedPassivelyRef stays 'true' from the previous connection
+    // and the user silently misses re-joining voice + requesting the live stream.
+    useEffect(() => {
+        hasJoinedPassivelyRef.current = false;
+    }, [socket]);
+
     // ── Auto-join Passive Voice on Room Entry ────────────────────────────────
     useEffect(() => {
         if (socket && roomCode && !hasJoinedPassivelyRef.current && !isInVoiceRef.current) {
@@ -339,14 +346,16 @@ export const WebRTCProvider = ({ children }) => {
         if (!socket || !roomCode) return;
 
         if (stream) {
-            // Close any stale video peer connections
+            // FIX: Always clear ALL stale peer entries before announcing a new stream.
+            // When host starts a second live stream (after ending a previous one or changing
+            // video), videoPeersRef still has 'pending' entries for all current participants.
+            // Without clearing, onParticipantUpdate sees them as already handled and skips
+            // re-announcing — participants are left frozen on the old stream frame.
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
-            // Announce to ALL room participants — they will send video-stream:offer requests
             socket.emit('video-stream:announce', { roomCode });
-            console.log('[VideoStream] Announced live stream to room');
+            console.log('[VideoStream] Announced live stream to room (peers cleared first)');
         } else {
             console.log('[VideoStream] Stopping live stream.');
-            // Stream stopped — close all video connections and notify participants
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
             socket.emit('video-stream:ended', { roomCode });
             setRemotePremierStream(null);
@@ -443,16 +452,26 @@ export const WebRTCProvider = ({ children }) => {
     useEffect(() => {
         if (!socket) return;
 
-        // Auto-sync active stream to participants who join late
+        // Auto-sync active stream to participants who join late or rejoin with a new socket ID
         const onParticipantUpdate = ({ participants }) => {
             if (!isHostRef.current) return;
-            // Accept if we have either the stream ref OR have already announced to others
             if (!premierStreamRef.current) return;
+
+            // Build the set of currently-connected socketIds so we can garbage-collect
+            // stale 'pending' entries whose participant has since disconnected/rejoined.
+            // A rejoined participant gets a NEW socketId — the old entry blocks re-announce.
+            const liveSocketIds = new Set(participants.map(p => p.socketId));
+            Object.keys(videoPeersRef.current).forEach(sid => {
+                if (!liveSocketIds.has(sid)) closeVideoPeer(sid);
+            });
+
             participants.forEach(p => {
-                if (p.socketId !== socket.id && !videoPeersRef.current[p.socketId]) {
-                    console.log(`[VideoStream] Late joiner detected (${p.username}), sending targeted stream announce`);
+                if (p.socketId === socket.id) return; // skip self
+                if (!p.isOnline) return;              // skip grace-period-offline participants
+                if (!videoPeersRef.current[p.socketId]) {
+                    console.log(`[VideoStream] Announcing stream to ${p.username} (${p.socketId})`);
                     socket.emit('video-stream:announce', { roomCode, targetSocketId: p.socketId });
-                    videoPeersRef.current[p.socketId] = 'pending'; // prevent duplicate announcements
+                    videoPeersRef.current[p.socketId] = 'pending';
                 }
             });
         };
@@ -583,19 +602,20 @@ export const WebRTCProvider = ({ children }) => {
         })();
     }, [roomKey, socket, closeVideoPeer, createVideoPeerConnection]);
 
-    // Late-joiner fallback: if participant detects a live stream but hasn't
-    // received the video feed, request announce from host with retries.
+    // Late-joiner / refresh fix: if participant detects a live stream type but hasn't
+    // received the video feed yet, immediately request an announce from the host.
+    // Also flag isStreamAnnounced so the 'Connecting...' overlay shows right away.
     useEffect(() => {
         if (!socket || !roomCode || isHostRef.current) return;
         if (currentVideo?.type !== 'live') return;
-        
-        // If the stream is announced but we haven't received a remote stream yet, 
-        // we should be more aggressive about requesting an update.
-        if (remotePremierStream) return;
+        if (remotePremierStream) return; // already receiving stream, nothing to do
+
+        // Show connecting overlay immediately (don't wait for video-stream:announced
+        // which won't arrive on refresh since it's a one-time broadcast)
+        setIsStreamAnnounced(true);
 
         let attempt = 0;
-        const maxAttempts = 5; // Increased attempts
-        const baseDelay = 3000; // Increased delay to allow handshake to potentially finish
+        const maxAttempts = 5;
 
         const tryRequest = () => {
             attempt++;
@@ -603,17 +623,16 @@ export const WebRTCProvider = ({ children }) => {
             socket.emit('video-stream:request-announce', { roomCode });
         };
 
-        // First attempt after 1.5s (give normal flow time)
-        const firstTimer = setTimeout(tryRequest, 1500);
+        // Fire IMMEDIATELY on first run (no delay)
+        tryRequest();
 
-        // Subsequent retries
-        const retryTimers = [];
-        for (let i = 1; i < maxAttempts; i++) {
-            retryTimers.push(setTimeout(tryRequest, 1500 + baseDelay * i));
-        }
+        // Retry with backoff in case the first request is lost or host is busy
+        const retryDelays = [2000, 4000, 7000, 12000];
+        const retryTimers = retryDelays.slice(0, maxAttempts - 1).map((delay, i) =>
+            setTimeout(tryRequest, delay)
+        );
 
         return () => {
-            clearTimeout(firstTimer);
             retryTimers.forEach(clearTimeout);
         };
     }, [socket, roomCode, currentVideo?.type, remotePremierStream]);

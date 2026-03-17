@@ -206,13 +206,6 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (isHost || !videoEl) return;
 
-    // PARTICIPANT BLACK SCREEN FIX: When switching from live (srcObject) to a regular src,
-    // we must clear srcObject first — otherwise the video element ignores the new src prop.
-    if (!remotePremierStream && videoEl.srcObject) {
-      console.log('[VideoPlayer] Clearing stale srcObject (was live stream, now regular video).');
-      videoEl.srcObject = null;
-    }
-
     if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
       videoEl.srcObject = remotePremierStream;
@@ -222,8 +215,12 @@ const VideoPlayer = () => {
         setIsLoading(false);
       });
     } else if (!remotePremierStream && videoEl.srcObject) {
-      console.log('[VideoPlayer] Clearing remote live stream.');
+      // FIX: Stream ended — tear down srcObject and call load() so the element resets
+      // to the new src attribute. Without load(), the element internally still references
+      // the old MediaStream and shows the last frozen frame instead of the new video.
+      console.log('[VideoPlayer] Live stream ended. Clearing srcObject and reloading element.');
       videoEl.srcObject = null;
+      videoEl.load();
     }
   }, [remotePremierStream, videoEl, isHost]);
 
