@@ -12,7 +12,7 @@ import HLSPlayer from './HLSPlayer';
 import SyncStatusBadge from './SyncStatusBadge';
 import ReactionBurst from './ReactionBurst';
 import QuickReactionBar from './QuickReactionBar';
-import { Play, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
+import { Play, Pause, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useWebRTC from '../../hooks/useWebRTC';
 import useHostTransferSync from '../../hooks/useHostTransferSync';

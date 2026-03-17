@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
 import { Reply, ShieldCheck, Check, CheckCheck } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
+import { useAuth } from '../../context/AuthContext';
 
 // Swipe threshold — how many px to drag before triggering reply
 const SWIPE_THRESHOLD = 55;
@@ -26,7 +27,8 @@ const StatusTick = ({ status, isOwn }) => {
 };
 
 const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
-  const { reactToMessage, messageStatuses, user } = useRoom();
+  const { reactToMessage, messageStatuses } = useRoom();
+  const { user } = useAuth();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
   const [showActions, setShowActions] = useState(false);
