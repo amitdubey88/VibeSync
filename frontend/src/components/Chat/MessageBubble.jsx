@@ -63,6 +63,25 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
     setTimeout(() => setIsSnapping(false), 350);
   }, []);
 
+  // Click outside to dismiss
+  useEffect(() => {
+    if (!showActions && !showReactionPicker) return;
+    
+    const handleOutsideClick = (e) => {
+      if (rowRef.current && !rowRef.current.contains(e.target)) {
+        setShowActions(false);
+        setShowReactionPicker(false);
+      }
+    };
+    
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('touchstart', handleOutsideClick);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('touchstart', handleOutsideClick);
+    };
+  }, [showActions, showReactionPicker]);
+
   if (message.type === 'system') {
     return (
       <div id={`msg-${message.id}`} className="flex justify-center my-2">
@@ -216,60 +235,48 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
       {/* Hover Action / Reaction Bar */}
       {(isHovered || showActions) && (
         <div 
-          className={`absolute -top-10 flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#1e1e2d] border border-white/10 shadow-2xl z-40 animate-bounce-in
-            ${isOwn ? 'right-0' : 'left-0'}
+          className={`absolute -top-11 flex items-center gap-1 px-2 py-1.5 rounded-2xl bg-[#1e1e2d] border border-white/10 shadow-2xl z-40 animate-bounce-in min-w-fit
+            ${isOwn ? 'right-0 origin-right' : 'left-0 origin-left'}
           `}
           onClick={(e) => e.stopPropagation()}
         >
-          {REACTION_OPTIONS.map(emoji => (
-            <button
-              key={emoji}
-              onClick={(e) => {
-                e.stopPropagation();
-                reactToMessage(message.id, emoji);
-                setShowActions(false);
-              }}
-              className="text-lg hover:scale-125 transition-transform active:scale-150 p-1"
-            >
-              {emoji}
-            </button>
-          ))}
+          <div className="flex items-center gap-0.5">
+            {REACTION_OPTIONS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  reactToMessage(message.id, emoji);
+                  setShowActions(false);
+                }}
+                className="text-lg hover:scale-125 transition-transform active:scale-150 p-1"
+              >
+                {emoji}
+              </button>
+            ))}
+          </div>
           
           <div className="w-px h-4 bg-white/10 mx-1" />
           
-          <button
-            onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
-            className={`p-1.5 rounded-lg text-text-muted hover:text-accent-yellow transition-all ${showReactionPicker ? 'text-accent-yellow bg-white/5' : ''}`}
-            title="Add Reaction"
-          >
-            <SmilePlus className="w-3.5 h-3.5" />
-          </button>
-
-          {onReply && (
+          <div className="flex items-center gap-0.5 pr-1">
             <button
-              onClick={(e) => { e.stopPropagation(); onReply(message); setShowActions(false); }}
-              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
-              title="Reply"
+              onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
+              className={`p-1.5 rounded-xl text-text-muted hover:text-accent-yellow transition-all ${showReactionPicker ? 'text-accent-yellow bg-white/5' : ''}`}
+              title="Add Reaction"
             >
-              <Reply className="w-3.5 h-3.5" />
+              <SmilePlus className="w-4 h-4" />
             </button>
-          )}
 
-          {isOwn && (
-            <button
-              className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
-              title="Edit"
-            >
-              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
-          )}
-          
-          <button
-            className="p-1.5 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
-            title="More"
-          >
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="1.5"/><circle cx="19" cy="12" r="1.5"/><circle cx="5" cy="12" r="1.5"/></svg>
-          </button>
+            {onReply && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onReply(message); setShowActions(false); }}
+                className="p-1.5 rounded-xl text-text-muted hover:text-white hover:bg-white/5 transition-all"
+                title="Reply"
+              >
+                <Reply className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
       )}
 

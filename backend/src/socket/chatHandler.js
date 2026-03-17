@@ -102,13 +102,19 @@ module.exports = (io, socket, roomStore) => {
             const msg = room.messages.find(m => m.id === messageId);
             if (msg) {
                 msg.reactions = msg.reactions || {};
+                
+                // 1. Remove user from ALL existing reactions on this message
+                Object.keys(msg.reactions).forEach(e => {
+                    msg.reactions[e] = (msg.reactions[e] || []).filter(u => u !== socket.user.username);
+                    if (msg.reactions[e].length === 0) delete msg.reactions[e];
+                });
+
+                // 2. Add as new reaction (unless toggling the same emoji off, but here we enforce "chooses another = changes")
+                // Toggle logic: if it was already that specific emoji, it's already removed above. 
+                // If it was a DIFFERENT emoji, it's removed above and we add it now.
+                // We need to check if it WAS present in the specific emoji to support "tap again to remove"
                 const users = msg.reactions[emoji] || [];
-                if (users.includes(socket.user.username)) {
-                    msg.reactions[emoji] = users.filter(u => u !== socket.user.username);
-                    if (msg.reactions[emoji].length === 0) delete msg.reactions[emoji];
-                } else {
-                    msg.reactions[emoji] = [...users, socket.user.username];
-                }
+                msg.reactions[emoji] = [...users, socket.user.username];
             }
         }
 
@@ -118,15 +124,17 @@ module.exports = (io, socket, roomStore) => {
                 const msg = await Message.findOne({ id: messageId });
                 if (msg) {
                     const currentReactions = msg.reactions || new Map();
-                    let users = currentReactions.get(emoji) || [];
                     
-                    if (users.includes(socket.user.username)) {
-                        users = users.filter(u => u !== socket.user.username);
-                        if (users.length === 0) currentReactions.delete(emoji);
-                        else currentReactions.set(emoji, users);
-                    } else {
-                        currentReactions.set(emoji, [...users, socket.user.username]);
+                    // Remove user from all reaction keys
+                    for (let [e, users] of currentReactions.entries()) {
+                        const filtered = users.filter(u => u !== socket.user.username);
+                        if (filtered.length === 0) currentReactions.delete(e);
+                        else currentReactions.set(e, filtered);
                     }
+
+                    // Add new reaction
+                    const users = currentReactions.get(emoji) || [];
+                    currentReactions.set(emoji, [...users, socket.user.username]);
                     
                     msg.reactions = currentReactions;
                     await msg.save();
