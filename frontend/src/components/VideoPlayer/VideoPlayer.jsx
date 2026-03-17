@@ -351,6 +351,8 @@ const VideoPlayer = () => {
     videoEl.addEventListener('playing', onPlayingEv);
     videoEl.addEventListener('pause', onPauseEv);
     videoEl.addEventListener('ended', onPauseEv);
+    videoEl.addEventListener('seeking', onTimeUpdate);
+    videoEl.addEventListener('seeked', onTimeUpdate);
 
     return () => {
       if (safetyTimer) clearTimeout(safetyTimer);
@@ -363,6 +365,8 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('playing', onPlayingEv);
       videoEl.removeEventListener('pause', onPauseEv);
       videoEl.removeEventListener('ended', onPauseEv);
+      videoEl.removeEventListener('seeking', onTimeUpdate);
+      videoEl.removeEventListener('seeked', onTimeUpdate);
     };
   }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream]);
 

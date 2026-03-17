@@ -92,7 +92,11 @@ class YouTubeVideoProxy extends EventTarget {
   set currentTime(time) {
     this._pendingSeekTime = time;
     try {
+      this.dispatchEvent(new Event('seeking'));
       this.ytPlayer.seekTo(time, true);
+      // Force an immediate timeupdate so the UI reflects the seek target instantly
+      this.dispatchEvent(new Event('timeupdate'));
+      
       // Give YouTube API a delay to update its internal clock before firing the event,
       // ensuring useVideoSync reads the new target time, not the old unmodified time.
       setTimeout(() => {
@@ -348,7 +352,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       if (proxyRef.current && !proxyRef.current.paused) {
         proxyRef.current.dispatchEvent(new Event('timeupdate'));
       }
-    }, 250);
+    }, 100);
     return () => clearInterval(interval);
   }, [status]);
 
