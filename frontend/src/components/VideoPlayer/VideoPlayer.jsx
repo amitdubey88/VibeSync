@@ -210,14 +210,20 @@ const VideoPlayer = () => {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
       videoEl.srcObject = remotePremierStream;
       setIsLoading(false);
+
+      // FIX: Improved 'Autoplay Only' logic. 
+      // First attempt unmuted playback. If the browser blocks it (common if no interaction 
+      // has occurred), catch the error, mute the video, and try again. Muted autoplay 
+      // is almost always permitted.
       videoEl.play().catch(err => {
-        console.error('[Participant Live] AutoPlay blocked or failed:', err);
+        console.warn('[Participant Live] Unmuted autoplay blocked, trying muted...', err);
+        videoEl.muted = true;
+        videoEl.play().catch(muteErr => {
+          console.error('[Participant Live] Muted autoplay also failed:', muteErr);
+        });
         setIsLoading(false);
       });
     } else if (!remotePremierStream && videoEl.srcObject) {
-      // FIX: Stream ended — tear down srcObject and call load() so the element resets
-      // to the new src attribute. Without load(), the element internally still references
-      // the old MediaStream and shows the last frozen frame instead of the new video.
       console.log('[VideoPlayer] Live stream ended. Clearing srcObject and reloading element.');
       videoEl.srcObject = null;
       videoEl.load();
@@ -371,15 +377,22 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (!isHost) return;
     
-    // Only reset if the video is NOT a live stream placeholder, or if it was cleared.
-    if (!currentVideo?.url || (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current)) {
+    // FIX: Detect source change more reliably by checking the whole currentVideo object 
+    // (specifically title/url) and the local blobUrl. Previously, only checking 
+    // currentVideo.url caused issues when switching between different files for 
+    // live streaming because the URL placeholder ('live-stream') stayed the same.
+    const isSourceChanged = !currentVideo?.url || 
+                           (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current) ||
+                           (currentVideo.url === 'live-stream' && blobUrl && blobUrl !== blobUrlRef.current);
+
+    if (isSourceChanged) {
       console.log('[VideoPlayer] Video source changed. Resetting live stream state.');
       setPremierStream(null);
       isStreamingActiveRef.current = false;
       setIsLiveStreamingInitialized(false);
       isLiveStreamingInitializedRef.current = false;
     }
-  }, [currentVideo?.url, isHost, setPremierStream]);
+  }, [currentVideo, isHost, setPremierStream, blobUrl]);
 
   // BLACK SCREEN FIX: When host changes video to a regular URL, clear stale blob/stream state
   // Without this, blobUrl persists → activeSrc keeps using old blob → participant element stays black
@@ -537,14 +550,13 @@ const VideoPlayer = () => {
   const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
 
   const handleCenterClick = useCallback((e) => {
-    // Trigger mouse-move to show controls
     handleMouseMove();
-    // Only host can toggle playback
     if (!isHost || !videoEl) return;
+    
     const isPaused = videoEl.paused;
     if (isPaused) videoEl.play().catch(() => {});
     else videoEl.pause();
-    // Flash animation
+    
     setClickAnim(isPaused ? 'play' : 'pause');
     clearTimeout(clickAnimRef.current);
     clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
@@ -558,7 +570,7 @@ const VideoPlayer = () => {
         return;
       }
       if (videoEl) {
-        if (videoEl.paused) videoEl.play();
+        if (videoEl.paused) videoEl.play().catch(() => {});
         else videoEl.pause();
       }
     };
@@ -743,6 +755,7 @@ const VideoPlayer = () => {
           remotePremierStream ? (
             <div className="relative w-full h-full">
               <video 
+                key={remotePremierStream?.id || 'live-video'}
                 autoPlay 
                 playsInline
                 className="w-full h-full object-contain"
