@@ -200,7 +200,7 @@ export const RoomProvider = ({ children }) => {
       setVideoState(r.videoState);
       
       // Decrypt video source if needed
-      if (r.currentVideo \u0026\u0026 r.currentVideo.e2ee) {
+      if (r.currentVideo && r.currentVideo.e2ee) {
         const key = await deriveKey(r.code);
         try {
           const decryptedUrl = await decryptData(r.currentVideo.url, key);

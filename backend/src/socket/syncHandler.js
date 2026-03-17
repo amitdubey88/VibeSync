@@ -24,7 +24,8 @@ module.exports = (io, socket, roomStore) => {
 
     // ── video:set-uploading ───────────────────────────────────────────────────
     // Host started a local upload — participants see a "waiting" state.
-    socket.on('video:set-uploading', ({ roomCode, title }) => {
+    socket.on('video:set-uploading', (data) => {
+        const { roomCode, title } = data;
         const { room, code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
