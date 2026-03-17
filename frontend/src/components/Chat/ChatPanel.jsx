@@ -63,19 +63,25 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-4 py-3 border-b border-border-dark flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-bold text-text-primary">Live Chat</h3>
-        <div className="flex items-center gap-2">
+      <div className="px-4 py-4 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01] backdrop-blur-sm">
+        <div className="flex flex-col">
+          <h3 className="text-[13px] font-black text-text-primary tracking-tighter uppercase mb-0.5">Live Chat</h3>
+          <p className="text-[9px] text-text-muted font-bold tracking-widest uppercase opacity-60">Synchronized</p>
+        </div>
+        <div className="flex items-center gap-3">
           <button 
             onClick={() => setChatMuted(!chatMuted)}
-            className="p-1.5 rounded-md hover:bg-bg-hover text-text-muted hover:text-text-primary transition-colors"
+            className={`p-2 rounded-xl transition-all active:scale-95 ${chatMuted ? 'text-red-400 bg-red-500/10' : 'text-text-muted hover:bg-white/5 hover:text-text-primary'}`}
             title={chatMuted ? "Unmute chat notifications" : "Mute chat notifications"}
           >
             {chatMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
           </button>
-          <span className="badge bg-accent-red/10 text-accent-red">
-            {messages.filter((m) => m.type === 'text').length} messages
-          </span>
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-red/10 border border-accent-red/20 shadow-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse" />
+            <span className="text-[10px] font-black text-accent-red tracking-tight">
+              {messages.filter((m) => m.type === 'text').length}
+            </span>
+          </div>
         </div>
       </div>
 
@@ -159,25 +165,25 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       )}
 
       {/* ── Input bar ── */}
-      <div className="flex flex-col border-t border-border-dark shrink-0">
+      <div className="flex flex-col border-t border-white/5 shrink-0 bg-white/[0.01] backdrop-blur-md">
         
         {/* Reply Preview */}
         {replyToMessage && (
-          <div className="flex items-center justify-between px-3 py-2 bg-bg-hover text-xs border-b border-border-dark">
-            <div className="flex items-center gap-2 overflow-hidden">
-              <Reply className="w-3.5 h-3.5 text-accent-purple shrink-0" />
+          <div className="flex items-center justify-between px-4 py-3 bg-accent-purple/5 text-xs border-b border-white/5 animate-slide-up">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <div className="w-1 h-8 bg-accent-purple rounded-full shrink-0" />
               <div className="flex flex-col min-w-0">
-                <span className="font-bold text-accent-purple truncate">Replying to {replyToMessage.username}</span>
-                <span className="text-text-muted truncate">
-                  {replyToMessage.content.length > 50 
+                <span className="text-[10px] font-black text-accent-purple tracking-wider uppercase">Replying to {replyToMessage.username}</span>
+                <span className="text-text-muted truncate leading-relaxed italic opacity-80">
+                  "{replyToMessage.content.length > 50 
                     ? replyToMessage.content.substring(0, 50) + '...' 
-                    : replyToMessage.content}
+                    : replyToMessage.content}"
                 </span>
               </div>
             </div>
             <button 
               onClick={() => setReplyToMessage(null)} 
-              className="p-1 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded shrink-0"
+              className="p-1.5 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all active:scale-95"
               title="Cancel reply"
             >
               <X className="w-4 h-4" />
@@ -186,36 +192,38 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         )}
 
 
-        <form onSubmit={handleSend} className="flex items-center gap-2 px-3 py-2">
+        <form onSubmit={handleSend} className="flex items-center gap-3 px-4 py-3">
           <button
             type="button"
             onClick={() => setShowEmoji((s) => !s)}
-            className="btn-icon text-text-secondary hover:text-accent-yellow shrink-0"
+            className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showEmoji ? 'text-accent-yellow bg-accent-yellow/10' : 'text-text-secondary hover:text-text-primary hover:bg-white/5'}`}
             title="Emoji / Reactions"
           >
             <Smile className="w-5 h-5" />
           </button>
 
-          <input
-            ref={inputRef}
-            type="text"
-            className="input flex-1 py-2 text-sm"
-            placeholder="Send a message…"
-            value={input}
-            onChange={(e) => {
-              setInput(e.target.value);
-              if (e.target.value.trim()) {
-                broadcastTyping();
-              }
-            }}
-            onKeyDown={handleKeyDown}
-            maxLength={2000}
-            autoComplete="off"
-          />
+          <div className="relative flex-1 group">
+            <input
+              ref={inputRef}
+              type="text"
+              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-text-primary placeholder:text-text-muted/50 text-[14px] transition-all focus:outline-none focus:border-accent-purple/50 focus:ring-4 focus:ring-accent-purple/10 selection:bg-accent-purple/30"
+              placeholder="Send a message…"
+              value={input}
+              onChange={(e) => {
+                setInput(e.target.value);
+                if (e.target.value.trim()) {
+                  broadcastTyping();
+                }
+              }}
+              onKeyDown={handleKeyDown}
+              maxLength={2000}
+              autoComplete="off"
+            />
+          </div>
           <button
             type="submit"
             disabled={!input.trim()}
-            className="btn-primary px-3 py-2 h-9 shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent-purple text-white shadow-lg shadow-accent-purple/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:grayscale disabled:hover:scale-100 disabled:shadow-none"
             title="Send"
           >
             <Send className="w-4 h-4" />

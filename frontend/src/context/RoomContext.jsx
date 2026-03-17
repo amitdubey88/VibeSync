@@ -124,15 +124,15 @@ export const RoomProvider = ({ children }) => {
       const decryptedHistory = await Promise.all((history || []).map(async (m) => {
         let content = m.content;
         let replyTo = m.replyTo;
-        const isE2EE = m.e2ee === true || (m.e2ee !== false && typeof m.content === 'string' && m.content.length > 30 && !m.content.includes(' '));
+        const isE2EE = m.e2ee === true || (m.e2ee !== false && typeof m.content === 'string' && m.content.length > 30 && !m.content.includes(' ') && /^[a-zA-Z0-9+/]*={0,2}$/.test(m.content));
 
-        if (isE2EE && roomKey) {
-          try { content = await decryptData(content, roomKey); } catch (_) {}
+        if (isE2EE && key) {
+          try { content = await decryptData(content, key); } catch (_) {}
         }
         
         if (replyTo && isE2EE && replyTo.content && typeof replyTo.content === 'string') {
           try {
-            const decryptedReplyContent = await decryptData(replyTo.content, roomKey);
+            const decryptedReplyContent = await decryptData(replyTo.content, key);
             replyTo = { ...replyTo, content: decryptedReplyContent };
           } catch (_) {}
         }

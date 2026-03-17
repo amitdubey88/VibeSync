@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
-import { Reply, Smile, Plus } from 'lucide-react';
+import { Reply, Smile, Plus, ShieldCheck } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 
 // Swipe threshold — how many px to drag before triggering reply
@@ -122,9 +122,9 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
         <Reply className="w-3.5 h-3.5" style={{ transform: `scale(${0.7 + swipeProgress * 0.5})` }} />
       </div>
 
-      {/* Avatar */}
+      {/* Avatar with subtle glow/ring */}
       <div
-        className="avatar w-7 h-7 text-xs text-white shrink-0 mt-0.5"
+        className="avatar w-8 h-8 text-[10px] text-white shrink-0 mt-0.5 shadow-lg border border-white/10 ring-2 ring-white/5"
         style={{ backgroundColor: avatarBg }}
       >
         {getInitials(message.username)}
@@ -138,32 +138,39 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
           transition: isSnapping ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
         }}
       >
+        {/* Username for messages from others */}
         {!isOwn && (
-          <span className="text-xs text-text-muted font-medium">{message.username}</span>
+          <span className="text-[11px] text-text-muted font-bold ml-1 mb-0.5 tracking-tight uppercase opacity-80">
+            {message.username}
+          </span>
         )}
 
         <div
-          className={`flex flex-col px-3 py-2 rounded-2xl text-sm leading-relaxed break-words relative overflow-hidden
+          className={`flex flex-col px-3.5 py-2.5 rounded-2xl text-[14px] leading-[1.5] break-words relative overflow-hidden shadow-md transition-shadow group-hover:shadow-lg
             ${isOwn
-              ? 'bg-accent-purple text-white rounded-tr-sm'
-              : 'bg-bg-hover text-text-primary rounded-tl-sm'
+              ? 'bg-gradient-to-br from-accent-purple via-[#7c3aed] to-[#6d28d9] text-white rounded-tr-sm border border-white/10'
+              : 'bg-white/[0.03] backdrop-blur-md text-text-primary rounded-tl-sm border border-white/5 ring-1 ring-white/[0.02]'
             }`}
         >
           {message.replyTo && (
             <div 
               onClick={scrollToOriginal}
-              className={`mb-1.5 pl-2 py-1 pr-2 rounded text-xs border-l-2 cursor-pointer opacity-90 transition-all hover:bg-white/10 overflow-hidden
+              className={`mb-2 pl-2.5 py-1.5 pr-2.5 rounded-xl border-l-4 cursor-pointer transition-all hover:brightness-110 overflow-hidden relative
               ${isOwn
-                ? 'bg-white/10 border-white/40 text-white'
-                : 'bg-bg-secondary border-accent-purple text-text-secondary'}`}
+                ? 'bg-black/20 border-white/30 text-white/90'
+                : 'bg-white/5 border-accent-purple text-text-secondary shadow-inner'}`}
             >
-              <div className={`font-bold truncate ${isOwn ? 'text-white' : 'text-accent-purple'}`}>
+              <div className={`text-[10px] font-black uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-accent-purple/80'}`}>
                 {message.replyTo.username}
               </div>
-              <div className="line-clamp-2 break-all overflow-wrap-anywhere opacity-80">{message.replyTo.content}</div>
+              <div className="text-[11px] line-clamp-2 break-all overflow-wrap-anywhere opacity-70 leading-normal italic">
+                {message.replyTo.content}
+              </div>
             </div>
           )}
-          <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere">{message.content}</span>
+          <span className="whitespace-pre-wrap break-all overflow-wrap-anywhere font-medium tracking-tight">
+            {message.content}
+          </span>
           
           {/* Reaction display */}
           {message.reactions && Object.keys(message.reactions).length > 0 && (
@@ -184,9 +191,12 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
             </div>
           )}
 
-          {/* Internal Timestamp */}
-          <div className={`mt-0.5 flex justify-end ${isOwn ? 'opacity-60' : 'opacity-40'}`}>
-            <span className="text-[8px] select-none font-medium tracking-tight">
+          {/* Internal Timestamp & E2EE indicator */}
+          <div className={`mt-1.5 flex items-center justify-end gap-1.5 ${isOwn ? 'opacity-70' : 'opacity-40'}`}>
+            {message.e2ee && (
+              <ShieldCheck className="w-2.5 h-2.5 text-current" title="End-to-end encrypted" />
+            )}
+            <span className="text-[9px] select-none font-bold tracking-tighter uppercase">
               {formatMessageTime(message.createdAt)}
             </span>
           </div>
