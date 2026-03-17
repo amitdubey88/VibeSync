@@ -86,7 +86,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       </div>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto scroll-area px-3 py-3 space-y-1">
+      <div className="flex-1 overflow-y-auto scroll-area px-3 pt-12 pb-3 space-y-1">
 
         {/* E2EE Security Notice */}
         <div className="flex items-center gap-2.5 py-2.5 px-4 mb-4 bg-accent-yellow/5 border border-accent-yellow/10 rounded-xl justify-center">

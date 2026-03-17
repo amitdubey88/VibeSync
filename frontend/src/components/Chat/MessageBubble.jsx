@@ -283,8 +283,8 @@ const MessageBubble = ({ message, isOwn, onReply }) => {
       {/* Extended Reaction Picker */}
       {showReactionPicker && (
         <div 
-          className={`absolute -top-24 flex flex-wrap max-w-[200px] gap-1 px-3 py-2 rounded-2xl bg-[#13131f] border border-white/10 shadow-2xl z-50 animate-bounce-in
-            ${isOwn ? 'right-0' : 'left-0'}
+          className={`absolute -top-16 flex flex-wrap max-w-[200px] gap-1 px-3 py-2 rounded-2xl bg-[#13131f] border border-white/10 shadow-2xl z-50 animate-bounce-in
+            ${isOwn ? 'right-0 origin-top-right' : 'left-0 origin-top-left'}
           `}
           onClick={(e) => e.stopPropagation()}
         >
