@@ -205,10 +205,18 @@ const VideoPlayer = () => {
 
   useEffect(() => {
     if (isHost || !videoEl) return;
+
+    // PARTICIPANT BLACK SCREEN FIX: When switching from live (srcObject) to a regular src,
+    // we must clear srcObject first — otherwise the video element ignores the new src prop.
+    if (!remotePremierStream && videoEl.srcObject) {
+      console.log('[VideoPlayer] Clearing stale srcObject (was live stream, now regular video).');
+      videoEl.srcObject = null;
+    }
+
     if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
       videoEl.srcObject = remotePremierStream;
-      setIsLoading(false); // Explicitly clear loading state when stream is attached
+      setIsLoading(false);
       videoEl.play().catch(err => {
         console.error('[Participant Live] AutoPlay blocked or failed:', err);
         setIsLoading(false);
@@ -345,8 +353,6 @@ const VideoPlayer = () => {
     if (!isHost) return;
     
     // Only reset if the video is NOT a live stream placeholder, or if it was cleared.
-    // If we're already in a live stream and the room state updates (but URL stays 'live-stream'),
-    // do NOT reset the initialized flag or the premier stream.
     if (!currentVideo?.url || (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current)) {
       console.log('[VideoPlayer] Video source changed. Resetting live stream state.');
       setPremierStream(null);
@@ -355,6 +361,22 @@ const VideoPlayer = () => {
       isLiveStreamingInitializedRef.current = false;
     }
   }, [currentVideo?.url, isHost, setPremierStream]);
+
+  // BLACK SCREEN FIX: When host changes video to a regular URL, clear stale blob/stream state
+  // Without this, blobUrl persists → activeSrc keeps using old blob → participant element stays black
+  useEffect(() => {
+    if (!currentVideo?.url) return;
+    const isRegularUrl = currentVideo.url !== 'live-stream' && !blobUrlRef.current?.startsWith('blob:');
+    // If host navigates from blob/live to a new URL, wipe local blob tracking
+    if (isRegularUrl && blobUrl) {
+      console.log('[VideoPlayer] Clearing stale blob URL after video source change.');
+      URL.revokeObjectURL(blobUrl);
+      blobUrlRef.current = null;
+      setBlobUrl(null);
+      setIsDirectStreaming(false);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.url]);
 
   // Reset local timing when video source changes
   useEffect(() => {

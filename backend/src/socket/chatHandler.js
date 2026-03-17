@@ -154,6 +154,31 @@ module.exports = (io, socket, roomStore) => {
         });
     });
 
+    // ── chat:delivered ────────────────────────────────────────────────────────
+    // Participant ACKs receipt of one or more messages. Host and sender get notified.
+    socket.on('chat:delivered', ({ roomCode, messageIds }) => {
+        const code = roomCode?.toUpperCase();
+        if (!roomStore.has(code)) return;
+        const hashedCode = hashRoomCode(code);
+        // Broadcast to the room so the sender's client can update tick state
+        socket.to(hashedCode).emit('chat:delivered', {
+            messageIds,
+            username: socket.user.username,
+        });
+    });
+
+    // ── chat:read ─────────────────────────────────────────────────────────────
+    // Participant marks messages as seen (chat panel is open and active).
+    socket.on('chat:read', ({ roomCode, messageIds }) => {
+        const code = roomCode?.toUpperCase();
+        if (!roomStore.has(code)) return;
+        const hashedCode = hashRoomCode(code);
+        socket.to(hashedCode).emit('chat:read', {
+            messageIds,
+            username: socket.user.username,
+        });
+    });
+
     /**
      * Broadcasts a system notification to the room (join/leave/host change).
      * Called externally from the main socket index.

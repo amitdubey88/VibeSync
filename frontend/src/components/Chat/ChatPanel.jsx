@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import MessageBubble from './MessageBubble';
-import { Send, Smile, Bell, BellOff, X, Reply, ShieldCheck } from 'lucide-react';
+import { Send, Smile, Bell, BellOff, X, ShieldCheck } from 'lucide-react';
 
 // Quick emoji sets — no external library needed
 const EMOJI_SETS = [
@@ -13,7 +13,7 @@ const EMOJI_SETS = [
 
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
-  const { messages, sendMessage, sendReaction, room, currentVideo, typingUsers, broadcastTyping } = useRoom();
+  const { messages, sendMessage, sendReaction, room, typingUsers, broadcastTyping, markChatRead } = useRoom();
   const { user } = useAuth();
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
@@ -33,6 +33,17 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  // Emit read receipts for all visible messages from others when panel is active
+  useEffect(() => {
+    if (!room || !messages.length) return;
+    const unreadFromOthers = messages
+      .filter(m => m.type === 'text' && m.userId !== user?.id && m.username !== user?.username)
+      .map(m => m.id);
+    if (unreadFromOthers.length) markChatRead(unreadFromOthers);
+  // Only run when new messages arrive or user opens the panel
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, room?.code]);
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -76,12 +87,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           >
             {chatMuted ? <BellOff className="w-4 h-4" /> : <Bell className="w-4 h-4" />}
           </button>
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent-red/10 border border-accent-red/20 shadow-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent-red animate-pulse" />
-            <span className="text-[10px] font-black text-accent-red tracking-tight">
-              {messages.filter((m) => m.type === 'text').length}
-            </span>
-          </div>
+
         </div>
       </div>
 
@@ -137,9 +143,18 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             </p>
           </div>
         )}
-        {messages.map((msg) => {
+        {messages.map((msg, idx) => {
           const isOwn = msg.userId === user?.id || msg.username === user?.username;
-          return <MessageBubble key={msg.id} message={msg} isOwn={isOwn} onReply={setReplyToMessage} />;
+          const prevMsg = idx > 0 ? messages[idx - 1] : null;
+          return (
+            <MessageBubble
+              key={msg.id}
+              message={msg}
+              isOwn={isOwn}
+              onReply={setReplyToMessage}
+              prevMessage={prevMsg}
+            />
+          );
         })}
         <div ref={bottomRef} />
       </div>

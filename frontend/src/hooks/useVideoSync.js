@@ -196,6 +196,12 @@ const useVideoSync = (videoEl) => {
         const onSyncState = ({ videoState: vs, currentVideo: remoteVideo }) => {
             if (isHost) return;
             
+            // Always update videoState duration from server — fix for participants
+            // who never load the file locally and thus never get `loadedmetadata`
+            if (vs?.duration > 0) {
+                setVideoState(prev => prev ? { ...prev, duration: vs.duration } : vs);
+            }
+
             if (!videoEl) {
                 // Cache for when element mounts
                 cachedSyncStateRef.current = { videoState: vs, currentVideo: remoteVideo };

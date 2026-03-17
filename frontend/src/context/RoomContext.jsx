@@ -87,6 +87,8 @@ export const RoomProvider = ({ children }) => {
   const participantsRef = useRef([]);
   // Always-current ref for isHost so socket closures don't go stale (BUG-7)
   const isHostRef = useRef(false);
+  // Message delivery/read status: { [msgId]: 'sent' | 'delivered' | 'seen' }
+  const [messageStatuses, setMessageStatuses] = useState({});
 
   const addSystemMessage = useCallback((content) => {
     const sysMsg = {
@@ -124,10 +126,18 @@ export const RoomProvider = ({ children }) => {
       const decryptedHistory = await Promise.all((history || []).map(async (m) => {
         let content = m.content;
         let replyTo = m.replyTo;
-        const isE2EE = m.e2ee === true || (m.e2ee !== false && typeof m.content === 'string' && m.content.length > 30 && !m.content.includes(' ') && /^[a-zA-Z0-9+/]*={0,2}$/.test(m.content));
+        // STRONG heuristic: trust the e2ee flag first; fall back to content analysis
+        const isE2EE = m.e2ee === true || (
+          m.e2ee !== false &&
+          typeof m.content === 'string' &&
+          m.content.length > 20 &&
+          !m.content.includes(' ') &&
+          /^[a-zA-Z0-9+/]*={0,2}$/.test(m.content)
+        );
 
         if (isE2EE && key) {
-          try { content = await decryptData(content, key); } catch (_) {}
+          try { content = await decryptData(content, key); }
+          catch (_) { content = m.content; } // keep encrypted string visible rather than crashing
         }
         
         if (replyTo && isE2EE && replyTo.content && typeof replyTo.content === 'string') {
@@ -142,10 +152,24 @@ export const RoomProvider = ({ children }) => {
         }
 
         // Ensure reactions is a plain object for the UI
-        let reactions = m.reactions || {};
-        if (reactions instanceof Map) {
-          reactions = Object.fromEntries(reactions);
+        // Also decrypt reaction emoji keys (they may be stored encrypted from older sessions)
+        let rawReactions = m.reactions || {};
+        if (rawReactions instanceof Map) {
+          rawReactions = Object.fromEntries(rawReactions);
         }
+        
+        // Decrypt each emoji key; merge collisions (same emoji, different ciphertexts)
+        const reactions = {};
+        await Promise.all(Object.entries(rawReactions).map(async ([emojiKey, users]) => {
+          let displayKey = emojiKey;
+          // Heuristic: if the key looks like a base64-encoded ciphertext, try to decrypt
+          if (isE2EE && key && emojiKey.length > 6 && /^[a-zA-Z0-9+/=]+$/.test(emojiKey)) {
+            try { displayKey = await decryptData(emojiKey, key); } catch (_) {}
+          }
+          if (!reactions[displayKey]) reactions[displayKey] = [];
+          // Merge users, deduplicating by username
+          users.forEach(u => { if (!reactions[displayKey].includes(u)) reactions[displayKey].push(u); });
+        }));
 
         return { ...m, content, replyTo, reactions };
       }));
@@ -276,6 +300,11 @@ export const RoomProvider = ({ children }) => {
         if (prev.some(m => m.id === decryptedMsg.id)) return prev;
         return [...prev, decryptedMsg];
       });
+
+      // Emit delivered ACK for messages from others so the sender sees double-ticks
+      if (msg.userId !== user?.id && msg.username !== user?.username && room?.code) {
+        socket.emit('chat:delivered', { roomCode: room.code, messageIds: [msg.id] });
+      }
       
       // If it's not my message, check if we need to notify
       if (msg.userId !== user?.id && msg.username !== user?.username) {
@@ -438,6 +467,26 @@ export const RoomProvider = ({ children }) => {
       }));
     };
 
+    // ── Delivered / Seen receipts ─────────────────────────────────────────────
+    const onDelivered = ({ messageIds }) => {
+      setMessageStatuses(prev => {
+        const next = { ...prev };
+        (messageIds || []).forEach(id => {
+          // Only upgrade status (sent → delivered → seen)
+          if (!next[id] || next[id] === 'sent') next[id] = 'delivered';
+        });
+        return next;
+      });
+    };
+
+    const onRead = ({ messageIds }) => {
+      setMessageStatuses(prev => {
+        const next = { ...prev };
+        (messageIds || []).forEach(id => { next[id] = 'seen'; });
+        return next;
+      });
+    };
+
     const onRemotePlay = ({ currentTime }) => {
       if (!isHost) {
         addSystemMessage(`Host resumed the video`);
@@ -479,6 +528,8 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:host-left', onHostLeft);
     socket.on('chat:typing', onTyping);
     socket.on('chat:message-reaction', onMessageReaction);
+    socket.on('chat:delivered', onDelivered);
+    socket.on('chat:read', onRead);
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -505,6 +556,8 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:host-left', onHostLeft);
       socket.off('chat:typing', onTyping);
       socket.off('chat:message-reaction', onMessageReaction);
+    socket.off('chat:delivered', onDelivered);
+    socket.off('chat:read', onRead);
     };
   }, [socket, user, roomKey]);
 
@@ -584,15 +637,17 @@ export const RoomProvider = ({ children }) => {
   }, [socket, room]);
 
   const reactToMessage = useCallback(async (messageId, emoji) => {
-    if (!socket || !room || !roomKey) return;
-    const encryptedEmoji = await encryptData(emoji, roomKey);
+    if (!socket || !room) return;
+    // Emojis are sent in plaintext — they aren't sensitive and must be consistent
+    // for proper grouping on the backend (encrypted emojis produce different ciphertexts
+    // per user, preventing reactions from being merge/grouped correctly).
     socket.emit('chat:message-reaction', {
       roomCode: room.code,
       messageId,
-      emoji: encryptedEmoji,
-      e2ee: true
+      emoji, // plaintext emoji
+      e2ee: false
     });
-  }, [socket, room, roomKey]);
+  }, [socket, room]);
 
   const setVideoSource = useCallback(async (video, opts = {}) => {
     if (!socket || !room) return;
@@ -710,6 +765,13 @@ export const RoomProvider = ({ children }) => {
     socket.emit('room:set-status', { roomCode: room.code, status });
   }, [socket, room]);
 
+  // Marks messages as seen from the current user's perspective;
+  // called by ChatPanel when the user focuses on the chat.
+  const markChatRead = useCallback((messageIds) => {
+    if (!socket || !room || !messageIds.length) return;
+    socket.emit('chat:read', { roomCode: room.code, messageIds });
+  }, [socket, room]);
+
   return (
     <RoomContext.Provider value={{
       room, roomKey, participants, voiceParticipants, messages,
@@ -728,7 +790,8 @@ export const RoomProvider = ({ children }) => {
       clips, sendClip,
       hostAway,
       typingUsers, broadcastTyping,
-      reactToMessage
+      reactToMessage,
+      messageStatuses, markChatRead
     }}>
       {children}
     </RoomContext.Provider>
