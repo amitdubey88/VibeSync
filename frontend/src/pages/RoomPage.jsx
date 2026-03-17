@@ -258,8 +258,10 @@ const RoomPage = () => {
   // Redirect to home if room ended
   useEffect(() => {
     if (roomEndedByHost) {
+      console.log('[RoomPage] Room ended by host, clearing session and redirecting.');
+      sessionStorage.removeItem("vibesync_session");
       dismissRoomEnded();
-      navigate('/', { replace: true, state: { roomEnded: roomEndedByHost.message } });
+      navigate('/', { replace: true, state: { roomEnded: roomEndedByHost.message || "Session Ended" } });
     }
   }, [roomEndedByHost, navigate, dismissRoomEnded]);
 
@@ -425,8 +427,9 @@ const RoomPage = () => {
           <button 
             className="btn-primary w-full" 
             onClick={() => {
+              console.log('[RoomPage] Join error, clearing session and returning home.');
               sessionStorage.removeItem("vibesync_session");
-              navigate('/');
+              navigate('/', { replace: true });
             }}
           >
             <ChevronLeft className="w-4 h-4" /> Back to Home

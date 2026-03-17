@@ -5,6 +5,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { ROOM_TYPE } = require('../config/constants');
 const { hashRoomCode } = require('../utils/hash');
+const { endedRooms } = require('../socket/roomActionsHandler');
 
 // Try to use MongoDB models; fall back gracefully
 let Room, Message;
@@ -38,6 +39,13 @@ const getRoomStore = (req) => req.app.locals.roomStore;
 async function hydrateRoom(req, code) {
     const store = getRoomStore(req);
     if (store.has(code)) return store.get(code);
+
+    // Block rehydration if the room was recently ended
+    if (endedRooms.has(code)) {
+        console.log(`[rooms/hydrate] Blocked rehydration for ended room: ${code}`);
+        return null;
+    }
+
     if (!Room || !isDbReady()) return null;
     try {
         const hashedCode = hashRoomCode(code);
@@ -155,7 +163,13 @@ router.post('/:code/join', authenticate, async (req, res) => {
     // Try in-memory first; fall back to MongoDB (handles server restarts)
     const room = await hydrateRoom(req, code.toUpperCase());
 
-    if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
+    if (!room) {
+        // Specifically check if it was ended recently to provide a better error
+        if (endedRooms.has(code.toUpperCase())) {
+            return res.status(403).json({ success: false, message: 'This session has ended.' });
+        }
+        return res.status(404).json({ success: false, message: 'Room not found' });
+    }
     // Count only online participants toward the limit
     const onlineCount = room.participants.filter(p => p.isOnline !== false).length;
     if (onlineCount >= room.participantLimit) {

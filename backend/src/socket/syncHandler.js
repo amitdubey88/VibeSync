@@ -47,7 +47,7 @@ module.exports = (io, socket, roomStore) => {
         const t = (typeof currentTime === 'number') ? currentTime : 0;
         // Note: duration is synced separately via video:sync-duration — not part of set-source payload
         const playing = isPlaying ?? false;
-        room.videoState = { currentTime: t, duration: room.videoState?.duration || 0, isPlaying: playing, lastUpdated: Date.now() };
+        room.videoState = { currentTime: t, duration: 0, isPlaying: playing, lastUpdated: Date.now() };
 
         // Record video history for cleanup on room deletion
         if (video && video.url && (video.type === 'file' || video.type === 'url')) {

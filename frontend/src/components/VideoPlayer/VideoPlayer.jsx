@@ -356,6 +356,17 @@ const VideoPlayer = () => {
     }
   }, [currentVideo?.url, isHost, setPremierStream]);
 
+  // Reset local timing when video source changes
+  useEffect(() => {
+    if (currentVideo?.url) {
+      console.log('[VideoPlayer] Source changed, resetting local timing states.');
+      setDuration(0);
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setBuffered(0);
+    }
+  }, [currentVideo?.url]);
+
   // Reset local streaming state when host changes (driven by useHostTransferSync hook)
   useEffect(() => {
     if (hostChangedFlag && isHost) {

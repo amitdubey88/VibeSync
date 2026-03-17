@@ -16,6 +16,10 @@ try {
     Message = require('../models/Message');
 } catch (_) { }
 
+// In-memory blacklist for ended rooms to prevent immediate re-entry
+const endedRooms = new Set();
+module.exports.endedRooms = endedRooms;
+
 /**
  * Extract Cloudinary public_id from a secure_url
  * e.g. https://res.cloudinary.com/mycloud/video/upload/v123/vibesync/abc.mp4
@@ -91,6 +95,11 @@ module.exports = (io, socket, roomStore) => {
 
         // Remove room from in-memory store
         roomStore.delete(code);
+        
+        // Add to blacklist to prevent re-entry/rehydration
+        endedRooms.add(code);
+        // Remove from blacklist after 1 hour (TTL) to prevent memory leak
+        setTimeout(() => endedRooms.delete(code), 3600000);
 
         // 3. Permanent Cascading Delete in MongoDB
         if (Room && Message) {
