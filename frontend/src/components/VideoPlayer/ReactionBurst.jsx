@@ -12,10 +12,11 @@ const ReactionBurst = () => {
         const isStorm = newReactions.length > 4;
         
         // Pre-compute random position/delay at spawn time so they don't thrash on re-render
+        // SPREAD: Randomly distribute across 20-80% of the screen width
         const withPos = (r, suffix = '') => ({
           ...r,
           id: suffix ? `${r.id}${suffix}` : r.id,
-          left: 50 + (Math.random() * 40 - 20),
+          left: 20 + (Math.random() * 60), 
           delay: Math.random() * (isStorm ? 0.4 : 0.2),
         });
 
@@ -38,14 +39,15 @@ const ReactionBurst = () => {
   }, [reactions]);
 
   return (
-    <div className="absolute inset-0 pointer-events-none z-50 overflow-hidden">
+    <div className="absolute inset-0 pointer-events-none z-50">
       {localReactions.map((r) => (
         <div
           key={r.id}
-          className="absolute bottom-20 left-1/2 -translate-x-1/2 text-4xl animate-reaction-rise"
+          className="absolute bottom-20 text-4xl animate-reaction-rise filter drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]"
           style={{
             left: `${r.left ?? 50}%`,
-            animationDelay: `${r.delay ?? 0}s`
+            animationDelay: `${r.delay ?? 0}s`,
+            transform: 'translateX(-50%)'
           }}
         >
           {r.emoji}

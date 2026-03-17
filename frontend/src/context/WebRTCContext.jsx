@@ -163,7 +163,7 @@ export const WebRTCProvider = ({ children }) => {
         pc.ontrack = (event) => {
             // This connection only carries the premier video stream
             const stream = event.streams[0];
-            console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}`);
+            console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
             // CRITICAL FIX: WebRTC fires ontrack twice (audio, then video) but passes
             // the exact same MediaStream reference, just mutates it by adding the track.
             // React's setState ignores it because the object reference === the old one.
@@ -466,6 +466,7 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
             console.log(`[VideoStream] Host ${hostSocketId} announced a live stream. Attempting to connect...`);
             setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
+            setRemotePremierStream(null); // Clear old stream state before reconnecting
             if (!roomKey) {
                 // roomKey not yet derived — buffer and retry when it becomes available
                 console.warn('[VideoStream] roomKey not ready — buffering announce for retry');
