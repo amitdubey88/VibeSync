@@ -657,7 +657,7 @@ const RoomPage = () => {
             window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
           }}
           className={`flex flex-col glass-panel md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
-          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-96' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
+          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-96 xl:w-[420px]' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}

@@ -24,9 +24,25 @@ const useVideoSync = (videoEl) => {
     const isSyncingRef = useRef(false);
     const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'catching-up' | 'buffering'
     const roomCode = room?.code;
+    // Track source changes to avoid applying stale timing from previous video
+    const lastVideoUrlRef = useRef(null);
+    const sourceJustChangedRef = useRef(false);
 
     // Cache the latest sync state if videoEl isn't ready yet
     const cachedSyncStateRef = useRef(null);
+
+    // Detect video source changes so we never apply stale timing from the previous video
+    useEffect(() => {
+        if (!currentVideo?.url) return;
+        if (lastVideoUrlRef.current !== currentVideo.url) {
+            lastVideoUrlRef.current = currentVideo.url;
+            sourceJustChangedRef.current = true;
+            // Clear from changed flag after a reasonable buffer window (3s)
+            // by which time the new video's sync-state should have arrived
+            const timer = setTimeout(() => { sourceJustChangedRef.current = false; }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentVideo?.url]);
 
     // ── Host: emit events ────────────────────────────────────────────────────
     const onHostPlay = useCallback(() => {
@@ -200,6 +216,14 @@ const useVideoSync = (videoEl) => {
             // who never load the file locally and thus never get `loadedmetadata`
             if (vs?.duration > 0) {
                 setVideoState(prev => prev ? { ...prev, duration: vs.duration } : vs);
+            }
+
+            // TIMING FIX: if the source just changed, the server's currentTime is still from
+            // the previous video (race between video:source-change and video:sync-state).
+            // Skip applying stale currentTime; let the video element start fresh from 0.
+            if (sourceJustChangedRef.current) {
+                sourceJustChangedRef.current = false;
+                return;
             }
 
             if (!videoEl) {

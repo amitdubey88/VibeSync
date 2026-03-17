@@ -159,6 +159,22 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         <div ref={bottomRef} />
       </div>
 
+      {/* ── Typing Indicator (above input bar, WhatsApp-style) ── */}
+      {Object.keys(typingUsers).length > 0 && (
+        <div className="px-4 py-1.5 flex items-center gap-2 animate-fade-in border-t border-border-dark/30 bg-bg-secondary/60 shrink-0">
+          <div className="flex gap-1 h-3 items-center">
+            <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-typing-dot-1" />
+            <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-typing-dot-2" />
+            <span className="w-1.5 h-1.5 bg-accent-purple rounded-full animate-typing-dot-3" />
+          </div>
+          <span className="text-[11px] text-accent-purple font-medium italic">
+            {Object.keys(typingUsers).length === 1
+              ? `${Object.keys(typingUsers)[0]} is typing…`
+              : `${Object.keys(typingUsers).length} people are typing…`}
+          </span>
+        </div>
+      )}
+
       {/* ── Emoji picker ── */}
       {showEmoji && (
         <div className="absolute bottom-20 right-2 z-30 glass rounded-2xl p-3 shadow-2xl w-72 border border-border-light animate-fade-in">
@@ -245,21 +261,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </button>
         </form>
         
-        {/* Typing Indicator */}
-        {Object.keys(typingUsers).length > 0 && (
-          <div className="px-4 py-1.5 flex items-center gap-2 animate-fade-in bg-white/5 border-t border-border-dark/30">
-            <div className="flex gap-1 h-3 items-center">
-              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-1" />
-              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-2" />
-              <span className="w-1 h-1 bg-accent-purple rounded-full animate-typing-dot-3" />
-            </div>
-            <span className="text-[10px] text-accent-purple font-medium italic">
-              {Object.keys(typingUsers).length === 1 
-                ? `${Object.keys(typingUsers)[0]} is typing...`
-                : `${Object.keys(typingUsers).length} people are typing...`}
-            </span>
-          </div>
-        )}
       </div>
 
     </div>

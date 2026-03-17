@@ -47,6 +47,10 @@ const DirectVideoPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
         preload="auto"
         autoPlay={autoPlay}
         onCanPlay={onCanPlay}
+        // Prevent the browser's native controls from appearing (e.g. pressing F opens browser fullscreen)
+        controlsList="nodownload nofullscreen noremoteplayback"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
       />
     </div>
   );

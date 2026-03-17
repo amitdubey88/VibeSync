@@ -227,6 +227,24 @@ const VideoPlayer = () => {
     }
   }, [remotePremierStream, videoEl, isHost]);
 
+  // LIVE-PAUSE-THEN-CHANGE FIX:
+  // When host pauses live stream and then changes video to a new URL-based type,
+  // the participant's video element may still hold a stale srcObject from the WebRTC stream.
+  // This effect fires as soon as currentVideo.type changes away from live/uploading
+  // and aggressively clears the srcObject so the new src can load properly.
+  useEffect(() => {
+    if (isHost) return;
+    const isLiveType = currentVideo?.type === 'live' || currentVideo?.type === 'uploading';
+    if (!isLiveType && videoEl?.srcObject) {
+      console.log('[VideoPlayer] Live type ended. Force-clearing srcObject for new video source.');
+      videoEl.srcObject = null;
+      // Force a reload so the element picks up the new `src` attribute
+      videoEl.load();
+    }
+  // We only care about the video type changing
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.type, isHost]);
+
   useEffect(() => {
     if (!videoEl) return;
     const updateBuffered = () => {
@@ -513,6 +531,24 @@ const VideoPlayer = () => {
     }, 3500);
   }, []);
 
+  // Center-click to play/pause (host only, all video types)
+  const clickAnimRef = useRef(null);
+  const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
+
+  const handleCenterClick = useCallback((e) => {
+    // Trigger mouse-move to show controls
+    handleMouseMove();
+    // Only host can toggle playback
+    if (!isHost || !videoEl) return;
+    const isPaused = videoEl.paused;
+    if (isPaused) videoEl.play().catch(() => {});
+    else videoEl.pause();
+    // Flash animation
+    setClickAnim(isPaused ? 'play' : 'pause');
+    clearTimeout(clickAnimRef.current);
+    clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
+  }, [isHost, videoEl, handleMouseMove]);
+
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {
     const handleTogglePlay = () => {
@@ -648,6 +684,9 @@ const VideoPlayer = () => {
       onTouchStart={handleMouseMove}
       onClick={handleMouseMove}
       onMouseLeave={() => setShowControls(false)}
+      // Intercept the F key on the container level to prevent the browser's native fullscreen
+      onKeyDown={(e) => { if (e.key === 'f' || e.key === 'F') e.preventDefault(); }}
+      tabIndex={-1}
     >
       {/* LIVE Badge (Visible to everyone during live streaming) */}
       {(currentVideo?.type === 'live' || isDirectStreaming) && (
@@ -662,6 +701,25 @@ const VideoPlayer = () => {
 
       {/* Main Content Area */}
       <div className="relative z-0 w-full h-full flex items-center justify-center">
+        {/* Center-click overlay: transparent layer that intercepts clicks for play/pause */}
+        {/* Positioned above video content but below controls. Renders for all video types. */}
+        <div
+          className="absolute inset-0 z-10 cursor-pointer"
+          onClick={handleCenterClick}
+          style={{ touchAction: 'manipulation' }}
+        />
+
+        {/* Click animation flash (Play/Pause ripple) */}
+        {clickAnim && (
+          <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center animate-ping-once">
+              {clickAnim === 'play'
+                ? <Play className="w-7 h-7 text-white" />
+                : <Pause className="w-7 h-7 text-white" />}
+            </div>
+          </div>
+        )}
+
         {!isHost && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">

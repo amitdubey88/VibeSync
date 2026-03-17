@@ -44,6 +44,7 @@ export default {
         'float': 'float 3s ease-in-out infinite',
         'ripple': 'ripple 0.6s ease-out',
         'spin-slow': 'spin 3s linear infinite',
+        'ping-once': 'pingOnce 0.6s ease-out forwards',
       },
       keyframes: {
         fadeIn: {
@@ -69,6 +70,11 @@ export default {
         ripple: {
           '0%': { transform: 'scale(0)', opacity: '1' },
           '100%': { transform: 'scale(4)', opacity: '0' },
+        },
+        pingOnce: {
+          '0%':   { transform: 'scale(0.8)', opacity: '1' },
+          '60%':  { transform: 'scale(1.3)', opacity: '0.8' },
+          '100%': { transform: 'scale(1.6)', opacity: '0' },
         },
       },
       backdropBlur: {

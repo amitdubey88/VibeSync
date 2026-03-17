@@ -33,11 +33,15 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
 const corsOriginFn = (origin, cb) => {
     // Allow requests with no origin (mobile apps, curl, server-to-server)
     if (!origin) return cb(null, true);
-    // Allow explicitly listed origins, Vercel/Koyeb deployments, and browser extensions
+    // Allow explicitly listed origins and well-known deployment platforms
     if (allowedOrigins.includes(origin) ||
         origin === 'http://localhost:5174' ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.koyeb.app') ||
+        origin.endsWith('.vorcel.app') ||   // Vorcel deployment platform
+        origin.endsWith('.netlify.app') ||  // Netlify deployments
+        origin.endsWith('.render.com') ||   // Render deployments
+        origin.endsWith('.onrender.com') ||
         origin.startsWith('chrome-extension://')) {
         return cb(null, true);
     }
