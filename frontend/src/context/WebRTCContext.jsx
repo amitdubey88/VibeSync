@@ -52,6 +52,11 @@ export const WebRTCProvider = ({ children }) => {
     // duplicate peer connections during rapid video switches.
     const negotiatingRef = useRef({}); // { [socketId]: true | undefined }
 
+    // Guard: true while participant is actively mid-WebRTC-handshake for the incoming stream.
+    // Prevents onVideoStreamEnded (from a fast video-switch) from clearing the stream
+    // while a new connection is already in progress.
+    const isConnectingRef = useRef(false);
+
     // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
         document.querySelectorAll('audio[data-socket-id]').forEach(a => { a.muted = !isInVoice; });
@@ -170,11 +175,7 @@ export const WebRTCProvider = ({ children }) => {
             }
         };
 
-        // FLICKER FIX: Debounce track updates.
-        // ontrack fires ONCE PER TRACK (video track first, then audio track).
-        // Without a debounce, setRemotePremierStream fires twice, causing two srcObject
-        // swaps and two play() calls in rapid succession → visible flicker / AbortError.
-        // Wait 150ms for all tracks on this connection to arrive before committing.
+        // TRACK RECEIVED — debounce so both tracks (video+audio) arrive before committing.
         let trackDebounceTimer = null;
         pc.ontrack = (event) => {
             const stream = event.streams[0];
@@ -184,8 +185,7 @@ export const WebRTCProvider = ({ children }) => {
             trackDebounceTimer = setTimeout(() => {
                 // Only update if this PC is still the active one for this peer
                 if (videoPeersRef.current[remoteSocketId] !== pc) return;
-                // Always create a new MediaStream so React detects the change and re-fires the
-                // VideoPlayer useEffect that attaches srcObject.
+                isConnectingRef.current = false; // Connection delivered — safe for ended events to clear
                 setRemotePremierStream(new MediaStream(stream.getTracks()));
             }, 150);
         };
@@ -532,11 +532,8 @@ export const WebRTCProvider = ({ children }) => {
             }
 
             negotiatingRef.current[hostSocketId] = true;
-            // FLICKER FIX: Do NOT call setRemotePremierStream(null) here.
-            // Clearing the stream immediately blacks out the screen for the entire duration
-            // of the WebRTC handshake (typically 1-3s). Instead, keep the old stream alive
-            // until ontrack fires with the new stream. The old stream will naturally go stale
-            // once the host's new tracks arrive and setRemotePremierStream fires in ontrack.
+            isConnectingRef.current = true;  // Mark as connecting so stream-ended events don't clear prematurely
+            // Keep old stream alive until ontrack fires with the new one.
             closeVideoPeer(hostSocketId);
             try {
                 const pc = createVideoPeerConnection(hostSocketId);
@@ -552,8 +549,11 @@ export const WebRTCProvider = ({ children }) => {
                 console.log('[VideoStream] Sent video-stream:offer to host.');
             } catch (err) {
                 console.error('[VideoStream] Failed to create offer:', err);
+                isConnectingRef.current = false;
             } finally {
                 delete negotiatingRef.current[hostSocketId];
+                // Note: isConnectingRef stays true until ontrack fires and delivers the stream.
+                // It is reset by onVideoStreamEnded if that event arrives while NOT connecting.
             }
         };
 
@@ -596,17 +596,18 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = videoPeersRef.current[fromSocketId];
             if (!pc || !roomKey) return;
-            // FIX3: Guard against stale answers arriving after the PC has already completed
-            // the handshake (state = 'stable'). This can happen when rapid video switches
-            // cause two offer/answer cycles to overlap — the second answer arrives after
-            // the first has already moved the PC to stable.
+            // Guard: if the PC is not in have-local-offer state, the answer is stale.
+            // 'stable' means we already completed a handshake (e.g. from onParticipantUpdate
+            // sending announce that arrived first). 'closed' means the PC was replaced.
+            // We do NOT guard against 'have-remote-offer' since that shouldn't happen participant-side.
             if (pc.signalingState !== 'have-local-offer') {
-                console.warn(`[VideoStream] Dropping stale answer from ${fromSocketId} — signalingState: ${pc.signalingState}`);
+                console.warn(`[VideoStream] Dropping answer from ${fromSocketId} — signalingState: ${pc.signalingState}`);
                 return;
             }
             try {
                 const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+                console.log(`[VideoStream] Answer accepted from ${fromSocketId} — connection established`);
             } catch (err) {
                 console.warn(`[VideoStream] setRemoteDescription failed for ${fromSocketId}:`, err);
             }
@@ -627,8 +628,18 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamEnded = () => {
             console.log('[VideoStream] Host ended live stream');
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
-            setRemotePremierStream(null);
-            setIsStreamAnnounced(false); // hide Connecting screen
+            // FREEZE FIX: Only clear the stream if we're NOT mid-reconnect.
+            // When host switches videos, the sequence is:
+            //   video-stream:ended  →  video-stream:announced (new stream)
+            // If ended clears the stream unconditionally, and announced has already
+            // set isConnectingRef=true, we would blank the screen right before the
+            // new tracks arrive — showing a freeze/black frame for 1-3s.
+            if (!isConnectingRef.current) {
+                setRemotePremierStream(null);
+                setIsStreamAnnounced(false);
+            } else {
+                console.log('[VideoStream] Reconnect already in-progress — skipping stream clear on ended');
+            }
         };
 
         socket.on('video-stream:announced', onVideoStreamAnnounced);
@@ -678,8 +689,11 @@ export const WebRTCProvider = ({ children }) => {
     }, [roomKey, socket, closeVideoPeer, createVideoPeerConnection]);
 
     // Late-joiner / refresh fix: if participant detects a live stream type but hasn't
-    // received the video feed yet, immediately request an announce from the host.
-    // Also flag isStreamAnnounced so the 'Connecting...' overlay shows right away.
+    // received the video feed yet, request an announce from the host.
+    // TIMING: Wait 1.5s before first attempt so onParticipantUpdate-triggered announce
+    // (sent by host immediately on participant join) has time to arrive and start the
+    // WebRTC handshake first. If we fire immediately, both paths run in parallel and
+    // negotiatingRef blocks the second one — leaving no active connection attempt.
     useEffect(() => {
         if (!socket || !roomCode || isHostRef.current) return;
         if (currentVideo?.type !== 'live') return;
@@ -693,17 +707,17 @@ export const WebRTCProvider = ({ children }) => {
         const maxAttempts = 5;
 
         const tryRequest = () => {
+            // Skip if stream was already received between retries
+            if (remotePremierStream) return;
             attempt++;
             console.log(`[VideoStream] Late joiner requesting stream (attempt ${attempt}/${maxAttempts})`);
             socket.emit('video-stream:request-announce', { roomCode });
         };
 
-        // Fire IMMEDIATELY on first run (no delay)
-        tryRequest();
-
-        // Retry with backoff in case the first request is lost or host is busy
-        const retryDelays = [2000, 4000, 7000, 12000];
-        const retryTimers = retryDelays.slice(0, maxAttempts - 1).map((delay, i) =>
+        // Delay first attempt 1.5s to give host's onParticipantUpdate announce a head start.
+        // Subsequent retries use exponential backoff.
+        const retryDelays = [1500, 3500, 6000, 10000];
+        const retryTimers = retryDelays.slice(0, maxAttempts).map((delay) =>
             setTimeout(tryRequest, delay)
         );
 
@@ -711,6 +725,16 @@ export const WebRTCProvider = ({ children }) => {
             retryTimers.forEach(clearTimeout);
         };
     }, [socket, roomCode, currentVideo?.type, remotePremierStream]);
+
+    // Also clear isConnectingRef when stream actually becomes null externally
+    // (e.g. host ended stream and no new connection is coming)
+    useEffect(() => {
+        if (!remotePremierStream) {
+            // Give 3s grace in case a new announce is in-flight, then clean up
+            const t = setTimeout(() => { isConnectingRef.current = false; }, 3000);
+            return () => clearTimeout(t);
+        }
+    }, [remotePremierStream]);
 
     // BUG5 FIX: Mid-session watchdog — if the participant has a stream but the video
     // element stalls (readyState < 2) for 4 consecutive seconds, auto-request recovery.
