@@ -48,6 +48,10 @@ export const WebRTCProvider = ({ children }) => {
     // becomes available, preventing a silent no-op due to the early return.
     const pendingStreamHostRef = useRef(null);
 
+    // BUG2 FIX: Track which remote IDs have a negotiation in-flight to prevent
+    // duplicate peer connections during rapid video switches.
+    const negotiatingRef = useRef({}); // { [socketId]: true | undefined }
+
     // Mute/unmute all remote audio elements when voice status changes
     useEffect(() => {
         document.querySelectorAll('audio[data-socket-id]').forEach(a => { a.muted = !isInVoice; });
@@ -143,8 +147,7 @@ export const WebRTCProvider = ({ children }) => {
         document.querySelectorAll(`audio[data-socket-id="${remoteSocketId}"]`).forEach(a => a.remove());
     }, []);
 
-    // Alias for backward compatibility with other parts of the code
-    const closePeer = closeVoicePeer;
+    // (closePeer alias removed — was unused duplicate of closeVoicePeer)
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VIDEO STREAM peer connections (video only — separate from voice)
@@ -164,15 +167,12 @@ export const WebRTCProvider = ({ children }) => {
             // This connection only carries the premier video stream
             const stream = event.streams[0];
             console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
-            
-            // Re-wrap the stream to ensure React detects the change and re-binds the video element
-            // We use a small delay or a check to avoid double-flashes when audio and video tracks arrive closely.
-            setRemotePremierStream(prev => {
-                if (prev && prev.id === stream.id && prev.getTracks().length === stream.getTracks().length) {
-                    return prev;
-                }
-                return new MediaStream(stream.getTracks());
-            });
+
+            // BUG3 FIX: Always create a new MediaStream object so React detects the change
+            // and the VideoPlayer useEffect re-fires to re-attach srcObject.
+            // The old identity check (prev.id === stream.id) prevented re-attachment
+            // after replaceTrack because the stream ID stays the same but tracks change.
+            setRemotePremierStream(new MediaStream(stream.getTracks()));
         };
 
         // ICE restart: participant (non-host) is always the offerer for video stream connections,
@@ -207,6 +207,25 @@ export const WebRTCProvider = ({ children }) => {
         const pc = videoPeersRef.current[remoteSocketId];
         if (pc && typeof pc.close === 'function') pc.close();
         delete videoPeersRef.current[remoteSocketId];
+        delete negotiatingRef.current[remoteSocketId]; // BUG2 FIX: clear negotiation guard
+    }, []);
+
+    // BUG1 FIX: Replace tracks on an existing peer connection instead of tearing it down.
+    // This keeps ICE alive and avoids the 1-3s black screen window during renegotiation.
+    const replaceStreamOnPeer = useCallback((pc, newStream) => {
+        if (!pc || !newStream) return false;
+        const senders = pc.getSenders();
+        let replaced = false;
+        newStream.getTracks().forEach(newTrack => {
+            const sender = senders.find(s => s.track?.kind === newTrack.kind);
+            if (sender) {
+                sender.replaceTrack(newTrack).catch(err =>
+                    console.warn('[VideoStream] replaceTrack failed:', err)
+                );
+                replaced = true;
+            }
+        });
+        return replaced;
     }, []);
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -489,25 +508,45 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
             console.log(`[VideoStream] Host ${hostSocketId} announced a live stream. Attempting to connect...`);
             setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
-            setRemotePremierStream(null); // Clear old stream state before reconnecting
+
+            // BUG2 FIX: If a negotiation is already in progress for this host, skip this
+            // announce to prevent duplicate peer connections from rapid video switches.
+            if (negotiatingRef.current[hostSocketId]) {
+                console.warn('[VideoStream] Negotiation already in-progress — skipping duplicate announce');
+                return;
+            }
+
             if (!roomKey) {
                 // roomKey not yet derived — buffer and retry when it becomes available
                 console.warn('[VideoStream] roomKey not ready — buffering announce for retry');
                 pendingStreamHostRef.current = hostSocketId;
                 return;
             }
+
+            negotiatingRef.current[hostSocketId] = true; // BUG2 FIX: lock
+            // Clear old stream state before reconnecting
+            setRemotePremierStream(null);
             closeVideoPeer(hostSocketId);
-            const pc = createVideoPeerConnection(hostSocketId);
-            pc.addTransceiver('video', { direction: 'recvonly' });
-            pc.addTransceiver('audio', { direction: 'recvonly' });
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            const enc = await encryptData(offer, roomKey);
-            socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
-            console.log('[VideoStream] Sent video-stream:offer to host.');
+            try {
+                const pc = createVideoPeerConnection(hostSocketId);
+                pc.addTransceiver('video', { direction: 'recvonly' });
+                pc.addTransceiver('audio', { direction: 'recvonly' });
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                const enc = await encryptData(offer, roomKey);
+                socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
+                console.log('[VideoStream] Sent video-stream:offer to host.');
+            } catch (err) {
+                console.error('[VideoStream] Failed to create offer:', err);
+            } finally {
+                // Release lock after offer sent (or on failure) so future announces can proceed
+                delete negotiatingRef.current[hostSocketId];
+            }
         };
 
-        // Host receives offer from a participant → answer with video stream
+        // Host receives offer from a participant → answer with video stream.
+        // BUG1 FIX: If we already have a stable peer connection with this participant,
+        // use replaceTrack rather than tearing down the connection.
         const onVideoStreamOffer = async ({ fromSocketId, offer, e2ee }) => {
             if (!roomKey) return;
             if (!premierStreamRef.current) {
@@ -516,6 +555,26 @@ export const WebRTCProvider = ({ children }) => {
             }
             try {
                 const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
+                const existingPc = videoPeersRef.current[fromSocketId];
+
+                // BUG1 FIX: If we already have an established (non-pending) PC with this participant
+                // and the new stream has the same track kinds, use replaceTrack to swap tracks
+                // in-place. This avoids a full renegotiation cycle (eliminates the black screen window).
+                if (existingPc && existingPc !== 'pending' &&
+                    (existingPc.connectionState === 'connected' || existingPc.connectionState === 'connecting') &&
+                    replaceStreamOnPeer(existingPc, premierStreamRef.current)) {
+                    console.log(`[VideoStream] replaceTrack used for ${fromSocketId} — skipping full renegotiation.`);
+                    // We still need to answer the offer so the participant's SDP state machine is
+                    // not left hanging — create and send an answer using the existing PC.
+                    await existingPc.setRemoteDescription(new RTCSessionDescription(decrypted));
+                    const answer = await existingPc.createAnswer();
+                    await existingPc.setLocalDescription(answer);
+                    const enc = await encryptData(answer, roomKey);
+                    socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
+                    return;
+                }
+
+                // Fall back to full connection setup (first connection or failed PC)
                 closeVideoPeer(fromSocketId);
                 const pc = createVideoPeerConnection(fromSocketId);
                 // Add all video + audio tracks from the premier stream
@@ -637,6 +696,51 @@ export const WebRTCProvider = ({ children }) => {
         };
     }, [socket, roomCode, currentVideo?.type, remotePremierStream]);
 
+    // BUG5 FIX: Mid-session watchdog — if the participant has a stream but the video
+    // element stalls (readyState < 2) for 4 consecutive seconds, auto-request recovery.
+    // This handles silent ICE failures and the case where replaceTrack doesn't fire
+    // ontrack again after a host video switch.
+    // NOTE: We intentionally do NOT check videoEl.paused — WebRTC live-streams can
+    // transiently pause during track replacement, so checking paused would cause
+    // unnecessary reconnect loops.
+    const watchdogVideoRef = useRef(null); // registered by VideoPlayer when live <video> mounts
+    useEffect(() => {
+        if (!socket || !roomCode || isHostRef.current) return;
+        if (!remotePremierStream) return;
+
+        let staleTicks = 0;
+        const STALE_THRESHOLD = 4;   // 4 consecutive 1s ticks = 4s before recovery
+        const GRACE_PERIOD_MS = 5000; // allow initial WebRTC handshake to complete
+
+        // Local timer IDs — no need for a class-level ref since cleanup captures them
+        let watchdogInterval = null;
+
+        const startWatchdog = () => {
+            watchdogInterval = setInterval(() => {
+                const videoEl = watchdogVideoRef.current;
+                if (!videoEl) return;
+
+                if (videoEl.readyState < 2) {
+                    staleTicks++;
+                    if (staleTicks >= STALE_THRESHOLD) {
+                        console.warn('[VideoStream] Watchdog: stream stalled — requesting recovery...');
+                        staleTicks = 0;
+                        socket.emit('video-stream:request-announce', { roomCode });
+                    }
+                } else {
+                    staleTicks = 0;
+                }
+            }, 1000);
+        };
+
+        const graceTimer = setTimeout(startWatchdog, GRACE_PERIOD_MS);
+
+        return () => {
+            clearTimeout(graceTimer);
+            if (watchdogInterval) clearInterval(watchdogInterval);
+        };
+    }, [socket, roomCode, remotePremierStream]);
+
     // Reset flags when leaving a room
     useEffect(() => {
         if (!roomCode) {
@@ -649,6 +753,8 @@ export const WebRTCProvider = ({ children }) => {
             isInVoice, isMuted, voiceError,
             joinVoice, leaveVoice, toggleMute,
             setPremierStream, remotePremierStream, isStreamAnnounced, resetStreamState,
+            // Expose watchdog ref so VideoPlayer can register the live <video> element
+            watchdogVideoRef,
         }}>
             {children}
         </WebRTCContext.Provider>

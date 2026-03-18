@@ -108,7 +108,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
   const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration } = useRoom();
-  const { setPremierStream, remotePremierStream, isStreamAnnounced } = useWebRTC();
+  const { setPremierStream, remotePremierStream, isStreamAnnounced, watchdogVideoRef } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
   const videoRef = useRef(null);
 
@@ -146,6 +146,42 @@ const VideoPlayer = () => {
   // Once captureStream is active, seeking triggers 'playing' again — without this guard,
   // setPremierStream would tear down all participant connections on every seek.
   const isStreamingActiveRef = useRef(false);
+
+  // Ref mirror for remotePremierStream so video-element event listeners (onWaiting, etc.)
+  // can read the latest value without stale closures — avoids adding remotePremierStream
+  // to the event-listener effect's dep array (which would re-register listeners on every track).
+  const remotePremierStreamRef = useRef(remotePremierStream);
+  useEffect(() => { remotePremierStreamRef.current = remotePremierStream; }, [remotePremierStream]);
+
+  // Keep isLiveStreamingInitializedRef in sync with state to prevent drift.
+  // The ref is needed for the 'playing' event handler (fires before React commit),
+  // but the state drives UI. Both must always agree.
+  useEffect(() => {
+    isLiveStreamingInitializedRef.current = isLiveStreamingInitialized;
+  }, [isLiveStreamingInitialized]);
+
+  // BUG4 FIX: Stable useCallback at component scope so both the 'playing' event handler
+  // and the 'Start Streaming' button always reference the latest version.
+  // Previously defined inside a useEffect body which created a stale closure on video switch.
+  const startBroadcast = useCallback(() => {
+    if (!isHost || !videoRef.current || !videoRef.current.captureStream) return;
+    if (isStreamingActiveRef.current) return;
+
+    console.log('[DirectStream] Starting WebRTC broadcast capture...');
+    isStreamingActiveRef.current = true;
+
+    // Delay slightly to ensure the video has painted a frame before capturing
+    setTimeout(() => {
+      try {
+        const stream = videoRef.current.captureStream(60);
+        setPremierStream(stream);
+        console.log('[DirectStream] Stream captured and announced to room.');
+      } catch (e) {
+        console.error('[DirectStream] captureStream failed:', e);
+        isStreamingActiveRef.current = false;
+      }
+    }, 300);
+  }, [isHost, setPremierStream]); // stable deps — videoRef is a ref so no dep needed
 
   const setVideoRef = useCallback((el) => {
     videoRef.current = el;
@@ -206,15 +242,24 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (isHost || !videoEl) return;
 
-    if (remotePremierStream && videoEl.srcObject !== remotePremierStream) {
+    if (remotePremierStream) {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
+
+      // BUG6 FIX: Always clear srcObject first. This forces the browser to fully reset
+      // the media pipeline so it picks up the new stream's tracks correctly.
+      // Without this, stale tracks from the previous stream can linger and cause a black screen.
+      if (videoEl.srcObject) {
+        videoEl.srcObject = null;
+      }
       videoEl.srcObject = remotePremierStream;
+
+      // Register with watchdog so health checks can monitor this element's readyState
+      if (watchdogVideoRef) watchdogVideoRef.current = videoEl;
+
       setIsLoading(false);
 
-      // FIX: Improved 'Autoplay Only' logic. 
-      // First attempt unmuted playback. If the browser blocks it (common if no interaction 
-      // has occurred), catch the error, mute the video, and try again. Muted autoplay 
-      // is almost always permitted.
+      // First attempt unmuted playback. If blocked by the browser, mute and retry.
+      // Muted autoplay is almost always permitted.
       videoEl.play().catch(err => {
         console.warn('[Participant Live] Unmuted autoplay blocked, trying muted...', err);
         videoEl.muted = true;
@@ -225,10 +270,11 @@ const VideoPlayer = () => {
       });
     } else if (!remotePremierStream && videoEl.srcObject) {
       console.log('[VideoPlayer] Live stream ended. Clearing srcObject and reloading element.');
+      if (watchdogVideoRef) watchdogVideoRef.current = null;
       videoEl.srcObject = null;
       videoEl.load();
     }
-  }, [remotePremierStream, videoEl, isHost]);
+  }, [remotePremierStream, videoEl, isHost, watchdogVideoRef]);
 
   // LIVE-PAUSE-THEN-CHANGE FIX:
   // When host pauses live stream and then changes video to a new URL-based type,
@@ -275,9 +321,8 @@ const VideoPlayer = () => {
       updateBuffered();
     };
     const onWaiting = () => {
-      // Defensive: Only show spinner if we aren't a guest watching a live stream
-      // or if the element is genuinely not ready to play anything.
-      const isLiveGuest = !isHost && (currentVideo?.type === 'live' || remotePremierStream);
+      // Use ref to read latest remotePremierStream without stale closure
+      const isLiveGuest = !isHost && (currentVideo?.type === 'live' || remotePremierStreamRef.current);
       if (videoEl.readyState < 2 && !isLiveGuest) {
         setIsLoading(true);
       }
@@ -286,25 +331,6 @@ const VideoPlayer = () => {
     const onProgress = () => updateBuffered();
     const onPlayEv = () => {
       isPlayingRef.current = true;
-    };
-    const startBroadcast = () => {
-      if (!isHost || !videoEl || !videoEl.captureStream) return;
-      if (isStreamingActiveRef.current) return;
-
-      console.log('[DirectStream] Starting WebRTC broadcast capture...');
-      isStreamingActiveRef.current = true; // Set IMMEDIATELY to prevent race conditions
-
-      // Delay captureStream slightly to ensure the video has actually painted a frame.
-      setTimeout(() => {
-        try {
-          const stream = videoEl.captureStream(60); 
-          setPremierStream(stream);
-          console.log('[DirectStream] Stream captured and announced to room.');
-        } catch (e) {
-          console.error('[DirectStream] captureStream failed:', e);
-          isStreamingActiveRef.current = false;
-        }
-      }, 300); // Increased delay for stability
     };
 
     const onPlayingEv = () => {
@@ -338,8 +364,9 @@ const VideoPlayer = () => {
 
     // Safety fallback for participants in live mode:
     // If we're stuck in loading for more than 4s while a live stream is active, clear it.
+    // Use ref to read latest remotePremierStream without adding it to dep array.
     let safetyTimer;
-    if (!isHost && (currentVideo?.type === 'live' || remotePremierStream)) {
+    if (!isHost && (currentVideo?.type === 'live' || remotePremierStreamRef.current)) {
       safetyTimer = setTimeout(() => {
         setIsLoading(false);
       }, 4000);
@@ -371,7 +398,8 @@ const VideoPlayer = () => {
       videoEl.removeEventListener('seeking', onTimeUpdate);
       videoEl.removeEventListener('seeked', onTimeUpdate);
     };
-  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, setPremierStream]);
+  // startBroadcast is now a stable useCallback — no longer a closure dep here
+  }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, startBroadcast]);
 
   // Stop streaming automatically when the host changes or removes the video source
   useEffect(() => {
@@ -754,12 +782,17 @@ const VideoPlayer = () => {
           /* Participant: Show Direct/Premier Feed — only visible once host presses play */
           remotePremierStream ? (
             <div className="relative w-full h-full">
-              <video 
+              <video
                 key={remotePremierStream?.id || 'live-video'}
-                autoPlay 
+                autoPlay
                 playsInline
                 className="w-full h-full object-contain"
-                ref={setVideoRef}
+                ref={(el) => {
+                  setVideoRef(el);
+                  // BUG5+6 FIX: Register this element with the watchdog immediately on mount.
+                  // This ensures the health check starts monitoring as soon as the element exists.
+                  if (watchdogVideoRef) watchdogVideoRef.current = el;
+                }}
                 onCanPlay={() => setIsLoading(false)}
                 onPlaying={() => setIsLoading(false)}
               />
@@ -832,7 +865,8 @@ const VideoPlayer = () => {
                       console.log('[DirectStream] User clicked Start Streaming.');
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
-                      
+
+                      // BUG4 FIX: startBroadcast is now a stable useCallback — no stale closure.
                       if (videoEl && !videoEl.paused) {
                         startBroadcast();
                       } else if (videoEl) {
