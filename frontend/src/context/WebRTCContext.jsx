@@ -170,12 +170,24 @@ export const WebRTCProvider = ({ children }) => {
             }
         };
 
+        // FLICKER FIX: Debounce track updates.
+        // ontrack fires ONCE PER TRACK (video track first, then audio track).
+        // Without a debounce, setRemotePremierStream fires twice, causing two srcObject
+        // swaps and two play() calls in rapid succession → visible flicker / AbortError.
+        // Wait 150ms for all tracks on this connection to arrive before committing.
+        let trackDebounceTimer = null;
         pc.ontrack = (event) => {
             const stream = event.streams[0];
+            if (!stream) return;
             console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
-            // Always create a new MediaStream so React detects the change and re-fires the
-            // VideoPlayer useEffect that attaches srcObject.
-            setRemotePremierStream(new MediaStream(stream.getTracks()));
+            clearTimeout(trackDebounceTimer);
+            trackDebounceTimer = setTimeout(() => {
+                // Only update if this PC is still the active one for this peer
+                if (videoPeersRef.current[remoteSocketId] !== pc) return;
+                // Always create a new MediaStream so React detects the change and re-fires the
+                // VideoPlayer useEffect that attaches srcObject.
+                setRemotePremierStream(new MediaStream(stream.getTracks()));
+            }, 150);
         };
 
         // Only send ICE-restart offers when NOT suppressed (i.e. initial negotiation has
@@ -520,7 +532,11 @@ export const WebRTCProvider = ({ children }) => {
             }
 
             negotiatingRef.current[hostSocketId] = true;
-            setRemotePremierStream(null);
+            // FLICKER FIX: Do NOT call setRemotePremierStream(null) here.
+            // Clearing the stream immediately blacks out the screen for the entire duration
+            // of the WebRTC handshake (typically 1-3s). Instead, keep the old stream alive
+            // until ontrack fires with the new stream. The old stream will naturally go stale
+            // once the host's new tracks arrive and setRemotePremierStream fires in ontrack.
             closeVideoPeer(hostSocketId);
             try {
                 const pc = createVideoPeerConnection(hostSocketId);
@@ -720,7 +736,10 @@ export const WebRTCProvider = ({ children }) => {
                 const videoEl = watchdogVideoRef.current;
                 if (!videoEl) return;
 
-                if (videoEl.readyState < 2) {
+                // Only count as stale if readyState is low AND video is not intentionally paused.
+                // readyState < 2 during a normal pause is expected and not a stream failure.
+                const isStalled = videoEl.readyState < 2 && !videoEl.paused;
+                if (isStalled) {
                     staleTicks++;
                     if (staleTicks >= STALE_THRESHOLD) {
                         console.warn('[VideoStream] Watchdog: stream stalled — requesting recovery...');
