@@ -45,7 +45,13 @@ const corsOriginFn = (origin, cb) => {
         origin.startsWith('chrome-extension://')) {
         return cb(null, true);
     }
-    return cb(new Error(`CORS blocked: ${origin}`));
+    // IMPORTANT: Use cb(null, false) NOT cb(new Error(...)).
+    // Calling cb(new Error()) routes through Express's global error handler which
+    // sends the response BEFORE the cors middleware can set 'Access-Control-Allow-Origin',
+    // causing the browser to report "No 'Access-Control-Allow-Origin' header is present".
+    // cb(null, false) lets the cors package send a proper 403 with correct headers.
+    console.warn(`[CORS] Blocked origin: ${origin}`);
+    return cb(null, false);
 };
 
 // ── Socket.IO Setup ──────────────────────────────────────────────────────────
