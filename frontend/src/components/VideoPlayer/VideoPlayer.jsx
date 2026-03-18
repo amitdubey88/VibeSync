@@ -408,24 +408,28 @@ const VideoPlayer = () => {
   // startBroadcast is now a stable useCallback — no longer a closure dep here
   }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, startBroadcast]);
 
-  // Stop streaming automatically when the host changes or removes the video source
+  // Detect video source change and reset streaming flag (but do NOT destroy peers)
+  // On source change, we reset isStreamingActiveRef so the next startBroadcast()
+  // will captureStream() from the new video. setPremierStream(newStream) will then
+  // use replaceTrack() on all existing PCs — seamless switch, zero interruption.
+  // We ONLY call setPremierStream(null) when there truly is no video URL (stream ending).
   useEffect(() => {
     if (!isHost) return;
     
-    // FIX: Detect source change more reliably by checking the whole currentVideo object 
-    // (specifically title/url) and the local blobUrl. Previously, only checking 
-    // currentVideo.url caused issues when switching between different files for 
-    // live streaming because the URL placeholder ('live-stream') stayed the same.
     const isSourceChanged = !currentVideo?.url || 
                            (currentVideo.url !== 'live-stream' && currentVideo.url !== blobUrlRef.current) ||
                            (currentVideo.url === 'live-stream' && blobUrl && blobUrl !== blobUrlRef.current);
 
     if (isSourceChanged) {
-      console.log('[VideoPlayer] Video source changed. Resetting live stream state.');
-      setPremierStream(null);
+      console.log('[VideoPlayer] Video source changed. Resetting streaming flag.');
       isStreamingActiveRef.current = false;
       setIsLiveStreamingInitialized(false);
       isLiveStreamingInitializedRef.current = false;
+      
+      // Only tear down stream if there's truly no video source anymore
+      if (!currentVideo?.url) {
+        setPremierStream(null);
+      }
     }
   }, [currentVideo, isHost, setPremierStream, blobUrl]);
 

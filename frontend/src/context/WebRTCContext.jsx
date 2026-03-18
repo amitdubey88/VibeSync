@@ -176,6 +176,7 @@ export const WebRTCProvider = ({ children }) => {
         };
 
         // TRACK RECEIVED — debounce so both tracks (video+audio) arrive before committing.
+        // Reduced to 50ms: only matters for initial connection. replaceTrack() doesn't fire ontrack.
         let trackDebounceTimer = null;
         pc.ontrack = (event) => {
             const stream = event.streams[0];
@@ -186,8 +187,11 @@ export const WebRTCProvider = ({ children }) => {
                 // Only update if this PC is still the active one for this peer
                 if (videoPeersRef.current[remoteSocketId] !== pc) return;
                 isConnectingRef.current = false; // Connection delivered — safe for ended events to clear
-                setRemotePremierStream(new MediaStream(stream.getTracks()));
-            }, 150);
+                setRemotePremierStream(prev => {
+                    if (prev) prev.getTracks().forEach(t => t.stop());
+                    return new MediaStream(stream.getTracks());
+                });
+            }, 50);
         };
 
         // Only send ICE-restart offers when NOT suppressed (i.e. initial negotiation has
@@ -223,10 +227,41 @@ export const WebRTCProvider = ({ children }) => {
         const pc = videoPeersRef.current[remoteSocketId];
         if (pc && typeof pc.close === 'function') pc.close();
         delete videoPeersRef.current[remoteSocketId];
-        delete negotiatingRef.current[remoteSocketId]; // BUG2 FIX: clear negotiation guard
+        delete negotiatingRef.current[remoteSocketId];
     }, []);
 
+    // ── replaceTrack helper: hot-swap tracks on ALL existing video PCs ────────
+    // Uses RTCRtpSender.replaceTrack() — no renegotiation, no ICE restart.
+    // Returns true if at least one PC was updated, false if no PCs exist.
+    const replaceTracksOnAllPeers = useCallback((newStream) => {
+        const peerEntries = Object.entries(videoPeersRef.current);
+        // Filter to only real RTCPeerConnection objects (not 'pending' strings)
+        const activePeers = peerEntries.filter(([, pc]) => pc && typeof pc.getSenders === 'function');
+        if (activePeers.length === 0) return false;
 
+        const newVideoTrack = newStream.getVideoTracks()[0] || null;
+        const newAudioTrack = newStream.getAudioTracks()[0] || null;
+
+        activePeers.forEach(([socketId, pc]) => {
+            const senders = pc.getSenders();
+            const videoSender = senders.find(s => s.track?.kind === 'video' || (!s.track && s._kind === 'video'));
+            const audioSender = senders.find(s => s.track?.kind === 'audio' || (!s.track && s._kind === 'audio'));
+
+            if (videoSender && newVideoTrack) {
+                videoSender.replaceTrack(newVideoTrack).catch(err =>
+                    console.warn(`[VideoStream] replaceTrack(video) failed for ${socketId}:`, err)
+                );
+            }
+            if (audioSender && newAudioTrack) {
+                audioSender.replaceTrack(newAudioTrack).catch(err =>
+                    console.warn(`[VideoStream] replaceTrack(audio) failed for ${socketId}:`, err)
+                );
+            }
+        });
+
+        console.log(`[VideoStream] Replaced tracks on ${activePeers.length} peer(s) — no renegotiation`);
+        return true;
+    }, []);
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VOICE API
@@ -361,25 +396,41 @@ export const WebRTCProvider = ({ children }) => {
     // ═══════════════════════════════════════════════════════════════════════════
 
     const setPremierStream = useCallback((stream) => {
+        const oldStream = premierStreamRef.current;
         premierStreamRef.current = stream;
         if (!socket || !roomCode) return;
 
         if (stream) {
-            // FIX: Always clear ALL stale peer entries before announcing a new stream.
-            // When host starts a second live stream (after ending a previous one or changing
-            // video), videoPeersRef still has 'pending' entries for all current participants.
-            // Without clearing, onParticipantUpdate sees them as already handled and skips
-            // re-announcing — participants are left frozen on the old stream frame.
-            Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
-            socket.emit('video-stream:announce', { roomCode });
-            console.log('[VideoStream] Announced live stream to room (peers cleared first)');
+            // ── SEAMLESS SWITCH: If we already have active peer connections, hot-swap
+            //    tracks instead of tearing down + re-announcing. This keeps ICE+DTLS
+            //    alive and swaps media content in-place — zero interruption.
+            const didReplace = replaceTracksOnAllPeers(stream);
+
+            if (didReplace) {
+                // Stop old tracks to free hardware resources
+                if (oldStream && oldStream !== stream) {
+                    oldStream.getTracks().forEach(t => t.stop());
+                }
+                // Notify participants so they can force play() if video element stalled
+                socket.emit('video-stream:tracks-replaced', { roomCode });
+                console.log('[VideoStream] Tracks replaced on existing peers — no renegotiation needed');
+            } else {
+                // No existing peers — do a full announce (first-time setup or all PCs disconnected)
+                Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
+                socket.emit('video-stream:announce', { roomCode });
+                console.log('[VideoStream] Announced live stream to room (no existing peers to replace)');
+            }
         } else {
             console.log('[VideoStream] Stopping live stream.');
+            // Stop old tracks
+            if (oldStream) {
+                oldStream.getTracks().forEach(t => t.stop());
+            }
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
             socket.emit('video-stream:ended', { roomCode });
             setRemotePremierStream(null);
         }
-    }, [roomCode, socket, closeVideoPeer]);
+    }, [roomCode, socket, closeVideoPeer, replaceTracksOnAllPeers]);
 
     // ── Stream state reset (called by useHostTransferSync on host change) ────
     const resetStreamState = useCallback(() => {
@@ -628,12 +679,6 @@ export const WebRTCProvider = ({ children }) => {
         const onVideoStreamEnded = () => {
             console.log('[VideoStream] Host ended live stream');
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
-            // FREEZE FIX: Only clear the stream if we're NOT mid-reconnect.
-            // When host switches videos, the sequence is:
-            //   video-stream:ended  →  video-stream:announced (new stream)
-            // If ended clears the stream unconditionally, and announced has already
-            // set isConnectingRef=true, we would blank the screen right before the
-            // new tracks arrive — showing a freeze/black frame for 1-3s.
             if (!isConnectingRef.current) {
                 setRemotePremierStream(null);
                 setIsStreamAnnounced(false);
@@ -642,11 +687,28 @@ export const WebRTCProvider = ({ children }) => {
             }
         };
 
+        // Participant receives this when host used replaceTrack() (seamless switch).
+        // The existing track objects continue receiving new media automatically —
+        // this event is just a nudge to force play() if the video element paused.
+        const onTracksReplaced = () => {
+            console.log('[VideoStream] Host replaced tracks — nudging playback');
+            const videoEl = watchdogVideoRef.current;
+            if (videoEl && videoEl.paused) {
+                videoEl.play().catch(err => {
+                    if (err.name === 'AbortError') return;
+                    console.warn('[VideoStream] play() after tracks-replaced failed:', err);
+                    videoEl.muted = true;
+                    videoEl.play().catch(() => {});
+                });
+            }
+        };
+
         socket.on('video-stream:announced', onVideoStreamAnnounced);
         socket.on('video-stream:offer',     onVideoStreamOffer);
         socket.on('video-stream:answer',    onVideoStreamAnswer);
         socket.on('video-stream:ice',       onVideoStreamIce);
         socket.on('video-stream:ended',     onVideoStreamEnded);
+        socket.on('video-stream:tracks-replaced', onTracksReplaced);
         socket.on('room:participant-update', onParticipantUpdate);
         socket.on('video-stream:request-announce', onRequestAnnounce);
 
@@ -656,6 +718,7 @@ export const WebRTCProvider = ({ children }) => {
             socket.off('video-stream:answer',    onVideoStreamAnswer);
             socket.off('video-stream:ice',       onVideoStreamIce);
             socket.off('video-stream:ended',     onVideoStreamEnded);
+            socket.off('video-stream:tracks-replaced', onTracksReplaced);
             socket.off('room:participant-update', onParticipantUpdate);
             socket.off('video-stream:request-announce', onRequestAnnounce);
         };

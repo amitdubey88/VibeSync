@@ -56,6 +56,18 @@ module.exports = (io, socket, roomStore) => {
         socket.to(hashedCode).emit('video-stream:ended');
     });
 
+    // ── video-stream:tracks-replaced ──────────────────────────────────────────
+    // Host emits this after using replaceTrack() on existing PCs (seamless switch).
+    // Relay to all participants so they can nudge playback if video element paused.
+    socket.on('video-stream:tracks-replaced', ({ roomCode }) => {
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
+        if (!room) return;
+        const hashedCode = hashRoomCode(code);
+        socket.to(hashedCode).emit('video-stream:tracks-replaced');
+    });
+
     // ── Peer-to-peer relays (host ↔ participant) ───────────────────────────────
     // These are simple relays — the server never inspects the SDP/ICE payloads.
 
