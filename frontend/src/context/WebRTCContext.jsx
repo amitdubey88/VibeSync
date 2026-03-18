@@ -156,6 +156,13 @@ export const WebRTCProvider = ({ children }) => {
     const createVideoPeerConnection = useCallback((remoteSocketId) => {
         const pc = new RTCPeerConnection(ICE_SERVERS);
 
+        // FIX1: Flag to suppress onnegotiationneeded when we create offers explicitly.
+        // addTransceiver() triggers onnegotiationneeded automatically, but we already
+        // call createOffer() ourselves in onVideoStreamAnnounced. Without this guard,
+        // a SECOND offer fires on the same PC, causing:
+        //   "m-lines order in subsequent offer doesn't match order from previous offer/answer"
+        pc._suppressNegotiation = true;
+
         pc.onicecandidate = async (event) => {
             if (event.candidate && socket && roomKey) {
                 const enc = await encryptData(event.candidate, roomKey);
@@ -164,20 +171,17 @@ export const WebRTCProvider = ({ children }) => {
         };
 
         pc.ontrack = (event) => {
-            // This connection only carries the premier video stream
             const stream = event.streams[0];
             console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
-
-            // BUG3 FIX: Always create a new MediaStream object so React detects the change
-            // and the VideoPlayer useEffect re-fires to re-attach srcObject.
-            // The old identity check (prev.id === stream.id) prevented re-attachment
-            // after replaceTrack because the stream ID stays the same but tracks change.
+            // Always create a new MediaStream so React detects the change and re-fires the
+            // VideoPlayer useEffect that attaches srcObject.
             setRemotePremierStream(new MediaStream(stream.getTracks()));
         };
 
-        // ICE restart: participant (non-host) is always the offerer for video stream connections,
-        // so on failure it re-creates the offer. The host just answers using the existing handler.
+        // Only send ICE-restart offers when NOT suppressed (i.e. initial negotiation has
+        // already completed and the connection later fails mid-session).
         pc.onnegotiationneeded = async () => {
+            if (pc._suppressNegotiation) return; // explicit offer in progress — skip
             if (isHostRef.current || !socket || !roomKey) return;
             if (pc.signalingState !== 'stable') return;
             try {
@@ -210,23 +214,7 @@ export const WebRTCProvider = ({ children }) => {
         delete negotiatingRef.current[remoteSocketId]; // BUG2 FIX: clear negotiation guard
     }, []);
 
-    // BUG1 FIX: Replace tracks on an existing peer connection instead of tearing it down.
-    // This keeps ICE alive and avoids the 1-3s black screen window during renegotiation.
-    const replaceStreamOnPeer = useCallback((pc, newStream) => {
-        if (!pc || !newStream) return false;
-        const senders = pc.getSenders();
-        let replaced = false;
-        newStream.getTracks().forEach(newTrack => {
-            const sender = senders.find(s => s.track?.kind === newTrack.kind);
-            if (sender) {
-                sender.replaceTrack(newTrack).catch(err =>
-                    console.warn('[VideoStream] replaceTrack failed:', err)
-                );
-                replaced = true;
-            }
-        });
-        return replaced;
-    }, []);
+
 
     // ═══════════════════════════════════════════════════════════════════════════
     // VOICE API
@@ -504,49 +492,51 @@ export const WebRTCProvider = ({ children }) => {
         };
 
         // Participant receives this when the host starts a live stream.
-        // Create a video-only peer connection and send an offer to the host.
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
             console.log(`[VideoStream] Host ${hostSocketId} announced a live stream. Attempting to connect...`);
-            setIsStreamAnnounced(true); // show 'Connecting to Feed...' on participant side
+            setIsStreamAnnounced(true);
 
-            // BUG2 FIX: If a negotiation is already in progress for this host, skip this
-            // announce to prevent duplicate peer connections from rapid video switches.
+            // Skip duplicate announce if negotiation already in-flight for this host.
             if (negotiatingRef.current[hostSocketId]) {
                 console.warn('[VideoStream] Negotiation already in-progress — skipping duplicate announce');
                 return;
             }
 
             if (!roomKey) {
-                // roomKey not yet derived — buffer and retry when it becomes available
                 console.warn('[VideoStream] roomKey not ready — buffering announce for retry');
                 pendingStreamHostRef.current = hostSocketId;
                 return;
             }
 
-            negotiatingRef.current[hostSocketId] = true; // BUG2 FIX: lock
-            // Clear old stream state before reconnecting
+            negotiatingRef.current[hostSocketId] = true;
             setRemotePremierStream(null);
             closeVideoPeer(hostSocketId);
             try {
                 const pc = createVideoPeerConnection(hostSocketId);
+                // pc._suppressNegotiation = true already — addTransceiver won't fire a second offer
                 pc.addTransceiver('video', { direction: 'recvonly' });
                 pc.addTransceiver('audio', { direction: 'recvonly' });
                 const offer = await pc.createOffer();
                 await pc.setLocalDescription(offer);
+                // After our explicit offer is sent, allow onnegotiationneeded for ICE restarts later
+                pc._suppressNegotiation = false;
                 const enc = await encryptData(offer, roomKey);
                 socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
                 console.log('[VideoStream] Sent video-stream:offer to host.');
             } catch (err) {
                 console.error('[VideoStream] Failed to create offer:', err);
             } finally {
-                // Release lock after offer sent (or on failure) so future announces can proceed
                 delete negotiatingRef.current[hostSocketId];
             }
         };
 
         // Host receives offer from a participant → answer with video stream.
-        // BUG1 FIX: If we already have a stable peer connection with this participant,
-        // use replaceTrack rather than tearing down the connection.
+        // FIX2: Removed the replaceStreamOnPeer fast-path that was causing
+        //   "setRemoteDescription called in wrong state: stable" errors.
+        // The fast-path tried to both replaceTrack AND renegotiate SDP on the same PC,
+        // leaving the signaling state machine in an inconsistent 'stable' state before
+        // onVideoStreamAnswer tried to apply the new answer. Full teardown + rebuild
+        // (below) is clean and avoids all state-machine conflicts.
         const onVideoStreamOffer = async ({ fromSocketId, offer, e2ee }) => {
             if (!roomKey) return;
             if (!premierStreamRef.current) {
@@ -555,29 +545,13 @@ export const WebRTCProvider = ({ children }) => {
             }
             try {
                 const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
-                const existingPc = videoPeersRef.current[fromSocketId];
-
-                // BUG1 FIX: If we already have an established (non-pending) PC with this participant
-                // and the new stream has the same track kinds, use replaceTrack to swap tracks
-                // in-place. This avoids a full renegotiation cycle (eliminates the black screen window).
-                if (existingPc && existingPc !== 'pending' &&
-                    (existingPc.connectionState === 'connected' || existingPc.connectionState === 'connecting') &&
-                    replaceStreamOnPeer(existingPc, premierStreamRef.current)) {
-                    console.log(`[VideoStream] replaceTrack used for ${fromSocketId} — skipping full renegotiation.`);
-                    // We still need to answer the offer so the participant's SDP state machine is
-                    // not left hanging — create and send an answer using the existing PC.
-                    await existingPc.setRemoteDescription(new RTCSessionDescription(decrypted));
-                    const answer = await existingPc.createAnswer();
-                    await existingPc.setLocalDescription(answer);
-                    const enc = await encryptData(answer, roomKey);
-                    socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
-                    return;
-                }
-
-                // Fall back to full connection setup (first connection or failed PC)
+                // Always close the old PC and create a fresh one.
+                // This ensures the host's answer always targets the participant's current offer
+                // and the SDP state machine starts from a clean slate.
                 closeVideoPeer(fromSocketId);
                 const pc = createVideoPeerConnection(fromSocketId);
-                // Add all video + audio tracks from the premier stream
+                // Suppress onnegotiationneeded on host-side PCs (host never sends offers)
+                pc._suppressNegotiation = true;
                 premierStreamRef.current.getTracks().forEach(track =>
                     pc.addTrack(track, premierStreamRef.current)
                 );
@@ -594,9 +568,20 @@ export const WebRTCProvider = ({ children }) => {
 
         const onVideoStreamAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = videoPeersRef.current[fromSocketId];
-            if (pc && roomKey) {
+            if (!pc || !roomKey) return;
+            // FIX3: Guard against stale answers arriving after the PC has already completed
+            // the handshake (state = 'stable'). This can happen when rapid video switches
+            // cause two offer/answer cycles to overlap — the second answer arrives after
+            // the first has already moved the PC to stable.
+            if (pc.signalingState !== 'have-local-offer') {
+                console.warn(`[VideoStream] Dropping stale answer from ${fromSocketId} — signalingState: ${pc.signalingState}`);
+                return;
+            }
+            try {
                 const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            } catch (err) {
+                console.warn(`[VideoStream] setRemoteDescription failed for ${fromSocketId}:`, err);
             }
         };
 

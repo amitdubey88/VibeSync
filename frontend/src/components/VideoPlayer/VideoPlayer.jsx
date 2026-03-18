@@ -245,12 +245,12 @@ const VideoPlayer = () => {
     if (remotePremierStream) {
       console.log('[VideoPlayer] Attaching remote live stream to video element.');
 
-      // BUG6 FIX: Always clear srcObject first. This forces the browser to fully reset
-      // the media pipeline so it picks up the new stream's tracks correctly.
-      // Without this, stale tracks from the previous stream can linger and cause a black screen.
-      if (videoEl.srcObject) {
-        videoEl.srcObject = null;
-      }
+      // FIX: Always pause() BEFORE clearing srcObject. Setting srcObject = null fires a
+      // synchronous load() which interrupts any in-flight play() promise with:
+      //   "AbortError: The play() request was interrupted by a new load request"
+      // Pausing cancels the pending play first, making the srcObject swap safe.
+      if (!videoEl.paused) videoEl.pause();
+      videoEl.srcObject = null;
       videoEl.srcObject = remotePremierStream;
 
       // Register with watchdog so health checks can monitor this element's readyState
@@ -258,19 +258,26 @@ const VideoPlayer = () => {
 
       setIsLoading(false);
 
-      // First attempt unmuted playback. If blocked by the browser, mute and retry.
-      // Muted autoplay is almost always permitted.
-      videoEl.play().catch(err => {
-        console.warn('[Participant Live] Unmuted autoplay blocked, trying muted...', err);
-        videoEl.muted = true;
-        videoEl.play().catch(muteErr => {
-          console.error('[Participant Live] Muted autoplay also failed:', muteErr);
+      // Attempt unmuted playback first; muted is the fallback if browser blocks it.
+      const playPromise = videoEl.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(err => {
+          // 'AbortError' here means srcObject was changed again before play resolved —
+          // this is normal during rapid switches, just ignore it.
+          if (err.name === 'AbortError') return;
+          console.warn('[Participant Live] Unmuted autoplay blocked, trying muted...', err);
+          videoEl.muted = true;
+          videoEl.play().catch(muteErr => {
+            if (muteErr.name === 'AbortError') return;
+            console.error('[Participant Live] Muted autoplay also failed:', muteErr);
+          });
+          setIsLoading(false);
         });
-        setIsLoading(false);
-      });
-    } else if (!remotePremierStream && videoEl.srcObject) {
-      console.log('[VideoPlayer] Live stream ended. Clearing srcObject and reloading element.');
+      }
+    } else if (videoEl.srcObject) {
+      console.log('[VideoPlayer] Live stream ended. Clearing srcObject.');
       if (watchdogVideoRef) watchdogVideoRef.current = null;
+      if (!videoEl.paused) videoEl.pause();
       videoEl.srcObject = null;
       videoEl.load();
     }
