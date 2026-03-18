@@ -117,7 +117,7 @@ const useSyncDataChannel = () => {
     useEffect(() => {
         if (!socket) return;
 
-        const onOffer = async ({ fromSocketId, offer }) => {
+        const onOffer = async ({ fromSocketId, offer, e2ee }) => {
             if (isHost) return; // Only guests receive offers for this channel
             try {
                 const pc = createPeer(fromSocketId);
@@ -131,7 +131,9 @@ const useSyncDataChannel = () => {
                     channelsRef.current[fromSocketId] = channel;
                 };
 
-                await pc.setRemoteDescription(offer);
+                // Decrypt the offer before applying it (host sends encrypted offers)
+                const decrypted = e2ee && roomKey ? await decryptData(offer, roomKey) : offer;
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
                 const enc = await encryptData(answer, roomKey);
@@ -149,17 +151,26 @@ const useSyncDataChannel = () => {
 
         const onAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && roomKey) {
+            if (!pc || !roomKey) return;
+            try {
                 const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            } catch (err) {
+                console.warn(`[DataChannel] setRemoteDescription failed for ${fromSocketId}:`, err.name);
             }
         };
 
         const onIce = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && pc.remoteDescription && roomKey) {
+            if (!pc || !pc.remoteDescription || !roomKey) return;
+            try {
                 const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
-                await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(e => console.warn('[DataChannel] Error adding ICE', e));
+                await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(e =>
+                    console.warn('[DataChannel] Error adding ICE', e)
+                );
+            } catch (err) {
+                // Stale/mismatched ICE candidates are expected during reconnects
+                if (err.name !== 'OperationError') console.warn(`[DataChannel] ICE error for ${fromSocketId}:`, err.name);
             }
         };
 

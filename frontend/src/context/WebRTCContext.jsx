@@ -404,16 +404,20 @@ export const WebRTCProvider = ({ children }) => {
 
         const onOffer = async ({ fromSocketId, offer, e2ee }) => {
             if (!roomKey) return;
-            const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
-            // Always close & recreate the PC so the current mic track is attached.
-            // Without this, reused PCs from passive joins won't have the host's audio.
-            closeVoicePeer(fromSocketId);
-            const pc = createVoicePeerConnection(fromSocketId);
-            await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            const enc = await encryptData(answer, roomKey);
-            socket.emit('voice:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
+            try {
+                const decrypted = e2ee ? await decryptData(offer, roomKey) : offer;
+                // Always close & recreate the PC so the current mic track is attached.
+                // Without this, reused PCs from passive joins won't have the host's audio.
+                closeVoicePeer(fromSocketId);
+                const pc = createVoicePeerConnection(fromSocketId);
+                await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+                const answer = await pc.createAnswer();
+                await pc.setLocalDescription(answer);
+                const enc = await encryptData(answer, roomKey);
+                socket.emit('voice:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
+            } catch (err) {
+                console.warn(`[Voice] Failed to handle offer from ${fromSocketId}:`, err.name);
+            }
         };
 
         const onAnswer = async ({ fromSocketId, answer, e2ee }) => {

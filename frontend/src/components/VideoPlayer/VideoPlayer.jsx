@@ -534,8 +534,17 @@ const VideoPlayer = () => {
   // ── Handle Encrypted Video Fetching & Decryption ───────────────────────────
   const { roomKey } = useRoom();
   useEffect(() => {
-    // Only fetch/decrypt if it's an encrypted file and we aren't the host who already has a blobUrl
-    if (!currentVideo || currentVideo.type === 'youtube' || !currentVideo.e2ee || blobUrl || !roomKey) {
+    // Only fetch/decrypt if it's an encrypted non-live file and we aren't the host with a blobUrl.
+    // Guard against: live streams (type=live or url=live-stream), youtube, host-side blob uploads.
+    if (
+      !currentVideo ||
+      currentVideo.type === 'youtube' ||
+      currentVideo.type === 'live' ||
+      currentVideo.url === 'live-stream' ||
+      !currentVideo.e2ee ||
+      blobUrl ||
+      !roomKey
+    ) {
       setDecryptedUrl(null);
       return;
     }
@@ -559,7 +568,7 @@ const VideoPlayer = () => {
         decryptedUrlRef.current = url;
         setDecryptedUrl(url);
       } catch (err) {
-        console.error('Decryption failed:', err);
+        console.error('Decryption failed:', err, '| url:', currentVideo?.url, '| type:', currentVideo?.type);
         // toast.error('Failed to decrypt video');
       } finally {
         if (active) setIsDecrypting(false);

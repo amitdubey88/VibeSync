@@ -131,11 +131,19 @@ export async function decryptFile(encryptedBlob, key, originalType = 'video/mp4'
     const iv = combined.slice(0, 12);
     const ciphertext = combined.slice(12);
 
-    const decrypted = await window.crypto.subtle.decrypt(
-        { name: ENCRYPTION_ALGORITHM, iv },
-        key,
-        ciphertext
-    );
-
-    return new Blob([decrypted], { type: originalType });
+    try {
+        const decrypted = await window.crypto.subtle.decrypt(
+            { name: ENCRYPTION_ALGORITHM, iv },
+            key,
+            ciphertext
+        );
+        return new Blob([decrypted], { type: originalType });
+    } catch (err) {
+        // AES-GCM OperationError means wrong key, wrong IV, or the blob is not actually encrypted.
+        // Provide a readable error so callers can log or display a useful message.
+        throw new Error(
+            `decryptFile failed — the file may not be encrypted, or the room key is wrong. ` +
+            `Original: ${err.name}: ${err.message}`
+        );
+    }
 }
