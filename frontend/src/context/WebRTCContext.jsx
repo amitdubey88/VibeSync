@@ -418,17 +418,24 @@ export const WebRTCProvider = ({ children }) => {
 
         const onAnswer = async ({ fromSocketId, answer, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && roomKey) {
+            if (!pc || !roomKey) return;
+            try {
                 const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
+            } catch (err) {
+                console.warn(`[Voice] setRemoteDescription failed for ${fromSocketId}:`, err.name);
             }
         };
 
         const onIce = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = peersRef.current[fromSocketId];
-            if (pc && candidate && roomKey) {
+            if (!pc || !candidate || !roomKey) return;
+            try {
                 const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
                 await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(() => {});
+            } catch (err) {
+                // Stale ICE candidates from replaced connections are expected — ignore
+                if (err.name !== 'OperationError') console.warn(`[Voice] ICE error for ${fromSocketId}:`, err.name);
             }
         };
 
@@ -587,9 +594,13 @@ export const WebRTCProvider = ({ children }) => {
 
         const onVideoStreamIce = async ({ fromSocketId, candidate, e2ee }) => {
             const pc = videoPeersRef.current[fromSocketId];
-            if (pc && candidate && roomKey) {
+            if (!pc || !candidate || !roomKey) return;
+            try {
                 const decrypted = e2ee ? await decryptData(candidate, roomKey) : candidate;
                 await pc.addIceCandidate(new RTCIceCandidate(decrypted)).catch(() => {});
+            } catch (err) {
+                // Stale ICE candidates for a closed/replaced PC are expected — silently ignore
+                if (err.name !== 'OperationError') console.warn(`[VideoStream] ICE error for ${fromSocketId}:`, err.name);
             }
         };
 
