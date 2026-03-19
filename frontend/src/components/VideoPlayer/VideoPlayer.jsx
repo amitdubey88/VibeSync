@@ -675,6 +675,12 @@ const VideoPlayer = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Check BEFORE updating refs: was a live stream already active?
+    // If so, we need to reset isStreamingActiveRef so startBroadcast() can
+    // re-capture from the new video. Without this, captureStream() never fires
+    // because the guard `if (isStreamingActiveRef.current) return` blocks it.
+    const wasAlreadyStreaming = isStreamingActiveRef.current;
+
     // Create blob URL → host starts watching IMMEDIATELY
     const localUrl = URL.createObjectURL(file);
     blobUrlRef.current = localUrl;
@@ -691,7 +697,34 @@ const VideoPlayer = () => {
         { currentTime: 0, isPlaying: false }
       );
     }
-    toast.success('⚡ Video Loaded! Click "Start Streaming" to go live.', { duration: 4000 });
+
+    if (wasAlreadyStreaming) {
+      // SEAMLESS SWITCH: Reset streaming-active flag so startBroadcast() 
+      // will call captureStream() on the new video. Keep isLiveStreamingInitialized
+      // true so onPlayingEv → startBroadcast() fires automatically.
+      console.log('[VideoPlayer] Switching live file — resetting for re-capture');
+      isStreamingActiveRef.current = false;
+      // Auto-play once the new source is ready — when React re-renders with the
+      // new blobUrl, the video element loads the new file. We listen for canplay
+      // then start playback, which triggers onPlayingEv → startBroadcast().
+      const autoplayOnLoad = () => {
+        const el = videoRef.current;
+        if (!el) return;
+        const onReady = () => {
+          el.play().catch(() => {});
+        };
+        if (el.readyState >= 3) {
+          onReady();
+        } else {
+          el.addEventListener('canplay', onReady, { once: true });
+        }
+      };
+      // Wait for React render + video element source update
+      setTimeout(autoplayOnLoad, 200);
+      toast.success('⚡ Switching live video...', { duration: 2000 });
+    } else {
+      toast.success('⚡ Video Loaded! Click "Start Streaming" to go live.', { duration: 4000 });
+    }
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
