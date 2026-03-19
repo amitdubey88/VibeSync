@@ -88,18 +88,33 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     return () => window.removeEventListener('video:toggle-mute', onToggleMute);
   }, []);
 
-  // Sync volume state to video element
+  // Sync volume state FROM video element when modified externally (e.g. autoplay fallback)
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.volume = isMutedLocal ? 0 : volume;
-      videoRef.current.muted = isMutedLocal;
-    }
-  }, [videoRef, videoEl, volume, isMutedLocal]);
+    const video = videoRef.current;
+    if (!video) return;
 
+    const onVolumeChange = () => {
+      // Sync local state if the video was muted externally
+      setIsMutedLocal(video.muted || video.volume === 0);
+      if (video.volume > 0) setVolume(video.volume);
+    };
+
+    video.addEventListener('volumechange', onVolumeChange);
+    // Initial sync
+    onVolumeChange();
+
+    return () => video.removeEventListener('volumechange', onVolumeChange);
+  }, [videoRef, videoEl]);
+
+  // Sync volume state TO video element ONLY when user interacts with sliders
   const handleVolume = (e) => {
     const v = parseFloat(e.target.value);
     setVolume(v);
     setIsMutedLocal(v === 0);
+    if (videoRef.current) {
+      videoRef.current.volume = v;
+      videoRef.current.muted = (v === 0);
+    }
   };
 
   const toggleMuteVideo = useCallback(() => {
@@ -107,7 +122,11 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     const newMuted = !isMutedLocal;
     videoRef.current.muted = newMuted;
     setIsMutedLocal(newMuted);
-  }, [videoRef, isMutedLocal]);
+    if (!newMuted && volume === 0) {
+      setVolume(1);
+      videoRef.current.volume = 1;
+    }
+  }, [videoRef, isMutedLocal, volume]);
 
   const toggleFullscreen = useCallback(() => {
     // BUGFIX: videoRef.current might be a YouTubeVideoProxy (not a DOM element),

@@ -1,7 +1,7 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import useSyncDataChannel from './useSyncDataChannel';
+import toast from 'react-hot-toast';
 
 const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
 
@@ -30,6 +30,24 @@ const useVideoSync = (videoEl) => {
 
     // Cache the latest sync state if videoEl isn't ready yet
     const cachedSyncStateRef = useRef(null);
+
+    // Reusable robust play function that falls back to muted playback
+    // if the browser blocks audio-enabled autoplay (e.g. after a page refresh).
+    const safePlay = useCallback(() => {
+        if (!videoEl) return;
+        const playPromise = videoEl.play();
+        if (playPromise !== undefined) {
+            playPromise.catch(err => {
+                if (err.name === 'NotAllowedError') {
+                    console.warn('[VideoSync] Autoplay blocked by browser. Retrying muted.');
+                    videoEl.muted = true;
+                    videoEl.play().catch(() => {});
+                    // Muted local state is synced via VideoControls.jsx DOM listener!
+                    toast('Audio blocked by browser. Tap speaker icon to unmute.', { icon: '🔇', duration: 4000 });
+                }
+            });
+        }
+    }, [videoEl]);
 
     // Detect video source changes so we never apply stale timing from the previous video
     useEffect(() => {
@@ -180,7 +198,7 @@ const useVideoSync = (videoEl) => {
             if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
                 applyTimeIfNeeded(currentTime);
             }
-            videoEl.play().catch(() => { });
+            safePlay();
             setVideoState((prev) => ({ ...prev, isPlaying: true, currentTime }));
         };
 
@@ -241,7 +259,7 @@ const useVideoSync = (videoEl) => {
             // Only correct drift if playing to avoid jitter while paused
             if (vs.isPlaying) {
                 applyTimeIfNeeded(vs.currentTime);
-                if (videoEl.paused) videoEl.play().catch(() => { });
+                if (videoEl.paused) safePlay();
             } else {
                 if (!videoEl.paused) videoEl.pause();
                 // If paused, we want exact match
@@ -265,7 +283,7 @@ const useVideoSync = (videoEl) => {
 
             // Enforce pause/play state drift
             if (isPlaying && videoEl.paused) {
-                videoEl.play().catch(() => {});
+                safePlay();
                 setVideoState(prev => ({ ...prev, isPlaying: true, currentTime: expectedTime }));
             } else if (!isPlaying && !videoEl.paused) {
                 videoEl.pause();
@@ -337,7 +355,7 @@ const useVideoSync = (videoEl) => {
             if (videoType !== 'live' && videoType !== 'uploading') {
                 if (vs.isPlaying) {
                     videoEl.currentTime = vs.currentTime;
-                    videoEl.play().catch(() => {});
+                    safePlay();
                 } else {
                     videoEl.currentTime = vs.currentTime;
                     videoEl.pause();

@@ -50,13 +50,24 @@ const LandingPage = () => {
 
     // Different username OR not logged in → issue a fresh guest token
     if (isAuthenticated) logout();
-    try {
-      await guestLogin(name);
-      return true;
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Login failed');
-      return false;
+    
+    // Retry mechanism for transient network or DB ready-state issues
+    let attempts = 0;
+    while (attempts < 3) {
+      try {
+        await guestLogin(name);
+        return true;
+      } catch (err) {
+        attempts++;
+        if (attempts >= 3) {
+          toast.error(err.response?.data?.message || 'Login failed');
+          return false;
+        }
+        // Wait 400ms before retrying
+        await new Promise(r => setTimeout(r, 400));
+      }
     }
+    return false;
   };
 
   // ── Apply inline username edit ────────────────────────────────────────────

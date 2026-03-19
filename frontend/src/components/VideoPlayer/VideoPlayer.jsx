@@ -276,6 +276,8 @@ const VideoPlayer = () => {
             console.error('[Participant Live] Muted autoplay also failed:', muteErr);
           });
           setIsLoading(false);
+          // NEW: Inform the user so they don't think "the sound banked out" glitchily
+          toast('Audio blocked by browser. Tap speaker icon to unmute.', { icon: '🔇', duration: 4000 });
         });
       }
     } else if (videoEl.srcObject) {
