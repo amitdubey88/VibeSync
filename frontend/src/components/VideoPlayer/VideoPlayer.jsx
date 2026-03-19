@@ -479,15 +479,6 @@ const VideoPlayer = () => {
         setPremierStream(null);
         setIsLiveStreamingInitialized(false);
         isLiveStreamingInitializedRef.current = false;
-        
-        // Also clear local blob tracking if moving away from live
-        if (!isLiveType && blobUrl) {
-           console.log('[VideoPlayer] Clearing stale blob URL after video source change.');
-           URL.revokeObjectURL(blobUrl);
-           blobUrlRef.current = null;
-           setBlobUrl(null);
-           setIsDirectStreaming(false);
-        }
       } else if (wasStreaming) {
         // Video source changed but streaming was active AND the NEW type is live
         // keep initialized so onPlayingEv → startBroadcast() fires automatically.
@@ -720,6 +711,10 @@ const VideoPlayer = () => {
     // because the guard `if (isStreamingActiveRef.current) return` blocks it.
     const wasAlreadyStreaming = isStreamingActiveRef.current;
 
+    if (blobUrlRef.current) {
+       URL.revokeObjectURL(blobUrlRef.current);
+    }
+
     // Create blob URL → host starts watching IMMEDIATELY
     const localUrl = URL.createObjectURL(file);
     blobUrlRef.current = localUrl;
@@ -802,6 +797,18 @@ const VideoPlayer = () => {
         return; // Reject the link, don't broadcast to room
       }
     }
+
+    // Explicitly clean up any previous blob/streaming state since we are moving to a URL
+    if (blobUrlRef.current) {
+       URL.revokeObjectURL(blobUrlRef.current);
+       blobUrlRef.current = null;
+    }
+    setBlobUrl(null);
+    setIsDirectStreaming(false);
+    setIsLiveStreamingInitialized(false);
+    isLiveStreamingInitializedRef.current = false;
+    isStreamingActiveRef.current = false;
+    setPremierStream(null);
 
     setVideoSource(
       { url: resolved.url, type: resolved.type, title: resolved.title }, 
@@ -987,19 +994,28 @@ const VideoPlayer = () => {
                     Your video is loaded locally. Click below when you're ready to start broadcasting to all participants.
                   </p>
                    <button
+                    disabled={!videoRef.current && !videoEl}
                     onClick={() => {
                       console.log('[DirectStream] User clicked Start Streaming.');
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
 
+                      const el = videoRef.current || videoEl;
+                      if (!el) {
+                         console.error('[DirectStream] Cannot start: video element missing.');
+                         return;
+                      }
+
                       // BUG4 FIX: startBroadcast is now a stable useCallback — no stale closure.
-                      if (videoEl && !videoEl.paused) {
+                      if (!el.paused) {
                         startBroadcast();
-                      } else if (videoEl) {
-                        videoEl.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
+                      } else {
+                        el.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
                       }
                     }}
-                    className="flex items-center justify-center gap-2 bg-accent-red hover:bg-accent-red/90 text-white font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all hover:scale-105"
+                    className={`flex items-center justify-center gap-2 font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all ${
+                       (!videoRef.current && !videoEl) ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-accent-red hover:bg-accent-red/90 text-white hover:scale-105'
+                    }`}
                   >
                     ▶ Start Streaming
                   </button>
