@@ -471,16 +471,26 @@ const VideoPlayer = () => {
       // Always reset streaming-active so the next startBroadcast() re-captures
       isStreamingActiveRef.current = false;
       
-      if (!currentVideo?.url) {
-        // No video source at all — fully stop streaming
+      const isLiveType = currentVideo?.type === 'live' || currentVideo?.type === 'uploading';
+
+      if (!currentVideo?.url || !isLiveType) {
+        // No video source, OR switching to a non-live source — fully stop streaming
+        if (wasStreaming) console.log('[VideoPlayer] Closing WebRTC broadcast due to switching away from live mode');
         setPremierStream(null);
         setIsLiveStreamingInitialized(false);
         isLiveStreamingInitializedRef.current = false;
+        
+        // Also clear local blob tracking if moving away from live
+        if (!isLiveType && blobUrl) {
+           console.log('[VideoPlayer] Clearing stale blob URL after video source change.');
+           URL.revokeObjectURL(blobUrl);
+           blobUrlRef.current = null;
+           setBlobUrl(null);
+           setIsDirectStreaming(false);
+        }
       } else if (wasStreaming) {
-        // Video source changed but streaming was active — keep initialized
-        // so onPlayingEv → startBroadcast() fires automatically for the new video.
-        // Do NOT reset isLiveStreamingInitialized — this prevents the "Ready to Go Live"
-        // overlay from re-appearing and ensures auto-rebroadcast.
+        // Video source changed but streaming was active AND the NEW type is live
+        // keep initialized so onPlayingEv → startBroadcast() fires automatically.
         console.log('[VideoPlayer] Keeping streaming initialized for seamless video switch');
       } else {
         // Source changed but streaming was never started — reset to show overlay
@@ -490,21 +500,8 @@ const VideoPlayer = () => {
     }
   }, [currentVideo, isHost, setPremierStream, blobUrl]);
 
-  // BLACK SCREEN FIX: When host changes video to a regular URL, clear stale blob/stream state
-  // Without this, blobUrl persists → activeSrc keeps using old blob → participant element stays black
-  useEffect(() => {
-    if (!currentVideo?.url) return;
-    const isRegularUrl = currentVideo.url !== 'live-stream' && !blobUrlRef.current?.startsWith('blob:');
-    // If host navigates from blob/live to a new URL, wipe local blob tracking
-    if (isRegularUrl && blobUrl) {
-      console.log('[VideoPlayer] Clearing stale blob URL after video source change.');
-      URL.revokeObjectURL(blobUrl);
-      blobUrlRef.current = null;
-      setBlobUrl(null);
-      setIsDirectStreaming(false);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideo?.url]);
+  // The previous BLACK SCREEN FIX logic has been merged into the isSourceChanged hook above.
+  // We keep this empty or remove it. We'll simply omit it.
 
   // Reset local timing when video source changes
   useEffect(() => {
@@ -770,7 +767,7 @@ const VideoPlayer = () => {
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
-  const handleUrlSubmit = (e) => {
+  const handleUrlSubmit = async (e) => {
     e.preventDefault();
     const url = urlInput.trim();
     if (!url) return;
@@ -785,6 +782,25 @@ const VideoPlayer = () => {
     if (resolved.type === 'unsupported') {
       toast.error('Unsupported link format or platform.');
       return;
+    }
+
+    if (resolved.type === 'direct') {
+      const validateToast = toast.loading('Checking video link...');
+      try {
+        await new Promise((resolve, reject) => {
+          const vid = document.createElement('video');
+          vid.preload = 'metadata';
+          vid.onloadedmetadata = () => resolve(true);
+          vid.onerror = () => reject(new Error('Not a playable video'));
+          setTimeout(() => reject(new Error('Timeout checking video')), 10000);
+          vid.src = resolved.url;
+        });
+        toast.dismiss(validateToast);
+      } catch (err) {
+        toast.dismiss(validateToast);
+        toast.error('The link does not contain a valid or playable video.');
+        return; // Reject the link, don't broadcast to room
+      }
     }
 
     setVideoSource(
