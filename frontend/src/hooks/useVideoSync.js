@@ -1,3 +1,4 @@
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import useSyncDataChannel from './useSyncDataChannel';
@@ -343,7 +344,7 @@ const useVideoSync = (videoEl) => {
             socket.off('video:sync', onHeartbeatSync);
             cleanupDataChannel();
         };
-    }, [socket, videoEl, isHost, setVideoState, currentVideo, sendSyncMessage, onSyncMessage]);
+    }, [socket, videoEl, isHost, setVideoState, currentVideo, sendSyncMessage, onSyncMessage, roomCode, safePlay]);
 
     // Apply cached sync state once videoEl becomes available
     useEffect(() => {
@@ -354,16 +355,18 @@ const useVideoSync = (videoEl) => {
             const videoType = remoteVideo?.type || currentVideo?.type;
             if (videoType !== 'live' && videoType !== 'uploading') {
                 if (vs.isPlaying) {
+                    // eslint-disable-next-line react-hooks/immutability
                     videoEl.currentTime = vs.currentTime;
                     safePlay();
                 } else {
+                    // eslint-disable-next-line react-hooks/immutability
                     videoEl.currentTime = vs.currentTime;
                     videoEl.pause();
                 }
             }
             cachedSyncStateRef.current = null;
         }
-    }, [videoEl, isHost, currentVideo]);
+    }, [videoEl, isHost, currentVideo, safePlay]);
 
     // ── Request sync on mount AND after socket reconnect (BUG-12) ────────────
     useEffect(() => {

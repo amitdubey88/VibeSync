@@ -1,8 +1,8 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useWebRTCContext } from '../../context/WebRTCContext';
 import { formatTime } from '../../utils/helpers';
-import toast from 'react-hot-toast';
+// Empty replacement to remove toast import entirely avoiding blank lines
 import {
   Play, Pause, Volume2, VolumeX, Maximize2, Minimize2, Upload,
   Mic, MicOff, Phone, Pin
@@ -181,8 +181,6 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
   
   const progress = safeDuration > 0 ? (safeTime / safeDuration) * 100 : 0;
   const bufferedProgress = safeDuration > 0 ? (buffered / safeDuration) * 100 : 0;
-  const showRemaining = safeDuration > 0 && safeDuration !== Infinity && !isLive;
-  const timeLeft = safeDuration - safeTime;
 
   return (
     <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>

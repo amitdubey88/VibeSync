@@ -33,7 +33,7 @@ const LandingPage = () => {
         if (session.roomCode) {
           navigate(`/room/${session.roomCode}`, { replace: true });
         }
-      } catch (e) {
+      } catch {
         sessionStorage.removeItem("vibesync_session");
       }
     }
@@ -68,25 +68,6 @@ const LandingPage = () => {
       }
     }
     return false;
-  };
-
-  // ── Apply inline username edit ────────────────────────────────────────────
-  const applyUsernameEdit = async () => {
-    const trimmed = editedName.trim();
-    if (!trimmed || trimmed.length < 2) {
-      toast.error('Username must be at least 2 characters');
-      return;
-    }
-    setUsername(trimmed);
-    setEditingUsername(false);
-    // Force re-login with the new name immediately
-    if (isAuthenticated) {
-      try {
-        logout();
-        await guestLogin(trimmed);
-        toast.success(`Username changed to "${trimmed}"`);
-      } catch {}
-    }
   };
 
   const handleJoin = async (e) => {
@@ -194,10 +175,10 @@ const LandingPage = () => {
               { icon: Mic, label: 'Voice Call' },
               { icon: ShieldCheck, label: 'E2EE' },
               { icon: Users, label: 'Multi-user' },
-            ].map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-2 glass rounded-full px-4 py-2 text-sm text-text-secondary">
-                <Icon className="w-4 h-4 text-accent-purple" />
-                {label}
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2 glass rounded-full px-4 py-2 text-sm text-text-secondary">
+                <item.icon className="w-4 h-4 text-accent-purple" />
+                {item.label}
               </div>
             ))}
           </div>
@@ -299,17 +280,17 @@ const LandingPage = () => {
                     {[
                       { value: 'public', icon: Globe, label: 'Public' },
                       { value: 'private', icon: Lock, label: 'Private' },
-                    ].map(({ value, icon: Icon, label }) => (
+                    ].map((item) => (
                       <button
-                        key={value}
+                        key={item.value}
                         type="button"
-                        onClick={() => setRoomType(value)}
+                        onClick={() => setRoomType(item.value)}
                         className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border text-sm font-medium transition-all
-                          ${roomType === value
+                          ${roomType === item.value
                             ? 'border-accent-purple bg-accent-purple/10 text-accent-purple'
                             : 'border-border-dark text-text-secondary hover:border-border-light'}`}
                       >
-                        <Icon className="w-4 h-4" /> {label}
+                        <item.icon className="w-4 h-4" /> {item.label}
                       </button>
                     ))}
                   </div>

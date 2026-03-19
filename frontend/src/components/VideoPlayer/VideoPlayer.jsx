@@ -560,7 +560,7 @@ const VideoPlayer = () => {
        // to avoid race conditions with play/pause state
        syncDuration(duration);
     }
-  }, [isHost, duration, currentVideo, videoState?.duration, syncDuration]);
+  }, [isHost, duration, currentVideo, videoState, syncDuration]);
 
   // When Cloudinary URL replaces blob URL: seek to saved position once metadata loads
   const pendingSeekRef = useRef(null);
@@ -628,7 +628,7 @@ const VideoPlayer = () => {
 
     fetchAndDecrypt();
     return () => { active = false; };
-  }, [currentVideo?.url, currentVideo?.e2ee, roomKey, blobUrl]);
+  }, [currentVideo, roomKey, blobUrl]);
 
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
@@ -644,7 +644,7 @@ const VideoPlayer = () => {
   const clickAnimRef = useRef(null);
   const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
 
-  const handleCenterClick = useCallback((e) => {
+  const handleCenterClick = useCallback(() => {
     handleMouseMove();
     if (!isHost || !videoEl) return;
     
@@ -793,7 +793,7 @@ const VideoPlayer = () => {
           vid.src = resolved.url;
         });
         toast.dismiss(validateToast);
-      } catch (err) {
+      } catch {
         toast.dismiss(validateToast);
         toast.error('The link does not contain a valid or playable video.');
         return; // Reject the link, don't broadcast to room
