@@ -408,11 +408,12 @@ const VideoPlayer = () => {
   // startBroadcast is now a stable useCallback — no longer a closure dep here
   }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, startBroadcast]);
 
-  // Detect video source change and reset streaming flag (but do NOT destroy peers)
-  // On source change, we reset isStreamingActiveRef so the next startBroadcast()
-  // will captureStream() from the new video. setPremierStream(newStream) will then
-  // use replaceTrack() on all existing PCs — seamless switch, zero interruption.
-  // We ONLY call setPremierStream(null) when there truly is no video URL (stream ending).
+  // Detect video source change and reset streaming-active flag for re-capture.
+  // CRITICAL: Do NOT reset isLiveStreamingInitialized if streaming was already active.
+  // Resetting it shows the "Ready to Go Live" overlay and blocks auto-rebroadcast.
+  // Instead, keep it true so onPlayingEv → startBroadcast() fires automatically.
+  // startBroadcast() will captureStream() the new video and setPremierStream() will
+  // use replaceTrack() on existing PCs — seamless switch, zero interruption.
   useEffect(() => {
     if (!isHost) return;
     
@@ -421,14 +422,28 @@ const VideoPlayer = () => {
                            (currentVideo.url === 'live-stream' && blobUrl && blobUrl !== blobUrlRef.current);
 
     if (isSourceChanged) {
-      console.log('[VideoPlayer] Video source changed. Resetting streaming flag.');
-      isStreamingActiveRef.current = false;
-      setIsLiveStreamingInitialized(false);
-      isLiveStreamingInitializedRef.current = false;
+      // Check BEFORE resetting: was streaming previously active?
+      const wasStreaming = isStreamingActiveRef.current || isLiveStreamingInitializedRef.current;
+      console.log(`[VideoPlayer] Video source changed. wasStreaming=${!!wasStreaming}`);
       
-      // Only tear down stream if there's truly no video source anymore
+      // Always reset streaming-active so the next startBroadcast() re-captures
+      isStreamingActiveRef.current = false;
+      
       if (!currentVideo?.url) {
+        // No video source at all — fully stop streaming
         setPremierStream(null);
+        setIsLiveStreamingInitialized(false);
+        isLiveStreamingInitializedRef.current = false;
+      } else if (wasStreaming) {
+        // Video source changed but streaming was active — keep initialized
+        // so onPlayingEv → startBroadcast() fires automatically for the new video.
+        // Do NOT reset isLiveStreamingInitialized — this prevents the "Ready to Go Live"
+        // overlay from re-appearing and ensures auto-rebroadcast.
+        console.log('[VideoPlayer] Keeping streaming initialized for seamless video switch');
+      } else {
+        // Source changed but streaming was never started — reset to show overlay
+        setIsLiveStreamingInitialized(false);
+        isLiveStreamingInitializedRef.current = false;
       }
     }
   }, [currentVideo, isHost, setPremierStream, blobUrl]);
