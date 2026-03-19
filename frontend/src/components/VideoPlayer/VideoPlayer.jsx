@@ -136,6 +136,10 @@ const VideoPlayer = () => {
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
 
+  // Participant stream swapping state
+  const [isSwappingStream, setIsSwappingStream] = useState(false);
+  const previousStreamTitleRef = useRef(null);
+
   // Live URL validation result — drives inline type feedback in the source picker modal
   const urlValidationResult = urlInput.trim() ? resolveVideoUrl(urlInput.trim()) : null;
 
@@ -407,6 +411,44 @@ const VideoPlayer = () => {
     };
   // startBroadcast is now a stable useCallback — no longer a closure dep here
   }, [videoEl, isHost, currentVideo?.type, isDirectStreaming, startBroadcast]);
+
+  // ── Participant Stream Swap UX ──────────────────────────────────────────
+  // Detects when the host changes the live stream file (title changes, URL stays 'live-stream')
+  // and shows a loading overlay until the WebRTC tracks are fully replaced.
+  useEffect(() => {
+    if (isHost) return;
+    
+    if (!currentVideo || currentVideo.type !== 'live') {
+      previousStreamTitleRef.current = null;
+      setIsSwappingStream(false);
+      return;
+    }
+
+    if (!previousStreamTitleRef.current) {
+      previousStreamTitleRef.current = currentVideo.title;
+      return;
+    }
+
+    if (currentVideo.title !== previousStreamTitleRef.current) {
+      console.log('[VideoPlayer] Stream title changed — showing participant loading overlay');
+      setIsSwappingStream(true);
+      previousStreamTitleRef.current = currentVideo.title;
+      
+      // Fallback to clear loading state just in case event drops
+      const t = setTimeout(() => setIsSwappingStream(false), 5000);
+      return () => clearTimeout(t);
+    }
+  }, [currentVideo, isHost]);
+
+  useEffect(() => {
+    if (isHost) return;
+    const handleSwapComplete = () => {
+      console.log('[VideoPlayer] Tracks replaced event received — hiding loading overlay');
+      setIsSwappingStream(false);
+    };
+    window.addEventListener('video-stream:tracks-replaced', handleSwapComplete);
+    return () => window.removeEventListener('video-stream:tracks-replaced', handleSwapComplete);
+  }, [isHost]);
 
   // Detect video source change and reset streaming-active flag for re-capture.
   // CRITICAL: Do NOT reset isLiveStreamingInitialized if streaming was already active.
@@ -989,9 +1031,15 @@ const VideoPlayer = () => {
 
 
       {/* Buffering/Loading Indicator */}
-      {(isLoading || isDecrypting) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/40 pointer-events-none z-10 gap-3">
+      {(isLoading || isDecrypting || isSwappingStream) && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none z-50 gap-3">
           <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
+          {isSwappingStream && (
+            <div className="text-center animate-fade-in">
+              <p className="text-white font-bold text-lg">Loading Next Stream...</p>
+              <p className="text-gray-300 text-sm">The host is switching videos</p>
+            </div>
+          )}
         </div>
       )}
 

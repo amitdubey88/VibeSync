@@ -630,9 +630,20 @@ export const WebRTCProvider = ({ children }) => {
                 const pc = createVideoPeerConnection(fromSocketId);
                 // Suppress onnegotiationneeded on host-side PCs (host never sends offers)
                 pc._suppressNegotiation = true;
-                premierStreamRef.current.getTracks().forEach(track =>
-                    pc.addTrack(track, premierStreamRef.current)
-                );
+                
+                premierStreamRef.current.getTracks().forEach(track => {
+                    const sender = pc.addTrack(track, premierStreamRef.current);
+                    
+                    // Boost video quality: WebRTC often defaults to low bitrates for capture streams (1-2 Mbps)
+                    // Force the encoder to allow up to 8 Mbps for high-quality live streaming
+                    if (track.kind === 'video') {
+                        const params = sender.getParameters();
+                        if (!params.encodings) params.encodings = [{}];
+                        params.encodings[0].maxBitrate = 8000000; // 8 Mbps
+                        sender.setParameters(params).catch(e => console.warn('[VideoStream] Failed to set high bitrate:', e));
+                    }
+                });
+
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
                 const answer = await pc.createAnswer();
                 await pc.setLocalDescription(answer);
@@ -692,6 +703,9 @@ export const WebRTCProvider = ({ children }) => {
         // this event is just a nudge to force play() if the video element paused.
         const onTracksReplaced = () => {
             console.log('[VideoStream] Host replaced tracks — nudging playback');
+            // Dispatch event for UI overlays to know swap is complete
+            window.dispatchEvent(new CustomEvent('video-stream:tracks-replaced'));
+
             const videoEl = watchdogVideoRef.current;
             if (videoEl && videoEl.paused) {
                 videoEl.play().catch(err => {

@@ -170,9 +170,13 @@ router.post('/:code/join', authenticate, async (req, res) => {
         }
         return res.status(404).json({ success: false, message: 'Room not found' });
     }
-    // Count only online participants toward the limit
-    const onlineCount = room.participants.filter(p => p.isOnline !== false).length;
-    if (onlineCount >= room.participantLimit) {
+    // Count only OTHER online participants toward the limit so a reconnecting user
+    // doesn't get blocked by their own ghost session before TCP timeout drops it.
+    const otherOnlineCount = room.participants.filter(p => 
+        p.isOnline !== false && p.userId !== req.user.id
+    ).length;
+    
+    if (otherOnlineCount >= room.participantLimit) {
         return res.status(403).json({ success: false, message: 'Room is full' });
     }
 

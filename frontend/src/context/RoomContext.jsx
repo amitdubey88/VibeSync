@@ -4,51 +4,20 @@ import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
 import toast from 'react-hot-toast';
 import { deriveKey, encryptData, decryptData } from '../utils/crypto';
+import { sounds } from '../utils/soundEffects';
 
 // Enhanced sound generator for premium UI feedback
 const playUISound = (type = 'message') => {
   try {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    
-    const now = ctx.currentTime;
-    
-    if (type === 'message') {
-      // Soft, high-pitched "ding"
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(800, now);
-      osc.frequency.exponentialRampToValueAtTime(1000, now + 0.1);
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.1, now + 0.01);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-      osc.start(now);
-      osc.stop(now + 0.3);
-    } else if (type === 'social') {
-      // Mellow, mid-range "pop" (joins/leaves)
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(880, now + 0.05);
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.15, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-      osc.start(now);
-      osc.stop(now + 0.15);
-    } else if (type === 'action') {
-      // Very short "tick" (clicks)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(1200, now);
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.05, now + 0.005);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-      osc.start(now);
-      osc.stop(now + 0.05);
-    }
+    if (type === 'message') sounds.playNotification();
+    else if (type === 'join') sounds.playJoin();
+    else if (type === 'leave') sounds.playLeave();
+    else if (type === 'knock') sounds.playKnock();
+    else if (type === 'end') sounds.playSessionEnded();
+    else if (type === 'social') sounds.playTone(600, 'sine', 0.1, 0, 0.05); // fallback
+    else if (type === 'action') sounds.playTone(1200, 'sine', 0.05, 0, 0.05);
   } catch (e) {
-    // Ignore audio context issues
+    // Ignore audio context issues (e.g. strict autoplay policy before interaction)
   }
 };
 
@@ -308,17 +277,23 @@ export const RoomProvider = ({ children }) => {
       
       // If it's not my message, check if we need to notify
       if (msg.userId !== user?.id && msg.username !== user?.username) {
-        setUnreadChatCount((prev) => prev + 1);
+        if (msg.type !== 'system') setUnreadChatCount((prev) => prev + 1);
         
         setChatMuted((isMuted) => {
           if (!isMuted) {
-            playUISound('message');
-            setEnergy(prev => Math.min(prev + 10, 100)); // Boost energy
-            toast(`💬 ${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
-              duration: 2000,
-              icon: '📩',
-              id: `chat-${msg.id}`
-            });
+            if (msg.type === 'system') {
+              if (displayContent.includes('joined the room')) playUISound('join');
+              else if (displayContent.includes('left the room') || displayContent.includes('removed from')) playUISound('leave');
+              else playUISound('social');
+            } else {
+              playUISound('message');
+              setEnergy(prev => Math.min(prev + 10, 100)); // Boost energy
+              toast(`💬 ${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
+                duration: 2000,
+                icon: '📩',
+                id: `chat-${msg.id}`
+              });
+            }
           }
           return isMuted;
         });
@@ -369,6 +344,7 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onRoomDeleted = ({ message }) => {
+      playUISound('end');
       // Use the ref so we always read the CURRENT value, not a stale closure (BUG-7)
       if (isHostRef.current) {
         sessionStorage.removeItem("vibesync_session");
@@ -384,6 +360,7 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onKicked = ({ message }) => {
+      playUISound('end');
       toast.error(message || 'You were removed from the room.', { duration: 2000 });
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
@@ -401,6 +378,7 @@ export const RoomProvider = ({ children }) => {
     const onJoinRequest = (req) => {
       setJoinRequests((prev) => {
         if (prev.find((r) => r.userId === req.userId)) return prev;
+        playUISound('knock');
         return [...prev, req];
       });
     };
