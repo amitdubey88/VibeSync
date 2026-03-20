@@ -1,6 +1,6 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
-import { Reply, ShieldCheck, Check, CheckCheck } from 'lucide-react';
+import { Reply, ShieldCheck, Check, CheckCheck, Pin } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 
@@ -10,8 +10,6 @@ const SWIPE_THRESHOLD = 55;
 const MAX_DRAG = 70;
 // Quick reaction options (first row in action bar)
 const QUICK_REACTIONS = ['👍', '❤️', '😆', '😮', '😢', '🙏'];
-// Extended reaction picker
-const MORE_REACTIONS = ['😂', '💀', '🔥', '🤡', '😭', '💯', '✨', '🎉', '🫶'];
 
 // ── Tick icon based on message status ─────────────────────────────────────────
 const StatusTick = ({ status, isOwn }) => {
@@ -26,13 +24,12 @@ const StatusTick = ({ status, isOwn }) => {
   return <Check className="w-3 h-3 text-white/40 shrink-0" />;
 };
 
-const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
+const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, isCoHost }) => {
   const { reactToMessage, messageStatuses } = useRoom();
   const { user } = useAuth();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
   const [showActions, setShowActions] = useState(false);
-  const [showMoreEmoji, setShowMoreEmoji] = useState(false);
   const startXRef = useRef(null);
   const isDraggingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
@@ -81,11 +78,10 @@ const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
 
   // Click outside to dismiss action bar
   useEffect(() => {
-    if (!showActions && !showMoreEmoji) return;
+    if (!showActions) return;
     const handleOutside = (e) => {
       if (rowRef.current && !rowRef.current.contains(e.target)) {
         setShowActions(false);
-        setShowMoreEmoji(false);
       }
     };
     document.addEventListener('mousedown', handleOutside);
@@ -94,7 +90,7 @@ const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
       document.removeEventListener('mousedown', handleOutside);
       document.removeEventListener('touchstart', handleOutside);
     };
-  }, [showActions, showMoreEmoji]);
+  }, [showActions]);
 
   // ── System message ────────────────────────────────────────────────────────
   if (message.type === 'system') {
@@ -268,16 +264,7 @@ const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
               ))}
 
               <div className="w-px h-4 bg-white/10 mx-1" />
-
-              {/* More emojis */}
-              <button
-                onClick={() => setShowMoreEmoji(p => !p)}
-                className={`p-1 rounded-lg text-text-muted hover:text-accent-yellow hover:bg-white/5 transition-all text-sm ${showMoreEmoji ? 'text-accent-yellow' : ''}`}
-                title="More reactions"
-              >
-                +
-              </button>
-
+ 
               {/* Reply */}
               {onReply && (
                 <button
@@ -288,25 +275,17 @@ const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
                   <Reply className="w-3.5 h-3.5" />
                 </button>
               )}
-            </div>
-          )}
 
-          {/* More emoji picker */}
-          {showMoreEmoji && (
-            <div
-              className={`absolute -top-20 flex flex-wrap max-w-[200px] gap-1 px-3 py-2 rounded-2xl bg-[#13131f] border border-white/10 shadow-2xl z-50 animate-fade-in
-                ${isOwn ? 'right-0' : 'left-0'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {MORE_REACTIONS.map(emoji => (
+              {/* Pin */}
+              {(isHost || isCoHost) && onPin && (
                 <button
-                  key={emoji}
-                  onClick={() => { reactToMessage(message.id, emoji); setShowMoreEmoji(false); setShowActions(false); }}
-                  className="text-lg hover:scale-125 transition-transform p-1"
+                  onClick={() => { onPin(message.id); setShowActions(false); }}
+                  className="p-1 rounded-lg text-text-muted hover:text-accent-yellow hover:bg-white/5 transition-all"
+                  title="Pin message"
                 >
-                  {emoji}
+                  <Pin className="w-3.5 h-3.5" />
                 </button>
-              ))}
+              )}
             </div>
           )}
         </div>

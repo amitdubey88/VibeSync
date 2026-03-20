@@ -60,7 +60,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   
   // Feature Hooks
-  const { pinnedMessage, unpinMessage } = usePinnedMessage();
+  const { pinnedMessage, pinMessage, unpinMessage } = usePinnedMessage();
   const { activePoll, createPoll, votePoll, endPoll } = usePolls();
   const { isSlowMode, remainingCooldown } = useSlowMode();
   const { isCoHost } = useCoHost();
@@ -236,7 +236,10 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               message={msg}
               isOwn={isOwn}
               onReply={setReplyToMessage}
+              onPin={pinMessage}
               prevMessage={prevMsg}
+              isHost={isHost}
+              isCoHost={isCoHost}
             />
           );
         })}
