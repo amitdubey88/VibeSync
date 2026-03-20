@@ -15,7 +15,15 @@ export const usePinnedMessage = () => {
         return;
       }
 
-      if (msg.e2ee && roomKey) {
+      // Decrypt if explicitly marked OR if content looks like base64-encrypted data (fallback)
+      const isEncrypted = msg.e2ee || (
+        typeof msg.content === 'string' && 
+        msg.content.length > 20 && 
+        !msg.content.includes(' ') && 
+        /^[a-zA-Z0-9+/]*={0,2}$/.test(msg.content)
+      );
+
+      if (isEncrypted && roomKey) {
         try {
           const decryptedContent = await decryptData(msg.content, roomKey);
           setPinnedMessage({ ...msg, content: decryptedContent });
@@ -35,7 +43,19 @@ export const usePinnedMessage = () => {
     if (!socket) return;
 
     const onPinned = async ({ pinnedMessage: msg }) => {
-      if (msg && msg.e2ee && roomKey) {
+      if (!msg) {
+        setPinnedMessage(null);
+        return;
+      }
+
+      const isEncrypted = msg.e2ee || (
+        typeof msg.content === 'string' && 
+        msg.content.length > 20 && 
+        !msg.content.includes(' ') && 
+        /^[a-zA-Z0-9+/]*={0,2}$/.test(msg.content)
+      );
+
+      if (isEncrypted && roomKey) {
         try {
           const decryptedContent = await decryptData(msg.content, roomKey);
           setPinnedMessage({ ...msg, content: decryptedContent });
@@ -44,7 +64,7 @@ export const usePinnedMessage = () => {
           setPinnedMessage(msg);
         }
       } else {
-        setPinnedMessage(msg || null);
+        setPinnedMessage(msg);
       }
     };
 

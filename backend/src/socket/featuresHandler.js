@@ -87,7 +87,13 @@ module.exports = (io, socket, roomStore) => {
         const msg = (room.messages || []).find(m => m.id === messageId);
         if (!msg) return;
 
-        room.pinnedMessage = { id: msg.id, content: msg.content, username: msg.username, pinnedAt: Date.now() };
+        room.pinnedMessage = { 
+            id: msg.id, 
+            content: msg.content, 
+            username: msg.username, 
+            pinnedAt: Date.now(),
+            e2ee: !!msg.e2ee 
+        };
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('chat:pinned', { pinnedMessage: room.pinnedMessage });
     });
