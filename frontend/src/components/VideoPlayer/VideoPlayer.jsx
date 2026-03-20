@@ -145,6 +145,21 @@ const VideoPlayer = () => {
   // Live URL validation result — drives inline type feedback in the source picker modal
   const urlValidationResult = urlInput.trim() ? resolveVideoUrl(urlInput.trim()) : null;
 
+  // Determine what src the <video> element actually plays:
+  //   - blobUrl while host is uploading (instant playback)
+  //   - decryptedUrl after decryption finishes (for encrypted files)
+  //   - currentVideo.url for direct or hls-fallback types
+  //   - EXCLUDES youtube (handled by YouTubePlayer), uploading, and 'live-stream' placeholder
+  const activeSrc = blobUrl || decryptedUrl || (
+    currentVideo &&
+    currentVideo.type !== 'youtube' &&
+    currentVideo.type !== 'hls' &&
+    currentVideo.type !== 'uploading' &&
+    currentVideo.url !== 'live-stream'
+      ? currentVideo.url
+      : null
+  );
+
   // Derived visibility states (State-driven UI)
   const isWebRTCStream = currentVideo?.type === 'live' || isDirectStreaming;
   const isStreamActive = isLiveStreamingInitialized || (!isHost && remotePremierStream);
@@ -833,20 +848,6 @@ const VideoPlayer = () => {
     toast.success(`${resolved.title} loaded!`);
   };
 
-  // Determine what src the <video> element actually plays:
-  //   - blobUrl while host is uploading (instant playback)
-  //   - decryptedUrl after decryption finishes (for encrypted files)
-  //   - currentVideo.url for direct or hls-fallback types
-  //   - EXCLUDES youtube (handled by YouTubePlayer), uploading, and 'live-stream' placeholder
-  const activeSrc = blobUrl || decryptedUrl || (
-    currentVideo &&
-    currentVideo.type !== 'youtube' &&
-    currentVideo.type !== 'hls' &&
-    currentVideo.type !== 'uploading' &&
-    currentVideo.url !== 'live-stream'
-      ? currentVideo.url
-      : null
-  );
 
   // Portal modal
   const sourcePicker = showSourcePicker && isHost && (
