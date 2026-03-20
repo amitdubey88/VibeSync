@@ -3,7 +3,7 @@ import { useRoom } from "../../context/RoomContext";
 import { useAuth } from "../../context/AuthContext";
 import MessageBubble from "./MessageBubble";
 import QuickReactionBar from "../VideoPlayer/QuickReactionBar";
-import { Send, Smile, Bell, BellOff, X, ShieldCheck, Plus } from "lucide-react";
+import { Send, Smile, Bell, BellOff, X, ShieldCheck, Plus, MessageSquare } from "lucide-react";
 import useWebRTC from "../../hooks/useWebRTC";
 import { useSocket } from "../../context/SocketContext";
 import { usePinnedMessage } from "../../hooks/usePinnedMessage";
