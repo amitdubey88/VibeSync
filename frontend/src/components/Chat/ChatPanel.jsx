@@ -2,7 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import MessageBubble from './MessageBubble';
+import QuickReactionBar from '../VideoPlayer/QuickReactionBar';
 import { Send, Smile, Bell, BellOff, X, ShieldCheck } from 'lucide-react';
+import useWebRTC from '../../hooks/useWebRTC';
+import { useEffect, useState } from 'react';
 
 // Quick emoji sets — no external library needed
 const EMOJI_SETS = [
@@ -13,8 +16,13 @@ const EMOJI_SETS = [
 
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
-  const { messages, sendMessage, sendReaction, room, typingUsers, broadcastTyping, markChatRead } = useRoom();
+  const { messages, sendMessage, sendReaction, room, typingUsers, broadcastTyping, markChatRead, isHost, isLiveStreamingInitialized } = useRoom();
   const { user } = useAuth();
+  const { remotePremierStream } = useWebRTC();
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  
+  const isStreamActive = isLiveStreamingInitialized || (!isHost && remotePremierStream);
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
@@ -33,6 +41,17 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    const fsHandler = () => setIsFullscreen(!!document.fullscreenElement);
+    const resizeHandler = () => setIsMobile(window.innerWidth < 768);
+    document.addEventListener('fullscreenchange', fsHandler);
+    window.addEventListener('resize', resizeHandler);
+    return () => {
+      document.removeEventListener('fullscreenchange', fsHandler);
+      window.removeEventListener('resize', resizeHandler);
+    };
+  }, []);
 
   // Emit read receipts for all visible messages from others when panel is active
   useEffect(() => {
@@ -192,6 +211,13 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {/* Reactions Bar (Mobile Chat ONLY) */}
+      {isStreamActive && isMobile && !isFullscreen && (
+        <div className="px-4 border-t border-white/5 bg-white/[0.02]">
+           <QuickReactionBar />
         </div>
       )}
 

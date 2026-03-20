@@ -107,10 +107,12 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
-  const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration } = useRoom();
+  const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration, isLiveStreamingInitialized, setIsLiveStreamingInitialized } = useRoom();
   const { setPremierStream, remotePremierStream, isStreamAnnounced, watchdogVideoRef } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
   const videoRef = useRef(null);
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Host-only blob URL — lets host play instantly from local file while uploading
   const [blobUrl, setBlobUrl] = useState(null);
@@ -123,7 +125,6 @@ const VideoPlayer = () => {
 
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
-  const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
   const [isPendingNextStream, setIsPendingNextStream] = useState(false);
   // Ref mirrors the state above so onPlayingEv always reads the latest value without a
   // stale closure — critical because play() fires 'playing' before React commits the state.
@@ -143,6 +144,17 @@ const VideoPlayer = () => {
 
   // Live URL validation result — drives inline type feedback in the source picker modal
   const urlValidationResult = urlInput.trim() ? resolveVideoUrl(urlInput.trim()) : null;
+
+  // Derived visibility states (State-driven UI)
+  const isStreamActive = isLiveStreamingInitialized || (!isHost && remotePremierStream);
+  
+  const shouldShowControls = isStreamActive && (
+    (currentVideo?.url && currentVideo.url !== 'live-stream') || 
+    (currentVideo?.type === 'youtube' && videoEl !== null) || 
+    currentVideo?.type === 'hls' || 
+    isDirectStreaming || 
+    remotePremierStream
+  );
 
   // Live ref so the callback can read playback position without stale closure
   const currentTimeRef = useRef(0);
@@ -164,6 +176,17 @@ const VideoPlayer = () => {
   useEffect(() => {
     isLiveStreamingInitializedRef.current = isLiveStreamingInitialized;
   }, [isLiveStreamingInitialized]);
+
+  useEffect(() => {
+    const fsHandler = () => setIsFullscreen(!!document.fullscreenElement);
+    const resizeHandler = () => setIsMobile(window.innerWidth < 768);
+    document.addEventListener('fullscreenchange', fsHandler);
+    window.addEventListener('resize', resizeHandler);
+    return () => {
+      document.removeEventListener('fullscreenchange', fsHandler);
+      window.removeEventListener('resize', resizeHandler);
+    };
+  }, []);
 
   // BUG4 FIX: Stable useCallback at component scope so both the 'playing' event handler
   // and the 'Start Streaming' button always reference the latest version.
@@ -839,7 +862,7 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host overflow-hidden rounded-2xl border border-border-light shadow-[0_0_80px_rgba(229,9,20,0.15)] transition-all duration-500"
+      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host video-container overflow-hidden rounded-2xl border border-border-light shadow-[0_0_80px_rgba(229,9,20,0.15)] transition-all duration-500"
       onMouseMove={handleMouseMove}
       onTouchStart={handleMouseMove}
       onClick={handleMouseMove}
@@ -1064,15 +1087,19 @@ const VideoPlayer = () => {
         </div>
       )}
 
-      {/* Controls Overlay - only render if a video is active/loaded AND (for YouTube) the proxy is ready */}
-      {(activeSrc || (currentVideo?.type === 'youtube' && videoEl !== null) || currentVideo?.type === 'hls' || isDirectStreaming || remotePremierStream) && (
+      {/* Controls Overlay - only render if derived state allows it */}
+      {shouldShowControls && (
         <>
-          {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
+          {/* Reactions & Presence (floaters are always visible) */}
           <VideoPresenceOverlay visible={showControls} />
           <div className="pointer-events-none">
             <ReactionBurst />
           </div>
-          <QuickReactionBar visible={showControls} className="bottom-20 left-1/2 -translate-x-1/2" />
+
+          {/* Quick Reaction Bar (Desktop or Fullscreen only here) */}
+          {(isFullscreen || !isMobile) && (
+            <QuickReactionBar visible={showControls} />
+          )}
 
           {/* Sync Status Badge */}
           {!isHost && currentVideo && currentVideo.type !== 'live' && (

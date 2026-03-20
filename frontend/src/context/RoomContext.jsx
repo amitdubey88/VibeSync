@@ -45,6 +45,7 @@ export const RoomProvider = ({ children }) => {
   // roomEndedByHost: set when host deletes the room, shows a persistent modal
   const [roomEndedByHost, setRoomEndedByHost] = useState(null); // null | { message }
   const [typingUsers, setTypingUsers] = useState({}); // { username: timestamp }
+  const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
 
   // Chat notifications state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -769,7 +770,8 @@ export const RoomProvider = ({ children }) => {
       hostAway,
       typingUsers, broadcastTyping,
       reactToMessage,
-      messageStatuses, markChatRead
+      messageStatuses, markChatRead,
+      isLiveStreamingInitialized, setIsLiveStreamingInitialized
     }}>
       {children}
     </RoomContext.Provider>

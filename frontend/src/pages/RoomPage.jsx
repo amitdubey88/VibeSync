@@ -629,12 +629,6 @@ const RoomPage = () => {
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
         <div className="md:hidden flex flex-col bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40 relative">
           
-          {/* Reaction Bar for Mobile Portrait attached to top of tab switcher */}
-          <div className="mobile-portrait-show absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none">
-            <div className="pointer-events-auto">
-              <QuickReactionBar className="relative" />
-            </div>
-          </div>
 
           <div className="flex w-full">
             <button 

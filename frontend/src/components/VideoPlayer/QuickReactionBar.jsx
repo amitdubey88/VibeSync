@@ -4,34 +4,40 @@ import { useRoom } from '../../context/RoomContext';
 const QuickReactionBar = ({ visible, className }) => {
   const { sendReaction } = useRoom();
   const [localVisible, setLocalVisible] = useState(false);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   
   const emojis = ['👍', '❤️', '😂', '🔥', '👏', '😮', '💀', '🎉'];
 
   useEffect(() => {
     const handler = (e) => setLocalVisible(e.detail);
-    const resizeHandler = () => setIsMobile(window.innerWidth < 768);
+    const fsHandler = () => setIsFullscreen(!!document.fullscreenElement);
     
     window.addEventListener('video:controls-visibility', handler);
-    window.addEventListener('resize', resizeHandler);
+    document.addEventListener('fullscreenchange', fsHandler);
     
     return () => {
       window.removeEventListener('video:controls-visibility', handler);
-      window.removeEventListener('resize', resizeHandler);
+      document.removeEventListener('fullscreenchange', fsHandler);
     };
   }, []);
 
   const isVisible = visible !== undefined ? visible : localVisible;
 
+  // Don't render anything if not visible
   if (!isVisible) return null;
 
-  // Dynamic positioning: fixed above chat on mobile, absolute inside video on desktop
-  const positionClasses = isMobile 
-    ? 'fixed bottom-[70px] left-1/2 -translate-x-1/2 z-[60]' 
-    : (className || 'bottom-20 left-1/2 -translate-x-1/2');
+  // Dynamic positioning logic:
+  // 1. If Fullscreen: Absolute overlay inside video player
+  // 2. Otherwise: w-fit mx-auto (Chat Panel container handles layout)
+  let positionClasses = '';
+  if (isFullscreen) {
+    positionClasses = 'absolute bottom-24 left-1/2 -translate-x-1/2 z-[60]';
+  } else {
+    positionClasses = 'w-fit mx-auto py-2';
+  }
 
   return (
-    <div className={`transition-all duration-300 animate-slide-up ${positionClasses}`}>
+    <div className={`transition-all duration-300 animate-slide-up ${positionClasses} ${className || ''}`}>
       <div className="flex gap-2 p-1.5 bg-black/40 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl">
         {emojis.map((emoji) => (
           <button
