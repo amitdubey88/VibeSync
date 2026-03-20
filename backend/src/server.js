@@ -2,7 +2,6 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
@@ -24,71 +23,26 @@ const server = http.createServer(app);
 const roomStore = new Map();
 app.locals.roomStore = roomStore;
 
-// ── CORS origin list ─────────────────────────────────────────────────────────
-// FRONTEND_URL can be a comma-separated list:
-//   e.g. "https://vibesync.vercel.app,http://localhost:5173"
-const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
-    .split(',').map((s) => s.trim());
-
-const corsOriginFn = (origin, cb) => {
-    // ALWAYS allow known deployment platforms and local development
-    if (!origin || 
-        allowedOrigins.includes(origin) ||
-        origin === 'http://localhost:5174' ||
-        origin.endsWith('.vercel.app') ||
-        origin.endsWith('.koyeb.app') ||
-        origin.endsWith('.vorcel.app') ||
-        origin.endsWith('.netlify.app') ||
-        origin.endsWith('.render.com') ||
-        origin.endsWith('.onrender.com') ||
-        origin.startsWith('chrome-extension://')) {
-        return cb(null, true);
-    }
-
-    // If origin is unknown, log a warning but STILL ALLOW to prevent production break
-    // This allows us to identify new origins while ensuring the service stays available.
-    console.warn(`[CORS] Unknown origin attempt (allowed anyway): ${origin}`);
-    return cb(null, true); 
-};
-
 // ── Socket.IO Setup ──────────────────────────────────────────────────────────
 const io = new Server(server, {
-    cors: { origin: corsOriginFn, methods: ['GET', 'POST'], credentials: true },
+    cors: {
+        origin: (origin, cb) => cb(null, true),
+        credentials: true,
+    },
     pingInterval: 10000,
     pingTimeout: 5000,
 });
 
-// ── Middleware ────────────────────────────────────────────────────────────────
-app.use(helmet({
-    crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow video serving
-}));
-
-// Use a more permissive origin function to ensure headers are always sent
-app.use(cors({ 
-    origin: (origin, cb) => cb(null, true), 
-    credentials: true 
-}));
-
-// ── Global Preflight Handling ────────────────────────────────────────────────
-// This ensures ALL OPTIONS requests are handled with correct CORS headers
-app.options('*', cors({ origin: true, credentials: true }));
-
-// ── Manual Fallback Headers (Safety Net) ───────────────────────────────────
-// Extra layer to ensure headers are present even if middleware is bypassed
+// ── CORS — unified, single middleware, first in the stack ────────────────────
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin) {
-        res.header("Access-Control-Allow-Origin", origin);
-    } else {
-        res.header("Access-Control-Allow-Origin", "*");
-    }
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-    
-    // Explicitly handle preflight in this middleware too
+    res.setHeader('Access-Control-Allow-Origin', origin || '*');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
+    res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+    res.setHeader('Access-Control-Max-Age', '86400');
     if (req.method === 'OPTIONS') {
-        return res.status(200).end();
+        return res.sendStatus(204);
     }
     next();
 });

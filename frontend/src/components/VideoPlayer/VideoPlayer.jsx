@@ -995,7 +995,7 @@ const VideoPlayer = () => {
           )
         ) : currentVideo?.type === 'youtube' ? (
           /* YouTube Video Proxy Output */
-          <div className="relative w-full h-full">
+          <div className="absolute inset-0 z-0">
             <YouTubePlayer 
               key={currentVideo.url}
               videoId={currentVideo.url} 
