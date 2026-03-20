@@ -6,69 +6,26 @@ import { decryptData } from '../utils/crypto';
 export const usePinnedMessage = () => {
   const { socket } = useSocket();
   const { room, roomKey } = useRoom();
+  
+  // Track the raw message from the server (encrypted)
+  const [rawPinnedMessage, setRawPinnedMessage] = useState(room?.pinnedMessage || null);
+  // Track the decrypted message for display
   const [pinnedMessage, setPinnedMessage] = useState(null);
 
+  // Sync raw message from room state updates
   useEffect(() => {
-    const decryptAndSet = async (msg) => {
-      if (!msg) {
-        setPinnedMessage(null);
-        return;
-      }
+    setRawPinnedMessage(room?.pinnedMessage || null);
+  }, [room?.pinnedMessage]);
 
-      // Decrypt if explicitly marked OR if content looks like base64-encrypted data (fallback)
-      const isEncrypted = msg.e2ee || (
-        typeof msg.content === 'string' && 
-        msg.content.length > 20 && 
-        !msg.content.includes(' ') && 
-        /^[a-zA-Z0-9+/]*={0,2}$/.test(msg.content)
-      );
-
-      if (isEncrypted && roomKey) {
-        try {
-          const decryptedContent = await decryptData(msg.content, roomKey);
-          setPinnedMessage({ ...msg, content: decryptedContent });
-        } catch (err) {
-          console.error('[E2EE] Pinned message decryption failed:', err);
-          setPinnedMessage(msg);
-        }
-      } else {
-        setPinnedMessage(msg);
-      }
-    };
-
-    decryptAndSet(room?.pinnedMessage);
-  }, [room?.pinnedMessage, roomKey]);
-
+  // Sync raw message from socket events
   useEffect(() => {
     if (!socket) return;
 
-    const onPinned = async ({ pinnedMessage: msg }) => {
-      if (!msg) {
-        setPinnedMessage(null);
-        return;
-      }
-
-      const isEncrypted = msg.e2ee || (
-        typeof msg.content === 'string' && 
-        msg.content.length > 20 && 
-        !msg.content.includes(' ') && 
-        /^[a-zA-Z0-9+/]*={0,2}$/.test(msg.content)
-      );
-
-      if (isEncrypted && roomKey) {
-        try {
-          const decryptedContent = await decryptData(msg.content, roomKey);
-          setPinnedMessage({ ...msg, content: decryptedContent });
-        } catch (err) {
-          console.error('[E2EE] Socket pinned message decryption failed:', err);
-          setPinnedMessage(msg);
-        }
-      } else {
-        setPinnedMessage(msg);
-      }
+    const onPinned = ({ pinnedMessage: msg }) => {
+      setRawPinnedMessage(msg || null);
     };
 
-    const onUnpinned = () => setPinnedMessage(null);
+    const onUnpinned = () => setRawPinnedMessage(null);
 
     socket.on('chat:pinned', onPinned);
     socket.on('chat:unpinned', onUnpinned);
@@ -77,7 +34,39 @@ export const usePinnedMessage = () => {
       socket.off('chat:pinned', onPinned);
       socket.off('chat:unpinned', onUnpinned);
     };
-  }, [socket, roomKey]);
+  }, [socket]);
+
+  // Handle Decryption: triggers whenever raw message or roomKey changes
+  useEffect(() => {
+    const decryptEffect = async () => {
+      if (!rawPinnedMessage) {
+        setPinnedMessage(null);
+        return;
+      }
+
+      // Decrypt if explicitly marked OR if content looks like base64-encrypted data (fallback)
+      const isEncrypted = rawPinnedMessage.e2ee || (
+        typeof rawPinnedMessage.content === 'string' && 
+        rawPinnedMessage.content.length > 20 && 
+        !rawPinnedMessage.content.includes(' ') && 
+        /^[a-zA-Z0-9+/]*={0,2}$/.test(rawPinnedMessage.content)
+      );
+
+      if (isEncrypted && roomKey) {
+        try {
+          const decryptedContent = await decryptData(rawPinnedMessage.content, roomKey);
+          setPinnedMessage({ ...rawPinnedMessage, content: decryptedContent });
+        } catch (err) {
+          console.error('[E2EE] Pinned message decryption failed:', err);
+          setPinnedMessage(rawPinnedMessage);
+        }
+      } else {
+        setPinnedMessage(rawPinnedMessage);
+      }
+    };
+
+    decryptEffect();
+  }, [rawPinnedMessage, roomKey]);
 
   const pinMessage = useCallback((messageId) => {
     if (!socket || !room) return;
