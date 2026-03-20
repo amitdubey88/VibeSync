@@ -113,29 +113,26 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-3 py-1.5 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01] backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <h3 className="text-[11px] font-black text-text-primary tracking-tighter uppercase">
-            Live Chat
-          </h3>
-        </div>
-        <button
-          onClick={() => setChatMuted(!chatMuted)}
-          className={`p-1 rounded-lg transition-all active:scale-95 ${chatMuted ? "text-red-400 bg-red-500/10" : "text-text-muted hover:bg-white/5 hover:text-text-primary"}`}
-          title={
-            chatMuted ? "Unmute chat notifications" : "Mute chat notifications"
-          }
-        >
-          {chatMuted ? (
-            <BellOff className="w-3 h-3" />
-          ) : (
-            <Bell className="w-3 h-3" />
-          )}
-        </button>
-      </div>
+      <button
+        onClick={() => setChatMuted(!chatMuted)}
+        className={`p-1.5 rounded-lg transition-all active:scale-95 ${
+          chatMuted
+            ? "text-red-400 bg-red-500/15 ring-1 ring-red-500/30"
+            : "text-text-muted bg-white/5 hover:bg-white/10 hover:text-text-primary"
+        }`}
+        title={
+          chatMuted ? "Unmute chat notifications" : "Mute chat notifications"
+        }
+      >
+        {chatMuted ? (
+          <BellOff className="w-3.5 h-3.5" />
+        ) : (
+          <Bell className="w-3.5 h-3.5" />
+        )}
+      </button>
 
       {/* ── Messages ── */}
-      <div className="flex-1 overflow-y-auto scroll-area px-3 pt-12 pb-3 space-y-1">
+      <div className="flex-1 overflow-y-auto scroll-area px-3 pt-3 pb-3 space-y-1">
         {/* E2EE Security Notice */}
         <div className="flex items-center gap-2.5 py-2.5 px-4 mb-4 bg-accent-yellow/5 border border-accent-yellow/10 rounded-xl justify-center">
           <ShieldCheck className="w-3.5 h-3.5 text-accent-yellow/60 shrink-0" />
