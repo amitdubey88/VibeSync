@@ -18,7 +18,6 @@ try {
 
 // In-memory blacklist for ended rooms to prevent immediate re-entry
 const endedRooms = new Set();
-module.exports.endedRooms = endedRooms;
 
 /**
  * Extract Cloudinary public_id from a secure_url
@@ -296,3 +295,5 @@ module.exports = (io, socket, roomStore) => {
         console.log(`🛡️ Screen share permission for ${target.username} set to ${canShare} by ${socket.user.username}`);
     });
 };
+
+module.exports.endedRooms = endedRooms;

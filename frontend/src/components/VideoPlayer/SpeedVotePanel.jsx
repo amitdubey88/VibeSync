@@ -54,7 +54,7 @@ export default function SpeedVotePanel() {
 
   // Floating generic participant vote panel (can pop out from a control button)
   return (
-    <div className="absolute top-4 left-4 z-40 bg-black/50 hover:bg-black/90 backdrop-blur-md rounded-xl p-3 border border-white/10 w-64 shadow-2xl transition-all opacity-30 hover:opacity-100">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-40 bg-black/50 hover:bg-black/90 backdrop-blur-md rounded-xl p-3 border border-white/10 w-64 shadow-2xl transition-all opacity-30 hover:opacity-100">
       <h4 className="text-white text-xs font-semibold uppercase tracking-wider mb-3 flex justify-between">
         <span>Vote Speed</span>
         {hasVotes && <span className="text-blue-400">{voteStats.total} total</span>}

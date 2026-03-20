@@ -3,7 +3,7 @@ import { useRoom } from "../../context/RoomContext";
 import { useAuth } from "../../context/AuthContext";
 import MessageBubble from "./MessageBubble";
 import QuickReactionBar from "../VideoPlayer/QuickReactionBar";
-import { Send, Smile, Bell, BellOff, X, ShieldCheck } from "lucide-react";
+import { Send, Smile, Bell, BellOff, X, ShieldCheck, Plus } from "lucide-react";
 import useWebRTC from "../../hooks/useWebRTC";
 import { useSocket } from "../../context/SocketContext";
 import { usePinnedMessage } from "../../hooks/usePinnedMessage";
@@ -57,6 +57,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const [showSwipeGuide, setShowSwipeGuide] = useState(
     () => localStorage.getItem("vs_swipe_guide_seen") !== "true",
   );
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   
   // Feature Hooks
   const { pinnedMessage, unpinMessage } = usePinnedMessage();
@@ -82,11 +83,19 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   useEffect(() => {
     const fsHandler = () => setIsFullscreen(!!document.fullscreenElement);
     const resizeHandler = () => setIsMobile(window.innerWidth < 768);
+    const clickHandler = (e) => {
+      // Close attach menu if clicking outside
+      if (!e.target.closest('.attach-menu-container')) {
+        setShowAttachMenu(false);
+      }
+    };
     document.addEventListener("fullscreenchange", fsHandler);
     window.addEventListener("resize", resizeHandler);
+    document.addEventListener("mousedown", clickHandler);
     return () => {
       document.removeEventListener("fullscreenchange", fsHandler);
       window.removeEventListener("resize", resizeHandler);
+      document.removeEventListener("mousedown", clickHandler);
     };
   }, []);
 
@@ -323,27 +332,41 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           onSubmit={handleSend}
           className="flex items-center gap-2 px-4 py-3"
         >
-          {canCreatePoll && (
+          <div className="relative attach-menu-container flex items-center">
             <button
               type="button"
-              onClick={() => setShowPollModal(true)}
-              className="flex items-center justify-center p-2 rounded-xl text-text-secondary hover:text-white hover:bg-blue-500/20 transition-all active:scale-90"
-              title="Create Poll"
+              onClick={() => { setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
+              className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showAttachMenu ? "text-accent-purple bg-accent-purple/10" : "text-text-secondary hover:text-text-primary hover:bg-white/5"}`}
+              title="Attach"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
+              <Plus className={`w-5 h-5 transition-transform duration-200 ${showAttachMenu ? 'rotate-45' : ''}`} />
             </button>
-          )}
 
-          <button
-            type="button"
-            onClick={() => { setShowGif((s) => !s); setShowEmoji(false); }}
-            className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showGif ? "text-blue-400 bg-blue-500/10" : "text-text-secondary hover:text-text-primary hover:bg-white/5"}`}
-            title="Send GIF"
-          >
-            <span className="text-[10px] font-black border-2 border-current px-1 rounded uppercase tracking-wider">GIF</span>
-          </button>
+            {showAttachMenu && (
+              <div className="absolute bottom-full left-0 mb-2 py-2 w-48 bg-bg-card border border-border-dark rounded-xl shadow-2xl z-50 animate-slide-up origin-bottom-left">
+                {canCreatePoll && (
+                  <button
+                    type="button"
+                    onClick={() => { setShowPollModal(true); setShowAttachMenu(false); }}
+                    className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                  >
+                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    Create a Poll
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setShowGif(true); setShowAttachMenu(false); }}
+                  className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                >
+                  <span className="text-[10px] font-black border-2 border-accent-green text-accent-green px-1 rounded uppercase tracking-wider flex items-center justify-center w-5 h-5 shrink-0">G</span>
+                  Search Tenor GIF
+                </button>
+              </div>
+            )}
+          </div>
 
           <button
             type="button"
