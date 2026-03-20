@@ -686,19 +686,41 @@ const VideoPlayer = () => {
 
   const handleCenterClick = useCallback(() => {
     handleMouseMove();
-    if (!isHost || !videoEl) return;
+
+    console.log('CLICK', {
+      isHost,
+      isWebRTCStream,
+      isLiveStreamingInitialized,
+      hasVideo: !!videoEl,
+      activeSrc
+    });
+
+    if (!videoEl) return;
+
+    // Only host controls playback
+    if (!isHost) return;
     
-    // BUG-15: Block play/pause during WebRTC preview phase per user request
-    if (isWebRTCStream && !isLiveStreamingInitialized) return;
+    // Only block during strict pre-live state (host hasn't started stream yet)
+    if (
+      isHost &&
+      isWebRTCStream &&
+      !isLiveStreamingInitialized &&
+      !activeSrc
+    ) {
+      return;
+    }
     
     const isPaused = videoEl.paused;
-    if (isPaused) videoEl.play().catch(() => {});
-    else videoEl.pause();
+    if (isPaused) {
+      videoEl.play().catch(() => {});
+    } else {
+      videoEl.pause();
+    }
     
     setClickAnim(isPaused ? 'play' : 'pause');
     clearTimeout(clickAnimRef.current);
     clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
-  }, [isHost, videoEl, handleMouseMove]);
+  }, [videoEl, isHost, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
 
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {
@@ -892,7 +914,7 @@ const VideoPlayer = () => {
         {/* Center-click overlay: transparent layer that intercepts clicks for play/pause */}
         {/* Positioned above video content but below controls. Renders for all video types. */}
         <div
-          className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center group/centerclick"
+          className="absolute inset-0 z-10 cursor-pointer pointer-events-auto flex items-center justify-center group/centerclick"
           onClick={handleCenterClick}
           style={{ touchAction: 'manipulation' }}
         >
