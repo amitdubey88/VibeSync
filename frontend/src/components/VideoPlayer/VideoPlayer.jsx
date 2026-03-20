@@ -685,16 +685,42 @@ const VideoPlayer = () => {
   const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
 
   const handleCenterClick = useCallback(() => {
+    handleMouseMove();
+
+    console.log('CLICK', {
+      isHost,
+      isWebRTCStream,
+      isLiveStreamingInitialized,
+      hasVideo: !!videoEl,
+      activeSrc
+    });
+
     if (!videoEl) return;
 
+    // Only host controls playback
+    if (!isHost) return;
+    
+    // Only block during strict pre-live state (host hasn't started stream yet)
+    if (
+      isHost &&
+      isWebRTCStream &&
+      !isLiveStreamingInitialized &&
+      !activeSrc
+    ) {
+      return;
+    }
+    
     const isPaused = videoEl.paused;
-
     if (isPaused) {
       videoEl.play().catch(() => {});
     } else {
       videoEl.pause();
     }
-  }, [videoEl]);
+    
+    setClickAnim(isPaused ? 'play' : 'pause');
+    clearTimeout(clickAnimRef.current);
+    clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
+  }, [videoEl, isHost, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
 
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {
@@ -888,9 +914,16 @@ const VideoPlayer = () => {
         {/* Center-click overlay: transparent layer that intercepts clicks for play/pause */}
         {/* Positioned above video content but below controls. Renders for all video types. */}
         <div
-          className="absolute inset-0 z-10 pointer-events-auto cursor-pointer"
+          className="absolute inset-0 z-10 cursor-pointer pointer-events-auto flex items-center justify-center group/centerclick"
           onClick={handleCenterClick}
-        />
+          style={{ touchAction: 'manipulation' }}
+        >
+          {shouldShowControls && !isLoading && videoState && !videoState.isPlaying && currentVideo?.type !== 'live' && (
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10 shadow-xl transition-all duration-300 transform group-hover/centerclick:scale-105 animate-fade-in">
+              <Play className="w-10 h-10 sm:w-12 sm:h-12 text-white ml-2 md:opacity-80 md:group-hover/centerclick:opacity-100" />
+            </div>
+          )}
+        </div>
 
         {/* Click animation flash (Play/Pause ripple) */}
         {clickAnim && (
