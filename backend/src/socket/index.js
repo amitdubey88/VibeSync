@@ -10,6 +10,8 @@ const chatHandler = require('./chatHandler');
 const voiceHandler = require('./voiceHandler');
 const roomActionsHandler = require('./roomActionsHandler');
 const videoStreamHandler = require('./videoStreamHandler');
+const featuresHandler = require('./featuresHandler');
+const queueHandler = require('./queueHandler');
 const { hashRoomCode } = require('../utils/hash');
 
 module.exports = (io, roomStore) => {
@@ -34,6 +36,8 @@ module.exports = (io, roomStore) => {
         voiceHandler(io, socket, roomStore);
         roomActionsHandler(io, socket, roomStore);
         videoStreamHandler(io, socket, roomStore);
+        featuresHandler(io, socket, roomStore);
+        queueHandler(io, socket, roomStore);
 
         // Current room this socket belongs to
         let currentRoomCode = null;
@@ -238,6 +242,15 @@ module.exports = (io, roomStore) => {
                     voiceParticipants: room.voiceParticipants || [],
                     requiresApproval: room.requiresApproval || false,
                     isLocked: room.isLocked || false,
+                    // New feature fields (safe defaults for rooms created before these features)
+                    pinnedMessage: room.pinnedMessage || null,
+                    slowMode: room.slowMode ? { enabled: room.slowMode.enabled, cooldown: room.slowMode.cooldown } : null,
+                    coHosts: room.coHosts || [],
+                    watchQueue: room.watchQueue || [],
+                    activePoll: room.activePoll || null,
+                    currentTheme: room.currentTheme || 'default',
+                    bannedWords: room.hostId === socket.user.id ? (room.bannedWords || []) : [],
+                    scheduledAt: room.scheduledAt || null,
                 },
             });
 

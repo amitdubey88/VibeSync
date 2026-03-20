@@ -13,11 +13,20 @@ import ConfirmDialog from '../components/UI/ConfirmDialog';
 import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
 import Tooltip from '../components/UI/Tooltip';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical, Trash } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical, Trash, Palette, ListVideo, ShieldAlert } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
 import RoomSkeleton from '../components/UI/RoomSkeleton';
+import WatchQueue from '../components/Sidebar/WatchQueue';
+import ModerationPanel from '../components/Sidebar/ModerationPanel';
+
+import SessionSummaryModal from '../components/UI/SessionSummaryModal';
+import KeyboardShortcutsPanel from '../components/UI/KeyboardShortcutsPanel';
+import CountdownLobby from '../components/UI/CountdownLobby';
+import ThemePicker from '../components/UI/ThemePicker';
+import OfflineShell from '../components/UI/OfflineShell';
+import { useRoomTheme } from '../hooks/useRoomTheme';
 
 const formatTime = (seconds) => {
   if (!seconds || isNaN(seconds)) return '00:00';
@@ -67,6 +76,7 @@ const RoomPage = () => {
     joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
+    sessionSummary, setSessionSummary,
     unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
     isLocked, videoState, currentVideo,
     hostAway,
@@ -85,8 +95,12 @@ const RoomPage = () => {
   const [showLeaveModal, setShowLeaveModal] = useState(false);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showRoomInfo, setShowRoomInfo] = useState(false);
+  const [showThemePicker, setShowThemePicker] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
   const hasJoinedRef = useRef(false);
+
+  // Initialize features
+  useRoomTheme();
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : window.innerWidth < 768;
@@ -259,19 +273,20 @@ const RoomPage = () => {
 
   // Redirect to home if room ended
   useEffect(() => {
-    if (roomEndedByHost) {
+    // If we have a sessionSummary, don't redirect yet (wait for modal dismiss)
+    if (roomEndedByHost && !sessionSummary) {
       console.log('[RoomPage] Room ended by host, clearing session and redirecting.');
       sessionStorage.removeItem("vibesync_session");
       dismissRoomEnded();
       navigate('/', { replace: true, state: { roomEnded: roomEndedByHost.message || "Session Ended" } });
     }
-  }, [roomEndedByHost, navigate, dismissRoomEnded]);
+  }, [roomEndedByHost, sessionSummary, navigate, dismissRoomEnded]);
 
   // Ghost-room guard: only fires after the room was real and became null.
   // We debounce by 4 seconds to allow socket reconnection to restore the room
   // before we redirect (avoids kicking users on temporary disconnects).
   useEffect(() => {
-    if (!joining && !room && !error && hasEverHadRoom.current) {
+    if (!joining && !room && !error && hasEverHadRoom.current && !sessionSummary) {
       ghostRedirectTimer.current = setTimeout(() => {
         // Re-check via ref: if room has been restored by reconnect, don't redirect
         if (!roomRef.current && hasEverHadRoom.current) {
@@ -291,7 +306,7 @@ const RoomPage = () => {
         ghostRedirectTimer.current = null;
       }
     };
-  }, [room, joining, error]);
+  }, [room, joining, error, sessionSummary]);
 
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
@@ -443,6 +458,9 @@ const RoomPage = () => {
 
   return (
     <div className="h-screen flex flex-col bg-cinematic overflow-hidden">
+      <CountdownLobby />
+      <OfflineShell />
+
       {/* ── Top bar ── */}
       <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-2 min-w-0">
@@ -550,6 +568,16 @@ const RoomPage = () => {
                     <Clock className="w-3.5 h-3.5" />
                     Keyboard Shortcuts
                   </button>
+
+                  {isHost && (
+                    <button
+                      onClick={() => setShowThemePicker(true)}
+                      className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                    >
+                      <Palette className="w-3.5 h-3.5" />
+                      Theater Theme
+                    </button>
+                  )}
                   
                   {isHost && (
                     <>
@@ -566,6 +594,12 @@ const RoomPage = () => {
                 </div>
               </div>
             )}
+            
+            {/* Note: render ThemePicker OUTSIDE the menu so it overlaps correctly, and independently of isMoreMenuOpen */}
+            <ThemePicker 
+              isOpen={showThemePicker} 
+              onClose={() => setShowThemePicker(false)} 
+            />
           </div>
 
           {/* Direct End Room for host on Mobile */}
@@ -630,10 +664,10 @@ const RoomPage = () => {
         <div className="md:hidden flex flex-col bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40 relative">
           
 
-          <div className="flex w-full">
+          <div className="flex w-full overflow-x-auto scrollbar-hide">
             <button 
               onClick={() => setActiveMobileTab('chat')}
-              className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
             >
             <MessageSquare className="w-4.5 h-4.5 mb-1" />
             <span>CHAT</span>
@@ -641,19 +675,35 @@ const RoomPage = () => {
           </button>
           <button 
             onClick={() => setActiveMobileTab('people')}
-            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
           >
             <Users className="w-4.5 h-4.5 mb-1" />
             <span>PEOPLE ({onlineCount})</span>
             {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
           </button>
           <button 
+            onClick={() => setActiveMobileTab('queue')}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+          >
+            <ListVideo className="w-4.5 h-4.5 mb-1" />
+            <span>QUEUE</span>
+          </button>
+          <button 
             onClick={() => setActiveMobileTab('activity')}
-            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
           >
             <Activity className="w-4.5 h-4.5 mb-1" />
             <span>ACTIVITY</span>
           </button>
+          {isHost && (
+            <button 
+              onClick={() => setActiveMobileTab('mod')}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'mod' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            >
+              <ShieldAlert className="w-4.5 h-4.5 mb-1" />
+              <span>MOD</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -673,7 +723,9 @@ const RoomPage = () => {
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
+              { id: 'queue', icon: ListVideo, label: 'Queue' },
               { id: 'activity', icon: Activity, label: 'Activity' },
+              ...(isHost ? [{ id: 'mod', icon: ShieldAlert, label: 'Mod' }] : [])
             ].map(({ id, icon: Icon, label }) => {
               const TabIcon = Icon;
               return (
@@ -731,6 +783,18 @@ const RoomPage = () => {
             {(sidebarTab === 'activity' || (activeMobileTab === 'activity' && isMobile)) ? (
               <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'activity') ? 'hidden' : 'flex'}`}>
                 <ActivityFeed />
+              </div>
+            ) : null}
+
+            {(sidebarTab === 'queue' || (activeMobileTab === 'queue' && isMobile)) ? (
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'queue') ? 'hidden' : 'flex'}`}>
+                <WatchQueue />
+              </div>
+            ) : null}
+
+            {isHost && (sidebarTab === 'mod' || (activeMobileTab === 'mod' && isMobile)) ? (
+              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'mod') ? 'hidden' : 'flex'}`}>
+                <ModerationPanel />
               </div>
             ) : null}
           </div>
@@ -794,22 +858,9 @@ const RoomPage = () => {
       />
 
       {/* Shortcuts Help Modal */}
-      <ConfirmDialog
-        open={showShortcutsHelp}
-        title="Keyboard Shortcuts"
-        message={
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-left py-2">
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">Space</span> <span className="text-xs">Play/Pause</span></div>
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">F</span> <span className="text-xs">Fullscreen</span></div>
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">M</span> <span className="text-xs">Mute</span></div>
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">C</span> <span className="text-xs">Chat Tab</span></div>
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">P</span> <span className="text-xs">People Tab</span></div>
-            <div className="flex justify-between border-b border-border-light pb-1"><span className="font-mono text-accent-purple bg-accent-purple/10 px-1.5 rounded">/</span> <span className="text-xs">Focus Chat</span></div>
-          </div>
-        }
-        confirmLabel="Got it"
-        onConfirm={() => setShowShortcutsHelp(false)}
-        onCancel={() => setShowShortcutsHelp(false)}
+      <KeyboardShortcutsPanel 
+        isOpen={showShortcutsHelp} 
+        onClose={() => setShowShortcutsHelp(false)} 
       />
 
       {/* Delete room confirmation */}
@@ -893,6 +944,17 @@ const RoomPage = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* Feature 17: Session Summary Modal */}
+      {sessionSummary && (
+        <SessionSummaryModal 
+          summary={sessionSummary} 
+          onClose={() => {
+            setSessionSummary(null);
+            sessionStorage.removeItem("vibesync_session");
+            navigate('/', { replace: true });
+          }} 
+        />
       )}
     </div>
   );

@@ -19,6 +19,28 @@ module.exports = (io, socket, roomStore) => {
         const trimmed = (content || '').trim().slice(0, 2000);
         if (!trimmed) return;
 
+        // ── Slow Mode check (Feature 4) ───────────────────────────────────────
+        if (room.slowMode?.enabled && socket.user.id !== room.hostId) {
+            const cooldown = room.slowMode.cooldown * 1000;
+            const lastSent = room.slowMode.lastSentAt?.[socket.user.id] || 0;
+            if (Date.now() - lastSent < cooldown) {
+                const remaining = Math.ceil((cooldown - (Date.now() - lastSent)) / 1000);
+                return socket.emit('room:slowmode:blocked', { remaining });
+            }
+            room.slowMode.lastSentAt = room.slowMode.lastSentAt || {};
+            room.slowMode.lastSentAt[socket.user.id] = Date.now();
+        }
+
+        // ── Word Filter check (Feature 5) — asterisk banned words ────────────
+        let filteredContent = trimmed;
+        if (!e2ee && room.bannedWords?.length) {
+            room.bannedWords.forEach(word => {
+                if (!word) return;
+                const escaped = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                filteredContent = filteredContent.replace(new RegExp(escaped, 'gi'), '*'.repeat(word.length));
+            });
+        }
+
         const { id: userId, username, avatar } = socket.user;
 
         const message = {
@@ -27,7 +49,7 @@ module.exports = (io, socket, roomStore) => {
             userId,
             username,
             avatar,
-            content: trimmed,
+            content: filteredContent,
             type: 'text',
             replyTo: replyTo || null,
             e2ee: !!e2ee,

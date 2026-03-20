@@ -44,6 +44,7 @@ export const RoomProvider = ({ children }) => {
   const [joinStatus, setJoinStatus] = useState('joined');
   // roomEndedByHost: set when host deletes the room, shows a persistent modal
   const [roomEndedByHost, setRoomEndedByHost] = useState(null); // null | { message }
+  const [sessionSummary, setSessionSummary] = useState(null); // Feature 17
   const [typingUsers, setTypingUsers] = useState({}); // { username: timestamp }
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
 
@@ -54,7 +55,13 @@ export const RoomProvider = ({ children }) => {
   const [energy, setEnergy] = useState(0); // 0-100 social energy
   const [clips, setClips] = useState([]); // List of timestamp highlights
   const [hostAway, setHostAway] = useState(false); // true when host temporarily disconnects
+  
+  // Refs to avoid stale closures in socket handlers
+  const roomRef = useRef(null);
   const participantsRef = useRef([]);
+  const messagesRef = useRef([]);
+  useEffect(() => { roomRef.current = room; }, [room]);
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
   // Always-current ref for isHost so socket closures don't go stale (BUG-7)
   const isHostRef = useRef(false);
   // Message delivery/read status: { [msgId]: 'sent' | 'delivered' | 'seen' }
@@ -346,16 +353,25 @@ export const RoomProvider = ({ children }) => {
 
     const onRoomDeleted = ({ message }) => {
       playUISound('end');
+      
+      // Feature 17: Capture Snapshot
+      const summary = {
+        name: roomRef.current?.name || 'VibeSync Room',
+        participantsCount: participantsRef.current?.length || 0,
+        messagesCount: messagesRef.current?.length || 0
+      };
+      
       // Use the ref so we always read the CURRENT value, not a stale closure (BUG-7)
       if (isHostRef.current) {
         sessionStorage.removeItem("vibesync_session");
         setRoom(null); setParticipants([]); setMessages([]);
         setVideoState(null); setCurrentVideo(null); setIsHost(false);
-        window.location.href = '/';
+        setSessionSummary(summary);
         return;
       }
 
       setRoomEndedByHost({ message: message || 'The host has ended this session.' });
+      setSessionSummary(summary);
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
     };
@@ -510,6 +526,23 @@ export const RoomProvider = ({ children }) => {
     socket.on('chat:delivered', onDelivered);
     socket.on('chat:read', onRead);
 
+    // Feature 12: Speed vote result — participants apply the agreed playback rate
+    const onSpeedChanged = ({ speed }) => {
+      window.dispatchEvent(new CustomEvent('video:set-playback-rate', { detail: speed }));
+    };
+    socket.on('video:speed-changed', onSpeedChanged);
+
+    // Feature 10: Watch Queue — host receives approved video and loads it
+    const onQueueLoadVideo = ({ video }) => {
+      if (!video?.url) return;
+      setVideoSource({
+        url: video.url,
+        title: video.title || 'Queue Video',
+        type: video.type || 'direct',
+      });
+    };
+    socket.on('queue:load-video', onQueueLoadVideo);
+
     return () => {
       socket.off('room:state', onRoomState);
       socket.off('room:participant-update', onParticipantUpdate);
@@ -535,8 +568,10 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:host-left', onHostLeft);
       socket.off('chat:typing', onTyping);
       socket.off('chat:message-reaction', onMessageReaction);
-    socket.off('chat:delivered', onDelivered);
-    socket.off('chat:read', onRead);
+      socket.off('chat:delivered', onDelivered);
+      socket.off('chat:read', onRead);
+      socket.off('video:speed-changed', onSpeedChanged);
+      socket.off('queue:load-video', onQueueLoadVideo);
     };
   }, [socket, user, roomKey]);
 
@@ -744,6 +779,12 @@ export const RoomProvider = ({ children }) => {
     socket.emit('room:set-status', { roomCode: room.code, status });
   }, [socket, room]);
 
+  // Feature 12: Playback Speed Voting — host applies the agreed-upon speed
+  const updatePlaybackSpeed = useCallback((speed) => {
+    if (!socket || !room) return;
+    socket.emit('video:set-speed', { roomCode: room.code, speed });
+  }, [socket, room]);
+
   // Marks messages as seen from the current user's perspective;
   // called by ChatPanel when the user focuses on the chat.
   const markChatRead = useCallback((messageIds) => {
@@ -761,6 +802,7 @@ export const RoomProvider = ({ children }) => {
       requiresApproval, joinRequests, joinStatus, isLocked,
       approveJoin, denyJoin, setApprovalRequired, refreshParticipants, toggleRoomLock,
       muteAllParticipants, roomEndedByHost,
+      sessionSummary, setSessionSummary, // Feature 17
       dismissRoomEnded: () => setRoomEndedByHost(null),
       unreadChatCount, setUnreadChatCount,
       chatMuted, setChatMuted,
@@ -771,7 +813,8 @@ export const RoomProvider = ({ children }) => {
       typingUsers, broadcastTyping,
       reactToMessage,
       messageStatuses, markChatRead,
-      isLiveStreamingInitialized, setIsLiveStreamingInitialized
+      isLiveStreamingInitialized, setIsLiveStreamingInitialized,
+      updatePlaybackSpeed, // Feature 12
     }}>
       {children}
     </RoomContext.Provider>

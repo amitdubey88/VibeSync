@@ -205,7 +205,7 @@ module.exports = (io, socket, roomStore) => {
     });
 
     // ── room:mute ─────────────────────────────────────────────────────────────
-    socket.on('room:mute', ({ roomCode, targetUserId }) => {
+    socket.on('room:mute', ({ roomCode, targetUserId, duration }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room) return socket.emit('error', { message: 'Room not found' });
@@ -216,7 +216,7 @@ module.exports = (io, socket, roomStore) => {
 
         const targetSocket = io.sockets.sockets.get(target.socketId);
         if (targetSocket) {
-            targetSocket.emit('room:muted', { mutedBy: socket.user.username });
+            targetSocket.emit('room:muted', { mutedBy: socket.user.username, duration: duration || null });
         }
 
         // Sync muted status with voice participants list
@@ -227,7 +227,23 @@ module.exports = (io, socket, roomStore) => {
             io.to(hashedCode).emit('room:voice-update', { voiceParticipants: room.voiceParticipants });
         }
 
-        console.log(`🔇 ${target.username} muted in room ${code} by ${socket.user.username}`);
+        // Feature 14: Timed auto-unmute
+        const durationMs = Number(duration) * 1000;
+        if (durationMs > 0 && durationMs <= 3600000) { // max 1 hour
+            setTimeout(() => {
+                const liveRoom = roomStore.get(code);
+                if (!liveRoom) return;
+                const voiceEntry = (liveRoom.voiceParticipants || []).find(p => p.userId === targetUserId);
+                if (voiceEntry) voiceEntry.isMuted = false;
+                const hs = hashRoomCode(code);
+                // Notify the affected participant
+                if (targetSocket) targetSocket.emit('room:unmuted', { message: 'Your mute has expired.' });
+                io.to(hs).emit('room:voice-update', { voiceParticipants: liveRoom.voiceParticipants });
+                console.log(`🔊 Timed mute expired for ${target.username} in ${code}`);
+            }, durationMs);
+        }
+
+        console.log(`🔇 ${target.username} muted in room ${code} by ${socket.user.username}${durationMs > 0 ? ` for ${duration}s` : ' permanently'}`);
     });
 
     // ── room:mute-all ─────────────────────────────────────────────────────────

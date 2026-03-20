@@ -12,6 +12,8 @@ import HLSPlayer from './HLSPlayer';
 import SyncStatusBadge from './SyncStatusBadge';
 import ReactionBurst from './ReactionBurst';
 import QuickReactionBar from './QuickReactionBar';
+import SubtitleOverlay from './SubtitleOverlay';
+import SpeedVotePanel from './SpeedVotePanel';
 import { Play, Pause, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useWebRTC from '../../hooks/useWebRTC';
@@ -1119,6 +1121,10 @@ const VideoPlayer = () => {
           )}
         </div>
       )}
+
+      {/* Feature 11: Subtitles Overlay (always visible if active) */}
+      <SubtitleOverlay />
+      <SpeedVotePanel />
 
       {/* Controls Overlay - only render if derived state allows it */}
       {shouldShowControls && (

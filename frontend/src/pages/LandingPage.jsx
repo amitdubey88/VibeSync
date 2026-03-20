@@ -16,6 +16,8 @@ const LandingPage = () => {
   const [roomName, setRoomName] = useState('');
   const [roomType, setRoomType] = useState('public');
   const [password, setPassword] = useState('');
+  const [scheduleToggle, setScheduleToggle] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(false);
 
   // Pre-fill username from stored session — only if field is still empty
@@ -97,6 +99,7 @@ const LandingPage = () => {
         name: roomName.trim(),
         type: roomType,
         password: roomType === 'private' ? password : undefined,
+        scheduledAt: scheduleToggle && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       });
       toast.success('Room created!');
       navigate(`/room/${room.code}`, { state: { password } });
@@ -309,6 +312,34 @@ const LandingPage = () => {
                     />
                   </div>
                 )}
+                
+                {/* Feature 13: Scheduled Rooms */}
+                <div className="pt-2 border-t border-white/5">
+                  <label className="flex items-center gap-2 cursor-pointer text-sm text-text-secondary hover:text-white transition-colors">
+                    <input 
+                      type="checkbox" 
+                      checked={scheduleToggle} 
+                      onChange={(e) => setScheduleToggle(e.target.checked)}
+                      className="rounded border-border-dark bg-black/50 text-accent-purple focus:ring-accent-purple/50 w-4 h-4 cursor-pointer"
+                    />
+                    Schedule for later ⏰
+                  </label>
+                  {scheduleToggle && (
+                    <div className="mt-3 animate-fade-in pl-6">
+                      <input
+                        type="datetime-local"
+                        className="input text-sm w-full py-2"
+                        value={scheduledAt}
+                        onChange={(e) => setScheduledAt(e.target.value)}
+                        min={new Date().toISOString().slice(0, 16)}
+                      />
+                      <p className="text-[10px] text-gray-500 mt-1.5 uppercase tracking-wider">
+                        A full-screen countdown will be shown to joiners until this time.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
                 <button type="submit" className="btn-primary w-full text-base py-3" disabled={loading}>
                   {loading ? 'Creating…' : <><Play className="w-4 h-4" /> Create Room</>}
                 </button>

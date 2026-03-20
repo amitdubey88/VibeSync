@@ -254,4 +254,40 @@ module.exports = (io, socket, roomStore) => {
             fromSocketId: socket.id
         });
     });
+
+    // ── subtitles:set (Feature 11) ────────────────────────────────────────────
+    // Host broadcasts SRT cue data; server relays to all participants.
+    socket.on('subtitles:set', ({ roomCode, cues }) => {
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
+        if (!room || socket.user.id !== room.hostId) return;
+        const hashedCode = require('../utils/hash').hashRoomCode(code);
+        socket.to(hashedCode).emit('subtitles:set', { cues });
+    });
+
+    // ── subtitles:clear (Feature 11) ─────────────────────────────────────────
+    socket.on('subtitles:clear', ({ roomCode }) => {
+        const code = roomCode?.toUpperCase?.();
+        if (!code) return;
+        const room = roomStore.get(code);
+        if (!room || socket.user.id !== room.hostId) return;
+        const hashedCode = require('../utils/hash').hashRoomCode(code);
+        socket.to(hashedCode).emit('subtitles:clear');
+    });
+
+    // ── video:set-speed (Feature 12 — Speed Vote) ─────────────────────────────
+    // Host broadcasts the agreed-upon playback rate to all participants.
+    // Clients listen for 'video:speed-changed' and apply it to their video element.
+    socket.on('video:set-speed', ({ roomCode, speed }) => {
+        const { room, code, error } = getRoomAndValidateHost(roomCode);
+        if (error) return socket.emit('error', { message: error });
+
+        const VALID_SPEEDS = [0.75, 1, 1.25, 1.5, 2];
+        if (!VALID_SPEEDS.includes(Number(speed))) return;
+
+        const hashedCode = hashRoomCode(code);
+        io.to(hashedCode).emit('video:speed-changed', { speed: Number(speed) });
+        console.log(`[sync] Speed set to ${speed}x in room ${code}`);
+    });
 };

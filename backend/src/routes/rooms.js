@@ -79,7 +79,7 @@ async function hydrateRoom(req, code) {
 // Creates a new room. Host must be authenticated.
 router.post('/', authenticate, async (req, res) => {
     try {
-        const { name, type = ROOM_TYPE.PUBLIC, participantLimit = 20, password } = req.body;
+        const { name, type = ROOM_TYPE.PUBLIC, participantLimit = 20, password, scheduledAt } = req.body;
         if (!name?.trim()) return res.status(400).json({ success: false, message: 'Room name required' });
 
         let code;
@@ -104,6 +104,7 @@ router.post('/', authenticate, async (req, res) => {
             voiceParticipants: [],
             pendingJoins: [],
             requiresApproval: false,
+            scheduledAt: scheduledAt ? new Date(scheduledAt).toISOString() : null, // Feature 13
         };
 
         // Store in-memory (the live source of truth)

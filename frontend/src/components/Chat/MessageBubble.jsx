@@ -208,8 +208,14 @@ const MessageBubble = ({ message, isOwn, onReply, prevMessage }) => {
               </div>
             )}
 
-            {/* Message text */}
-            <span className="whitespace-pre-wrap">{message.content}</span>
+            {/* Message text or GIF */}
+            {message.type === 'gif' ? (
+              <div className="mt-1 mb-1 relative rounded-lg overflow-hidden border border-white/10 group-hover/bubble:brightness-110 transition-all">
+                <img src={message.content} alt={message.title || 'GIF'} className="max-w-full h-auto min-w-[150px] object-cover" loading="lazy" />
+              </div>
+            ) : (
+              <span className="whitespace-pre-wrap">{message.content}</span>
+            )}
 
             {/* Timestamp + E2EE + Ticks row (inside bubble, WhatsApp-style) */}
             <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? 'justify-end' : 'justify-end'}`}>

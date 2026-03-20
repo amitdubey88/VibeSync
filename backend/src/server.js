@@ -13,6 +13,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/rooms');
 const registerSocketHandlers = require('./socket');
+const inviteRoutes = require('./routes/invite');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 const server = http.createServer(app);
@@ -95,6 +97,8 @@ const extRoutes = require('./routes/ext');
 app.use('/api/auth', authRoutes);
 app.use('/api/rooms', roomRoutes);
 app.use('/api/ext', extRoutes);   // Browser extension sync (no JWT)
+app.use('/invite', inviteRoutes); // Feature 9: OG invite link preview
+app.use('/api/notifications', notificationRoutes); // Feature 16: Web Push subscriptions
 
 // Video upload endpoint
 app.post('/api/upload', (req, res) => {
