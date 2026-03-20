@@ -1,0 +1,7 @@
+
+E:\VibeSync\frontend\src\pages\RoomPage.jsx
+  294:6  warning  React Hook useEffect has a missing dependency: 'navigate'. Either include it or remove the dependency array                      react-hooks/exhaustive-deps
+  339:6  warning  React Hook useEffect has missing dependencies: 'approveJoin' and 'denyJoin'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+✖ 2 problems (0 errors, 2 warnings)
+

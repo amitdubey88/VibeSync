@@ -3,6 +3,7 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
 import { joinRoom } from '../services/api';
+import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
 import SyncStatusBadge from '../components/VideoPlayer/SyncStatusBadge';
 import QuickReactionBar from '../components/VideoPlayer/QuickReactionBar';
 import ChatPanel from '../components/Chat/ChatPanel';
