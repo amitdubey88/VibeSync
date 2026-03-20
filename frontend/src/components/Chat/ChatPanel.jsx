@@ -15,13 +15,15 @@ const EMOJI_SETS = [
 
 
 const ChatPanel = ({ chatMuted, setChatMuted }) => {
-  const { messages, sendMessage, sendReaction, room, typingUsers, broadcastTyping, markChatRead, isHost, isLiveStreamingInitialized } = useRoom();
+  const { messages, sendMessage, sendReaction, room, typingUsers, broadcastTyping, markChatRead, isHost, isLiveStreamingInitialized, currentVideo } = useRoom();
   const { user } = useAuth();
   const { remotePremierStream } = useWebRTC();
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   
+  const isWebRTCStream = currentVideo?.type === 'live';
   const isStreamActive = isLiveStreamingInitialized || (!isHost && remotePremierStream);
+  const shouldShowReactions = currentVideo && (!isWebRTCStream || isStreamActive);
   const [input, setInput] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
@@ -214,7 +216,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       )}
 
       {/* Reactions Bar (Mobile Chat ONLY) */}
-      {isStreamActive && isMobile && !isFullscreen && (
+      {shouldShowReactions && isMobile && !isFullscreen && (
         <div className="px-4 border-t border-white/5 bg-white/[0.02]">
            <QuickReactionBar isOverlay={false} />
         </div>

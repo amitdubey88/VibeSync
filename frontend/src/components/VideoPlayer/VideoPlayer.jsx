@@ -892,10 +892,16 @@ const VideoPlayer = () => {
         {/* Center-click overlay: transparent layer that intercepts clicks for play/pause */}
         {/* Positioned above video content but below controls. Renders for all video types. */}
         <div
-          className="absolute inset-0 z-10 cursor-pointer"
+          className="absolute inset-0 z-10 cursor-pointer flex items-center justify-center group/centerclick"
           onClick={handleCenterClick}
           style={{ touchAction: 'manipulation' }}
-        />
+        >
+          {shouldShowControls && !isLoading && videoState && !videoState.isPlaying && currentVideo?.type !== 'live' && (
+            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10 shadow-xl transition-all duration-300 transform group-hover/centerclick:scale-105 animate-fade-in">
+              <Play className="w-10 h-10 sm:w-12 sm:h-12 text-white ml-2 md:opacity-80 md:group-hover/centerclick:opacity-100" />
+            </div>
+          )}
+        </div>
 
         {/* Click animation flash (Play/Pause ripple) */}
         {clickAnim && (
