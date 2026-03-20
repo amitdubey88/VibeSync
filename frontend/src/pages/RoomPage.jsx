@@ -19,7 +19,6 @@ import { useSocket } from '../context/SocketContext';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
 import RoomSkeleton from '../components/UI/RoomSkeleton';
 import WatchQueue from '../components/Sidebar/WatchQueue';
-import ModerationPanel from '../components/Sidebar/ModerationPanel';
 
 import SessionSummaryModal from '../components/UI/SessionSummaryModal';
 import KeyboardShortcutsPanel from '../components/UI/KeyboardShortcutsPanel';
@@ -430,6 +429,21 @@ const RoomPage = () => {
     );
   }
 
+  if (sessionSummary) {
+    return (
+      <div className="min-h-screen gradient-bg">
+        <SessionSummaryModal 
+          summary={sessionSummary} 
+          onClose={() => {
+            setSessionSummary(null);
+            sessionStorage.removeItem("vibesync_session");
+            navigate('/', { replace: true });
+          }} 
+        />
+      </div>
+    );
+  }
+
   if (joining || (!room && !error)) {
     return <RoomSkeleton />;
   }
@@ -695,15 +709,6 @@ const RoomPage = () => {
             <Activity className="w-4.5 h-4.5 mb-1" />
             <span>ACTIVITY</span>
           </button>
-          {isHost && (
-            <button 
-              onClick={() => setActiveMobileTab('mod')}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'mod' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
-            >
-              <ShieldAlert className="w-4.5 h-4.5 mb-1" />
-              <span>MOD</span>
-            </button>
-          )}
         </div>
       </div>
 
@@ -724,8 +729,7 @@ const RoomPage = () => {
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
               { id: 'queue', icon: ListVideo, label: 'Queue' },
-              { id: 'activity', icon: Activity, label: 'Activity' },
-              ...(isHost ? [{ id: 'mod', icon: ShieldAlert, label: 'Mod' }] : [])
+              { id: 'activity', icon: Activity, label: 'Activity' }
             ].map(({ id, icon: Icon, label }) => {
               const TabIcon = Icon;
               return (
@@ -789,12 +793,6 @@ const RoomPage = () => {
             {(sidebarTab === 'queue' || (activeMobileTab === 'queue' && isMobile)) ? (
               <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'queue') ? 'hidden' : 'flex'}`}>
                 <WatchQueue />
-              </div>
-            ) : null}
-
-            {isHost && (sidebarTab === 'mod' || (activeMobileTab === 'mod' && isMobile)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'mod') ? 'hidden' : 'flex'}`}>
-                <ModerationPanel />
               </div>
             ) : null}
           </div>
@@ -945,19 +943,7 @@ const RoomPage = () => {
           </div>
         </div>
       )}
-      {/* Feature 17: Session Summary Modal */}
-      {sessionSummary && (
-        <SessionSummaryModal 
-          summary={sessionSummary} 
-          onClose={() => {
-            setSessionSummary(null);
-            sessionStorage.removeItem("vibesync_session");
-            navigate('/', { replace: true });
-          }} 
-        />
-      )}
     </div>
   );
 };
-
 export default RoomPage;

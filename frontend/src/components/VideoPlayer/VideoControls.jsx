@@ -88,20 +88,6 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     return () => window.removeEventListener('video:toggle-mute', onToggleMute);
   }, []);
 
-  // Feature 12: Apply playback speed received via speed-vote result
-  useEffect(() => {
-    const onSetSpeed = (e) => {
-      const speed = Number(e.detail);
-      if (!speed || isNaN(speed)) return;
-      const video = videoRef.current || videoEl;
-      if (video && typeof video.playbackRate !== 'undefined') {
-        video.playbackRate = speed;
-      }
-    };
-    window.addEventListener('video:set-playback-rate', onSetSpeed);
-    return () => window.removeEventListener('video:set-playback-rate', onSetSpeed);
-  }, [videoRef, videoEl]);
-
   // Sync volume state FROM video element when modified externally (e.g. autoplay fallback)
   useEffect(() => {
     const video = videoRef.current;

@@ -9,13 +9,13 @@ export default {
       colors: {
         // Core palette
         bg: {
-          primary: '#08080f',
+          primary: 'var(--bg-primary, #08080f)',
           secondary: '#0f0f1a',
           card: '#13131f',
           hover: '#1a1a2e',
         },
         accent: {
-          red: '#e50914',
+          red: 'var(--accent-red, #e50914)',
           redHover: '#f40612',
           purple: '#8b5cf6',
           purpleHover: '#7c3aed',

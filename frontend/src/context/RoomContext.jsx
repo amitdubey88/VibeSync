@@ -526,11 +526,6 @@ export const RoomProvider = ({ children }) => {
     socket.on('chat:delivered', onDelivered);
     socket.on('chat:read', onRead);
 
-    // Feature 12: Speed vote result — participants apply the agreed playback rate
-    const onSpeedChanged = ({ speed }) => {
-      window.dispatchEvent(new CustomEvent('video:set-playback-rate', { detail: speed }));
-    };
-    socket.on('video:speed-changed', onSpeedChanged);
 
     // Feature 10: Watch Queue — host receives approved video and loads it
     const onQueueLoadVideo = ({ video }) => {
@@ -570,7 +565,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('chat:message-reaction', onMessageReaction);
       socket.off('chat:delivered', onDelivered);
       socket.off('chat:read', onRead);
-      socket.off('video:speed-changed', onSpeedChanged);
+
       socket.off('queue:load-video', onQueueLoadVideo);
     };
   }, [socket, user, roomKey]);

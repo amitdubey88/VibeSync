@@ -12,11 +12,11 @@ export const useRoomTheme = () => {
     const root = document.documentElement;
     // Map of theme definitions (CSS var overrides)
     const themes = {
-      default: { '--bg-color': '#0a0a0f', '--accent-color': '#e50914' },
-      crimson: { '--bg-color': '#1a0505', '--accent-color': '#ff3333' },
-      ocean:   { '--bg-color': '#05101a', '--accent-color': '#00aaff' },
-      forest:  { '--bg-color': '#051a0d', '--accent-color': '#00ff88' },
-      gold:    { '--bg-color': '#1a1805', '--accent-color': '#ffcc00' },
+      default: { '--bg-primary': '#08080f', '--accent-red': '#e50914' },
+      crimson: { '--bg-primary': '#1a0505', '--accent-red': '#ff3333' },
+      ocean:   { '--bg-primary': '#05101a', '--accent-red': '#00aaff' },
+      forest:  { '--bg-primary': '#051a0d', '--accent-red': '#00ff88' },
+      gold:    { '--bg-primary': '#1a1805', '--accent-red': '#ffcc00' },
     };
 
     const currentTheme = themes[theme] || themes['default'];

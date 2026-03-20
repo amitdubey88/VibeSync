@@ -10,7 +10,7 @@ import Avatar from '../UI/Avatar';
 const ParticipantsList = () => {
   const { participants, voiceParticipants, room, isHost, transferHost, kickParticipant, muteParticipant, toggleScreenSharePermission } = useRoom();
   const { user } = useAuth();
-  const { isCoHost, coHosts, promoteCoHost, demoteCoHost } = useCoHost();
+  const { isCoHost, coHosts, assignCoHost, removeCoHost } = useCoHost();
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirm, setConfirm] = useState(null); // { type, userId, username }
   const menuRef = useRef(null);
@@ -54,14 +54,14 @@ const ParticipantsList = () => {
       message: `${confirm?.username} will be able to moderate the room.`,
       confirmLabel: 'Promote',
       danger: false,
-      onConfirm: () => promoteCoHost(confirm.userId),
+      onConfirm: () => assignCoHost(confirm.userId),
     },
     demoteCoHost: {
       title: 'Remove Co-Host?',
       message: `${confirm?.username} will lose moderation privileges.`,
       confirmLabel: 'Demote',
       danger: false,
-      onConfirm: () => demoteCoHost(confirm.userId),
+      onConfirm: () => removeCoHost(confirm.userId),
     },
   };
 
