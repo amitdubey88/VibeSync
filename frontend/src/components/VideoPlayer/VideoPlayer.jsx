@@ -970,7 +970,7 @@ const VideoPlayer = () => {
             />
             {/* Start Streaming Overlay for Host */}
             {isHost && (currentVideo?.type === 'live' || isDirectStreaming) && !isLiveStreamingInitialized && (
-              <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
+              <div className="absolute inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl pb-12 sm:pb-0">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
                   <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-4 sm:mb-6">
                     <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-accent-red animate-pulse shadow-[0_0_30px_rgba(255,51,102,0.6)]" />

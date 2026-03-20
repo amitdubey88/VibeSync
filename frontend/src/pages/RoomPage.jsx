@@ -632,7 +632,7 @@ const RoomPage = () => {
           {/* Reaction Bar for Mobile Portrait attached to top of tab switcher */}
           <div className="mobile-portrait-show absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none">
             <div className="pointer-events-auto">
-              <QuickReactionBar className="relative" />
+              <QuickReactionBar visible={true} className="relative" />
             </div>
           </div>
 
