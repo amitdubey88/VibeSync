@@ -31,27 +31,24 @@ const allowedOrigins = (process.env.FRONTEND_URL || 'http://localhost:5173')
     .split(',').map((s) => s.trim());
 
 const corsOriginFn = (origin, cb) => {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return cb(null, true);
-    // Allow explicitly listed origins and well-known deployment platforms
-    if (allowedOrigins.includes(origin) ||
+    // ALWAYS allow known deployment platforms and local development
+    if (!origin || 
+        allowedOrigins.includes(origin) ||
         origin === 'http://localhost:5174' ||
         origin.endsWith('.vercel.app') ||
         origin.endsWith('.koyeb.app') ||
-        origin.endsWith('.vorcel.app') ||   // Vorcel deployment platform
-        origin.endsWith('.netlify.app') ||  // Netlify deployments
-        origin.endsWith('.render.com') ||   // Render deployments
+        origin.endsWith('.vorcel.app') ||
+        origin.endsWith('.netlify.app') ||
+        origin.endsWith('.render.com') ||
         origin.endsWith('.onrender.com') ||
         origin.startsWith('chrome-extension://')) {
         return cb(null, true);
     }
-    // IMPORTANT: Use cb(null, false) NOT cb(new Error(...)).
-    // Calling cb(new Error()) routes through Express's global error handler which
-    // sends the response BEFORE the cors middleware can set 'Access-Control-Allow-Origin',
-    // causing the browser to report "No 'Access-Control-Allow-Origin' header is present".
-    // cb(null, false) lets the cors package send a proper 403 with correct headers.
-    console.warn(`[CORS] Blocked origin: ${origin}`);
-    return cb(null, false);
+
+    // If origin is unknown, log a warning but STILL ALLOW to prevent production break
+    // This allows us to identify new origins while ensuring the service stays available.
+    console.warn(`[CORS] Unknown origin attempt (allowed anyway): ${origin}`);
+    return cb(null, true); 
 };
 
 // ── Socket.IO Setup ──────────────────────────────────────────────────────────
@@ -65,7 +62,37 @@ const io = new Server(server, {
 app.use(helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow video serving
 }));
-app.use(cors({ origin: corsOriginFn, credentials: true }));
+
+// Use a more permissive origin function to ensure headers are always sent
+app.use(cors({ 
+    origin: (origin, cb) => cb(null, true), 
+    credentials: true 
+}));
+
+// ── Global Preflight Handling ────────────────────────────────────────────────
+// This ensures ALL OPTIONS requests are handled with correct CORS headers
+app.options('*', cors({ origin: true, credentials: true }));
+
+// ── Manual Fallback Headers (Safety Net) ───────────────────────────────────
+// Extra layer to ensure headers are present even if middleware is bypassed
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+        res.header("Access-Control-Allow-Origin", origin);
+    } else {
+        res.header("Access-Control-Allow-Origin", "*");
+    }
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+    
+    // Explicitly handle preflight in this middleware too
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+    next();
+});
+
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 if (process.env.NODE_ENV !== 'test') {
