@@ -361,7 +361,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       {/* YouTube iframe container wrapper to prevent React diffing issues when YT replaces the node */}
       <div 
         className="w-full h-full absolute inset-0 transition-opacity duration-500"
-        style={{ opacity: status === 'ready' ? 1 : 0, pointerEvents: status === 'ready' ? 'auto' : 'none' }}
+        style={{ opacity: status === 'ready' ? 1 : 0, pointerEvents: 'none' }}
       >
         <div ref={containerRef} className="w-full h-full" />
       </div>
@@ -372,7 +372,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
         Users interact with the transparent VideoPlayer overlay instead.
       */}
       {status === 'ready' && (
-        <div className="absolute inset-0 z-0 touch-manipulation select-none" />
+        <div className="absolute inset-0 z-10 touch-manipulation select-none" />
       )}
 
       {/* Loading State - only show if status is 'loading' to prevent double spinners with parent */}

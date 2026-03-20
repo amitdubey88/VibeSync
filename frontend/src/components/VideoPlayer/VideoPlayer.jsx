@@ -1142,9 +1142,8 @@ const VideoPlayer = () => {
           )}
 
           {/* Fading Controls Group */}
-          <div className={`absolute inset-0 z-30 transition-opacity duration-300 
+          <div className={`absolute inset-0 z-30 transition-opacity duration-300 pointer-events-none
             ${showControls ? 'opacity-100' : 'opacity-0'}
-            ${isHost && isWebRTCStream && !isLiveStreamingInitialized ? 'pointer-events-none' : 'pointer-events-auto'} 
           `}>
             {/* The wrapper itself should be pointer-events-none, but VideoControls inside will have pointer-events-auto when visible */}
             <VideoControls
