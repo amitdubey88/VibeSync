@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRoom } from '../../context/RoomContext';
 
-const QuickReactionBar = ({ visible, className }) => {
+const QuickReactionBar = ({ visible, className, isOverlay }) => {
   const { sendReaction } = useRoom();
   const [localVisible, setLocalVisible] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
@@ -27,10 +27,10 @@ const QuickReactionBar = ({ visible, className }) => {
   if (!isVisible) return null;
 
   // Dynamic positioning logic:
-  // 1. If Fullscreen: Absolute overlay inside video player
-  // 2. Otherwise: w-fit mx-auto (Chat Panel container handles layout)
+  // 1. If Overlay (Video Player / Fullscreen): Absolute overlay at bottom
+  // 2. Otherwise: w-fit mx-auto (Chat Panel inline)
   let positionClasses = '';
-  if (isFullscreen) {
+  if (isFullscreen || isOverlay) {
     positionClasses = 'absolute bottom-24 left-1/2 -translate-x-1/2 z-[60]';
   } else {
     positionClasses = 'w-fit mx-auto py-2';

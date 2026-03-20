@@ -216,7 +216,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       {/* Reactions Bar (Mobile Chat ONLY) */}
       {isStreamActive && isMobile && !isFullscreen && (
         <div className="px-4 border-t border-white/5 bg-white/[0.02]">
-           <QuickReactionBar />
+           <QuickReactionBar isOverlay={false} />
         </div>
       )}
 

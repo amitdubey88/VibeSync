@@ -146,10 +146,11 @@ const VideoPlayer = () => {
   const urlValidationResult = urlInput.trim() ? resolveVideoUrl(urlInput.trim()) : null;
 
   // Derived visibility states (State-driven UI)
+  const isWebRTCStream = currentVideo?.type === 'live' || isDirectStreaming;
   const isStreamActive = isLiveStreamingInitialized || (!isHost && remotePremierStream);
   
-  const shouldShowControls = isStreamActive && (
-    (currentVideo?.url && currentVideo.url !== 'live-stream') || 
+  const shouldShowControls = (!isWebRTCStream || isStreamActive) && (
+    activeSrc || 
     (currentVideo?.type === 'youtube' && videoEl !== null) || 
     currentVideo?.type === 'hls' || 
     isDirectStreaming || 
@@ -672,6 +673,9 @@ const VideoPlayer = () => {
     handleMouseMove();
     if (!isHost || !videoEl) return;
     
+    // BUG-15: Block play/pause during WebRTC preview phase per user request
+    if (isWebRTCStream && !isLiveStreamingInitialized) return;
+    
     const isPaused = videoEl.paused;
     if (isPaused) videoEl.play().catch(() => {});
     else videoEl.pause();
@@ -992,7 +996,7 @@ const VideoPlayer = () => {
               onReady={handlePlayerReady}
             />
             {/* Start Streaming Overlay for Host */}
-            {isHost && (currentVideo?.type === 'live' || isDirectStreaming) && !isLiveStreamingInitialized && (
+            {isHost && isWebRTCStream && !isLiveStreamingInitialized && (
               <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl pointer-events-auto">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
                   <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-4 sm:mb-6">
@@ -1098,7 +1102,7 @@ const VideoPlayer = () => {
 
           {/* Quick Reaction Bar (Desktop or Fullscreen only here) */}
           {(isFullscreen || !isMobile) && (
-            <QuickReactionBar visible={showControls} />
+            <QuickReactionBar visible={showControls} isOverlay={true} />
           )}
 
           {/* Sync Status Badge */}
@@ -1111,7 +1115,7 @@ const VideoPlayer = () => {
           {/* Fading Controls Group */}
           <div className={`absolute inset-0 z-30 transition-opacity duration-300 
             ${showControls ? 'opacity-100' : 'opacity-0'}
-            ${isHost && !isLiveStreamingInitialized ? 'pointer-events-none' : 'pointer-events-auto'} 
+            ${isHost && isWebRTCStream && !isLiveStreamingInitialized ? 'pointer-events-none' : 'pointer-events-auto'} 
           `}>
             {/* The wrapper itself should be pointer-events-none, but VideoControls inside will have pointer-events-auto when visible */}
             <VideoControls
