@@ -5,7 +5,6 @@ import MessageBubble from './MessageBubble';
 import QuickReactionBar from '../VideoPlayer/QuickReactionBar';
 import { Send, Smile, Bell, BellOff, X, ShieldCheck } from 'lucide-react';
 import useWebRTC from '../../hooks/useWebRTC';
-import { useEffect, useState } from 'react';
 
 // Quick emoji sets — no external library needed
 const EMOJI_SETS = [
