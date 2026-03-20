@@ -3,7 +3,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
 import { joinRoom } from '../services/api';
-import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
+import SyncStatusBadge from '../components/VideoPlayer/SyncStatusBadge';
+import QuickReactionBar from '../components/VideoPlayer/QuickReactionBar';
 import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
@@ -31,8 +32,8 @@ const LiveTimeTracker = ({ videoState, currentVideo }) => {
 
   useEffect(() => {
     if (!videoState || currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
-      setDisplayTime(0);
-      return;
+      const timer = setTimeout(() => setDisplayTime(0), 0);
+      return () => clearTimeout(timer);
     }
     let raf;
     const update = () => {
@@ -61,12 +62,12 @@ const RoomPage = () => {
   const { user, isAuthenticated } = useAuth();
   const { socket, isConnected } = useSocket();
   const {
-    room, participants, joinRoom: socketJoin, leaveRoom, isHost, reactions, deleteRoom,
+    room, participants, joinRoom: socketJoin, leaveRoom, isHost, deleteRoom,
     joinStatus, joinRequests, requiresApproval, transferHost,
     approveJoin, denyJoin, setApprovalRequired, refreshParticipants,
     roomEndedByHost, dismissRoomEnded,
     unreadChatCount, setUnreadChatCount, chatMuted, setChatMuted,
-    setUserStatus, isLocked, toggleRoomLock, videoState, currentVideo,
+    isLocked, videoState, currentVideo,
     hostAway,
   } = useRoom();
 
@@ -295,7 +296,7 @@ const RoomPage = () => {
 
   useNavigationGuard({
     enabled: !!room,
-    onAttempt: (type) => {
+    onAttempt: () => {
       setShowRefreshConfirm(true);
     }
   });
@@ -449,8 +450,8 @@ const RoomPage = () => {
             <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
           </button>
           <div className="w-px h-5 bg-border-dark" />
-          <h1 className="text-sm font-bold text-text-primary truncate max-w-[120px] sm:max-w-xs text-left">{room?.name || code}</h1>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden sm:flex shrink-0">
+          <h1 className="text-sm font-bold text-text-primary truncate max-w-[100px] xs:max-w-[120px] sm:max-w-xs text-left">{room?.name || code}</h1>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden xs:flex sm:flex shrink-0">
             <ShieldCheck className="w-3 h-3" />
             E2EE
           </div>
@@ -459,24 +460,26 @@ const RoomPage = () => {
           {currentVideo && (
             <div className="hidden lg:flex flex-col border-l border-border-dark pl-4 ml-2 animate-fade-in max-w-[200px]">
               <span className="text-[10px] text-text-muted font-black uppercase tracking-widest">Now Watching</span>
-              <span className="text-xs font-bold text-text-primary truncate">{currentVideo.title || 'Untitled Video'}</span>
+              <span className="text-xs font-bold text-text-primary truncate">
+                {currentVideo.title || 'Untitled Video'}
+              </span>
             </div>
           )}
 
           <div className="w-px h-5 bg-border-dark hidden md:block" />
           
           {/* Energy Meter */}
-          <div className="hidden md:flex items-center px-3 border-r border-border-dark mr-2">
+          <div className="hidden md:flex items-center px-1 sm:px-3 border-r border-border-dark mr-1 sm:mr-2">
             <EnergyMeter />
           </div>
 
-          <div className="flex items-center gap-3 text-[11px] text-text-muted font-medium bg-white/5 px-2.5 py-1 rounded-full border border-white/10 backdrop-blur-md shadow-inner max-w-full overflow-hidden shrink-0">
-            <span className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-3 text-[10px] sm:text-[11px] text-text-muted font-medium bg-white/5 px-2 py-1 sm:px-2.5 rounded-full border border-white/10 backdrop-blur-md shadow-inner overflow-hidden shrink min-w-0">
+            <span className="flex items-center gap-1 sm:gap-1.5 shrink-0">
               <Users className="w-3 h-3 text-accent-purple" /> 
               {participants.filter(p => p.isOnline !== false).length}
             </span>
             {isLocked && <Lock className="w-2.5 h-2.5 text-red-400 shrink-0" />}
-            <span className="truncate shrink-0"><LiveTimeTracker videoState={videoState} currentVideo={currentVideo} /></span>
+            <span className="truncate shrink"><LiveTimeTracker videoState={videoState} currentVideo={currentVideo} /></span>
           </div>
 
           {isHost && (
@@ -487,21 +490,21 @@ const RoomPage = () => {
           )}
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <div className={`flex items-center gap-1.5 text-xs shrink-0
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className={`flex items-center gap-1 sm:gap-1.5 text-xs shrink-0
             ${isConnected ? 'text-accent-green' : 'text-red-400'}`}>
             {isConnected
-              ? <><Wifi className="w-3.5 h-3.5" /> <span>Live</span></>
+              ? <><Wifi className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Live</span></>
               : <><WifiOff className="w-3.5 h-3.5 animate-pulse" /> <span className="hidden sm:inline">Reconnecting…</span></>}
           </div>
           <Tooltip text="Copy room code" position="bottom">
             <button
               onClick={copyRoomCode}
-              className="flex items-center gap-1.5 bg-bg-hover hover:bg-bg-card border border-border-dark
-                         rounded-lg px-2 py-1.5 text-xs font-mono font-bold text-text-primary transition-all active:scale-95"
+              className="flex items-center gap-1 bg-bg-hover hover:bg-bg-card border border-border-dark
+                         rounded-lg px-1.5 xs:px-2 py-1.5 text-[10px] xs:text-xs font-mono font-bold text-text-primary transition-all active:scale-95"
             >
-              <span className="text-text-muted hidden xs:inline">CODE</span>
-              <span className="text-accent-purple tracking-widest">{code}</span>
+              <span className="text-text-muted hidden sm:inline">CODE</span>
+              <span className="text-accent-purple tracking-wider xs:tracking-widest">{code}</span>
               <Copy className="w-3 h-3 text-text-muted" />
             </button>
           </Tooltip>
@@ -623,11 +626,20 @@ const RoomPage = () => {
         </div>
 
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
-        <div className="md:hidden flex bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40">
-          <button 
-            onClick={() => setActiveMobileTab('chat')}
-            className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
-          >
+        <div className="md:hidden flex flex-col bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40 relative">
+          
+          {/* Reaction Bar for Mobile Portrait attached to top of tab switcher */}
+          <div className="mobile-portrait-show absolute bottom-full mb-3 left-1/2 -translate-x-1/2 w-full flex justify-center pointer-events-none">
+            <div className="pointer-events-auto">
+              <QuickReactionBar className="relative" />
+            </div>
+          </div>
+
+          <div className="flex w-full">
+            <button 
+              onClick={() => setActiveMobileTab('chat')}
+              className={`flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            >
             <MessageSquare className="w-4.5 h-4.5 mb-1" />
             <span>CHAT</span>
             {unreadChatCount > 0 && <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />}
@@ -648,6 +660,7 @@ const RoomPage = () => {
             <span>ACTIVITY</span>
           </button>
         </div>
+      </div>
 
         {/* ── Sidebar ── */}
         {/* Mobile: flex-1 height but only shows one tab at a time | Desktop: animated width */}
@@ -666,27 +679,30 @@ const RoomPage = () => {
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
               { id: 'activity', icon: Activity, label: 'Activity' },
-            ].map(({ id, icon: Icon, label }) => (
-              <button
-                key={id}
-                onClick={() => handleTabChange(id)}
-                className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all duration-200
-                  ${sidebarTab === id
-                    ? 'border-accent-red text-text-primary bg-white/5'
-                    : 'border-transparent text-text-muted hover:text-text-secondary'}`}
-              >
-                <Icon className="w-4 h-4" />
-                <span className="hidden xl:inline">{label}</span>
-                {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
-                  <span
-                    key={unreadChatCount}
-                    className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
-                  >
-                    {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                  </span>
-                )}
-              </button>
-            ))}
+            ].map(({ id, icon: Icon, label }) => {
+              const TabIcon = Icon;
+              return (
+                <button
+                  key={id}
+                  onClick={() => handleTabChange(id)}
+                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all duration-200
+                    ${sidebarTab === id
+                      ? 'border-accent-red text-text-primary bg-white/5'
+                      : 'border-transparent text-text-muted hover:text-text-secondary'}`}
+                >
+                  <TabIcon className="w-4 h-4" />
+                  <span className="hidden xl:inline">{label}</span>
+                  {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
+                    <span
+                      key={unreadChatCount}
+                      className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
+                    >
+                      {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
           <div className="flex-1 overflow-hidden flex flex-col">

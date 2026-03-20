@@ -124,6 +124,7 @@ const VideoPlayer = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isDirectStreaming, setIsDirectStreaming] = useState(false);
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
+  const [isPendingNextStream, setIsPendingNextStream] = useState(false);
   // Ref mirrors the state above so onPlayingEv always reads the latest value without a
   // stale closure — critical because play() fires 'playing' before React commits the state.
   const isLiveStreamingInitializedRef = useRef(false);
@@ -735,29 +736,12 @@ const VideoPlayer = () => {
     }
 
     if (wasAlreadyStreaming) {
-      // SEAMLESS SWITCH: Reset streaming-active flag so startBroadcast() 
-      // will call captureStream() on the new video. Keep isLiveStreamingInitialized
-      // true so onPlayingEv → startBroadcast() fires automatically.
-      console.log('[VideoPlayer] Switching live file — resetting for re-capture');
+      console.log('[VideoPlayer] Switching live file — pausing for host to start next stream');
       isStreamingActiveRef.current = false;
-      // Auto-play once the new source is ready — when React re-renders with the
-      // new blobUrl, the video element loads the new file. We listen for canplay
-      // then start playback, which triggers onPlayingEv → startBroadcast().
-      const autoplayOnLoad = () => {
-        const el = videoRef.current;
-        if (!el) return;
-        const onReady = () => {
-          el.play().catch(() => {});
-        };
-        if (el.readyState >= 3) {
-          onReady();
-        } else {
-          el.addEventListener('canplay', onReady, { once: true });
-        }
-      };
-      // Wait for React render + video element source update
-      setTimeout(autoplayOnLoad, 200);
-      toast.success('⚡ Switching live video...', { duration: 2000 });
+      setIsLiveStreamingInitialized(false);
+      isLiveStreamingInitializedRef.current = false;
+      setIsPendingNextStream(true);
+      toast.success('⚡ Video Loaded! Click "Stream Next Video" to go live.', { duration: 4000 });
     } else {
       toast.success('⚡ Video Loaded! Click "Start Streaming" to go live.', { duration: 4000 });
     }
@@ -987,12 +971,14 @@ const VideoPlayer = () => {
             {/* Start Streaming Overlay for Host */}
             {isHost && (currentVideo?.type === 'live' || isDirectStreaming) && !isLiveStreamingInitialized && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl">
-                <div className="flex flex-col items-center max-w-sm text-center animate-fade-in fade-in-up">
-                  <div className="w-20 h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-6">
-                    <span className="w-8 h-8 rounded-full bg-accent-red animate-pulse shadow-[0_0_30px_rgba(255,51,102,0.6)]" />
+                <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
+                  <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-4 sm:mb-6">
+                    <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-accent-red animate-pulse shadow-[0_0_30px_rgba(255,51,102,0.6)]" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Ready to Go Live</h3>
-                  <p className="text-gray-300 text-sm mb-8 px-4">
+                  <h3 className="text-lg sm:text-2xl font-bold text-white mb-2">
+                    {isPendingNextStream ? 'Ready to Stream Next Video' : 'Ready to Go Live'}
+                  </h3>
+                  <p className="text-gray-300 text-xs sm:text-sm mb-6 sm:mb-8 px-2 sm:px-4">
                     Your video is loaded locally. Click below when you're ready to start broadcasting to all participants.
                   </p>
                    <button
@@ -1001,6 +987,7 @@ const VideoPlayer = () => {
                       console.log('[DirectStream] User clicked Start Streaming.');
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
+                      setIsPendingNextStream(false);
 
                       const el = videoRef.current || videoEl;
                       if (!el) {
@@ -1015,11 +1002,11 @@ const VideoPlayer = () => {
                         el.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
                       }
                     }}
-                    className={`flex items-center justify-center gap-2 font-bold py-3 px-8 rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all ${
+                    className={`flex items-center justify-center gap-2 font-bold py-2 sm:py-3 px-6 sm:px-8 text-sm sm:text-base rounded-full shadow-[0_0_20px_rgba(255,51,102,0.4)] transition-all ${
                        (!videoRef.current && !videoEl) ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-accent-red hover:bg-accent-red/90 text-white hover:scale-105'
                     }`}
                   >
-                    ▶ Start Streaming
+                    ▶ {isPendingNextStream ? 'Stream Next Video' : 'Start Streaming'}
                   </button>
                 </div>
               </div>
@@ -1083,7 +1070,7 @@ const VideoPlayer = () => {
           {/* Reactions & Presence (floaters are always visible, menus follow showControls) */}
           <VideoPresenceOverlay visible={showControls} />
           <ReactionBurst />
-          <QuickReactionBar visible={showControls} />
+          <QuickReactionBar visible={showControls} className="mobile-portrait-hide bottom-20 left-1/2 -translate-x-1/2" />
 
           {/* Sync Status Badge */}
           {!isHost && currentVideo && currentVideo.type !== 'live' && (
