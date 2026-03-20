@@ -432,20 +432,13 @@
 }
 
 /* ── Mobile Portrait Utilities ────────────────────────────────────────────────── */
-.mobile-portrait-show { display: none !important; }
-.mobile-portrait-hide { display: block; } /* or initial */
-
-@media (max-width: 767px) {
-  /* In mobile layout, we hide the player's bar and show the chat's bar if it's tall and narrow (portrait) */
-  @media (orientation: portrait) {
-    .mobile-portrait-show { display: block !important; }
-    .mobile-portrait-hide { display: none !important; }
-  }
-}
-
-/* Fallback for very narrow desktop windows that might not report orientation */
-/* Also force hide the player bar on very small widths to prevent overlap */
-@media (max-width: 500px) {
+@media (max-width: 767px) and (orientation: portrait) {
   .mobile-portrait-show { display: block !important; }
   .mobile-portrait-hide { display: none !important; }
+}
+@media (min-width: 768px) {
+  .mobile-portrait-show { display: none !important; }
+}
+@media (max-width: 767px) and (orientation: landscape) {
+  .mobile-portrait-show { display: none !important; }
 }
