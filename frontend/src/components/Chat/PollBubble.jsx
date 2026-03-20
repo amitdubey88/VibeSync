@@ -20,20 +20,23 @@ export default function PollBubble({ poll, onVote, onEnd }) {
   const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes.length, 0);
 
   return (
-    <div className="bg-gray-800/80 rounded-xl p-4 my-2 border border-blue-500/30 w-full max-w-[300px]">
-      <div className="flex justify-between items-start mb-3">
-        <h4 className="text-white font-medium text-sm break-words">{poll.question}</h4>
+    <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-4 my-2 border border-white/10 w-full max-w-[320px] shadow-2xl shadow-black/20 animate-fade-in group/poll">
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex flex-col gap-1">
+          <span className="text-[10px] font-black text-accent-purple uppercase tracking-widest opacity-80">Active Poll</span>
+          <h4 className="text-text-primary font-bold text-sm leading-relaxed">{poll.question}</h4>
+        </div>
         {poll.active && canEnd && (
-          <span 
+          <button 
             onClick={() => onEnd && onEnd(poll.id)}
-            className="text-[10px] bg-red-500/20 text-red-300 px-2 py-1 rounded cursor-pointer hover:bg-red-500/40 transition-colors"
+            className="text-[10px] font-black text-red-400 bg-red-500/10 border border-red-500/20 px-2.5 py-1 rounded-lg hover:bg-red-500/20 transition-all active:scale-95 uppercase tracking-tighter"
           >
-            End Poll
-          </span>
+            End
+          </button>
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-2.5">
         {poll.options.map(option => {
           const hasVoted = option.votes.includes(user?.id);
           const percentage = totalVotes === 0 ? 0 : Math.round((option.votes.length / totalVotes) * 100);
@@ -43,28 +46,38 @@ export default function PollBubble({ poll, onVote, onEnd }) {
               key={option.id}
               onClick={() => handleVote(option.id)}
               disabled={!poll.active}
-              className={`relative w-full text-left overflow-hidden rounded-lg p-2 transition-all 
-                ${!poll.active ? 'cursor-default opacity-80' : 'hover:bg-gray-700/50 cursor-pointer'}
-                ${hasVoted ? 'border border-blue-500 bg-blue-500/10' : 'bg-gray-900/50'}
+              className={`relative w-full text-left overflow-hidden rounded-xl p-3 transition-all active:scale-[0.98] border shadow-inner
+                ${!poll.active ? 'cursor-default grayscale-[0.5] opacity-60' : 'hover:scale-[1.01] hover:shadow-lg cursor-pointer'}
+                ${hasVoted 
+                  ? 'border-accent-purple bg-accent-purple/15' 
+                  : 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'}
               `}
             >
-              <div 
-                className="absolute left-0 top-0 bottom-0 bg-blue-500/20 transition-all duration-500 z-0" 
-                style={{ width: `${percentage}%` }} 
+              <motion.div 
+                initial={{ width: 0 }}
+                animate={{ width: `${percentage}%` }}
+                className={`absolute left-0 top-0 bottom-0 ${hasVoted ? 'bg-accent-purple/20' : 'bg-white/10'} transition-all duration-1000 z-0`} 
               />
-              <div className="relative z-10 flex justify-between items-center text-xs">
-                <span className="text-gray-200">{option.text}</span>
-                <span className="text-gray-400 font-mono ml-2">{percentage}%</span>
+              <div className="relative z-10 flex justify-between items-center">
+                <span className={`text-xs font-semibold ${hasVoted ? 'text-accent-purple' : 'text-text-secondary'}`}>{option.text}</span>
+                <span className={`text-[11px] font-black ${hasVoted ? 'text-accent-purple' : 'text-text-muted'}`}>{percentage}%</span>
               </div>
             </button>
           );
         })}
       </div>
 
-      <div className="mt-3 flex justify-between items-center text-[10px] text-gray-500">
-        <span>{totalVotes} vote{totalVotes !== 1 && 's'}</span>
-        <span className={poll.active ? 'text-green-400' : 'text-red-400'}>
-          {poll.active ? 'Active' : 'Ended'} by {poll.createdBy}
+      <div className="mt-4 pt-3 flex justify-between items-center text-[10px] border-t border-white/5">
+        <div className="flex items-center gap-1.5 text-text-muted">
+          <div className="flex -space-x-1.5">
+            {[...Array(Math.min(3, totalVotes))].map((_, i) => (
+              <div key={i} className="w-3.5 h-3.5 rounded-full border border-bg-primary bg-bg-hover shadow-sm" />
+            ))}
+          </div>
+          <span className="font-bold">{totalVotes} vote{totalVotes !== 1 && 's'}</span>
+        </div>
+        <span className={`font-black uppercase tracking-widest ${poll.active ? 'text-accent-green' : 'text-red-400'}`}>
+          {poll.active ? 'Live' : 'Ended'}
         </span>
       </div>
     </div>

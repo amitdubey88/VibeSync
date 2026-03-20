@@ -144,23 +144,42 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
   return (
     <div className="flex flex-col h-full">
-      <button
-        onClick={() => setChatMuted(!chatMuted)}
-        className={`p-1.5 rounded-lg transition-all active:scale-95 ${
-          chatMuted
-            ? "text-red-400 bg-red-500/15 ring-1 ring-red-500/30"
-            : "text-text-muted bg-white/5 hover:bg-white/10 hover:text-text-primary"
-        }`}
-        title={
-          chatMuted ? "Unmute chat notifications" : "Mute chat notifications"
-        }
-      >
-        {chatMuted ? (
-          <BellOff className="w-3.5 h-3.5" />
-        ) : (
-          <Bell className="w-3.5 h-3.5" />
-        )}
-      </button>
+      {/* ── Chat Header ── */}
+      <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.03] backdrop-blur-md shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-accent-purple/15 flex items-center justify-center border border-accent-purple/20">
+            <MessageSquare className="w-4 h-4 text-accent-purple" />
+          </div>
+          <div className="flex flex-col">
+            <h2 className="text-sm font-bold text-text-primary tracking-tight">Live Chat</h2>
+            <div className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
+              <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Connected</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => setChatMuted(!chatMuted)}
+          className={`group flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full transition-all active:scale-95 border ${
+            chatMuted
+              ? "text-red-400 bg-red-500/10 border-red-500/30 ring-4 ring-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
+              : "text-text-muted bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 hover:text-text-primary shadow-inner"
+          }`}
+          title={chatMuted ? "Unmute chat notifications" : "Mute chat notifications"}
+        >
+          <div className={`p-1 rounded-full transition-colors ${chatMuted ? 'bg-red-500/20' : 'bg-white/10 group-hover:bg-accent-purple/20'}`}>
+            {chatMuted ? (
+              <BellOff className="w-3 h-3" />
+            ) : (
+              <Bell className={`w-3 h-3 transition-colors ${chatMuted ? '' : 'group-hover:text-accent-purple'}`} />
+            )}
+          </div>
+          <span className="text-[10px] font-bold uppercase tracking-wider">
+            {chatMuted ? "Muted" : "Active"}
+          </span>
+        </button>
+      </div>
 
       {/* ── Messages ── */}
       <div className="flex-1 overflow-y-auto scroll-area px-3 pt-3 pb-3 space-y-1">
