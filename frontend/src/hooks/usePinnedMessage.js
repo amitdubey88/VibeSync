@@ -1,20 +1,53 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
+import { decryptData } from '../utils/crypto';
 
 export const usePinnedMessage = () => {
   const { socket } = useSocket();
-  const { room } = useRoom();
+  const { room, roomKey } = useRoom();
   const [pinnedMessage, setPinnedMessage] = useState(null);
 
   useEffect(() => {
-    setPinnedMessage(room?.pinnedMessage || null);
-  }, [room?.pinnedMessage]);
+    const decryptAndSet = async (msg) => {
+      if (!msg) {
+        setPinnedMessage(null);
+        return;
+      }
+
+      if (msg.e2ee && roomKey) {
+        try {
+          const decryptedContent = await decryptData(msg.content, roomKey);
+          setPinnedMessage({ ...msg, content: decryptedContent });
+        } catch (err) {
+          console.error('[E2EE] Pinned message decryption failed:', err);
+          setPinnedMessage(msg);
+        }
+      } else {
+        setPinnedMessage(msg);
+      }
+    };
+
+    decryptAndSet(room?.pinnedMessage);
+  }, [room?.pinnedMessage, roomKey]);
 
   useEffect(() => {
     if (!socket) return;
 
-    const onPinned = ({ pinnedMessage: msg }) => setPinnedMessage(msg);
+    const onPinned = async ({ pinnedMessage: msg }) => {
+      if (msg && msg.e2ee && roomKey) {
+        try {
+          const decryptedContent = await decryptData(msg.content, roomKey);
+          setPinnedMessage({ ...msg, content: decryptedContent });
+        } catch (err) {
+          console.error('[E2EE] Socket pinned message decryption failed:', err);
+          setPinnedMessage(msg);
+        }
+      } else {
+        setPinnedMessage(msg || null);
+      }
+    };
+
     const onUnpinned = () => setPinnedMessage(null);
 
     socket.on('chat:pinned', onPinned);
@@ -24,7 +57,7 @@ export const usePinnedMessage = () => {
       socket.off('chat:pinned', onPinned);
       socket.off('chat:unpinned', onUnpinned);
     };
-  }, [socket]);
+  }, [socket, roomKey]);
 
   const pinMessage = useCallback((messageId) => {
     if (!socket || !room) return;
