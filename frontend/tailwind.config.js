@@ -10,27 +10,27 @@ export default {
         // Core palette
         bg: {
           primary: 'var(--bg-primary, #08080f)',
-          secondary: '#0f0f1a',
-          card: '#13131f',
-          hover: '#1a1a2e',
+          secondary: 'var(--bg-secondary, #0f0f1a)',
+          card: 'var(--bg-card, #13131f)',
+          hover: 'var(--bg-hover, #1a1a2e)',
         },
         accent: {
           red: 'var(--accent-red, #e50914)',
-          redHover: '#f40612',
-          purple: '#8b5cf6',
-          purpleHover: '#7c3aed',
-          cyan: '#06b6d4',
+          redHover: 'var(--accent-red-hover, #f40612)',
+          purple: 'var(--accent-purple, #8b5cf6)',
+          purpleHover: 'var(--accent-purple-hover, #7c3aed)',
+          cyan: 'var(--accent-cyan, #06b6d4)',
           green: '#10b981',
           yellow: '#f59e0b',
         },
         text: {
-          primary: '#f1f1f1',
-          secondary: '#a0a0b8',
+          primary: 'var(--text-primary, #f1f1f1)',
+          secondary: 'var(--text-secondary, #a0a0b8)',
           muted: '#5a5a7a',
         },
         border: {
-          dark: '#1e1e30',
-          light: '#2a2a40',
+          dark: 'var(--border-dark, #1e1e30)',
+          light: 'var(--border-light, #2a2a40)',
         },
       },
       fontFamily: {

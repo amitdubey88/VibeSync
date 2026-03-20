@@ -10,12 +10,16 @@
     --bg-primary: #08080f;
     --bg-secondary: #0f0f1a;
     --bg-card: #13131f;
+    --bg-hover: #1a1a2e;
     --accent-red: #e50914;
+    --accent-red-hover: #f40612;
     --accent-purple: #8b5cf6;
+    --accent-purple-hover: #7c3aed;
     --accent-cyan: #06b6d4;
     --text-primary: #f1f1f1;
     --text-secondary: #a0a0b8;
     --border-dark: #1e1e30;
+    --border-light: #2a2a40;
 
     /* ── Animation timing tokens ─────────────────────────────── */
     --dur-hover:  120ms;   /* button hover lift */

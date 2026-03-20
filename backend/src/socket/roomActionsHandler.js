@@ -16,8 +16,7 @@ try {
     Message = require('../models/Message');
 } catch (_) { }
 
-// In-memory blacklist for ended rooms to prevent immediate re-entry
-const endedRooms = new Set();
+const { endedRooms } = require('./sharedState');
 
 /**
  * Extract Cloudinary public_id from a secure_url
@@ -296,4 +295,4 @@ module.exports = (io, socket, roomStore) => {
     });
 };
 
-module.exports.endedRooms = endedRooms;
+

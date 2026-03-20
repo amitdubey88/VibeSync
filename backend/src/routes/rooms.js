@@ -5,7 +5,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { ROOM_TYPE } = require('../config/constants');
 const { hashRoomCode } = require('../utils/hash');
-const { endedRooms } = require('../socket/roomActionsHandler');
+const { endedRooms } = require('../socket/sharedState');
 
 // Try to use MongoDB models; fall back gracefully
 let Room, Message;

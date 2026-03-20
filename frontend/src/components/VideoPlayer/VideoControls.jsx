@@ -8,7 +8,7 @@ import {
   Mic, MicOff, Phone, Pin
 } from 'lucide-react';
 
-const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isHost, onLoadClick, visible }) => {
+const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isHost, isCoHost, onLoadClick, visible }) => {
   const { videoState, currentVideo, clips, sendClip } = useRoom();
   const { isMuted, toggleMute, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
@@ -35,7 +35,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
   const isPlaying = videoState?.isPlaying || false;
 
   const togglePlay = useCallback(() => {
-    if (!isHost) return;
+    if (!isHost && !isCoHost) return;
     const video = videoRef.current;
     if (!video) return;
     if (video.paused) video.play();
@@ -68,7 +68,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     // Fallback: try to grab duration directly from the element/proxy if displayDuration failed (is 0)
     const effectiveDuration = displayDuration > 0 ? displayDuration : (video?.duration || 0);
 
-    if (!isHost || !video || effectiveDuration <= 0) return;
+    if ((!isHost && !isCoHost) || !video || effectiveDuration <= 0) return;
     const rect = e.currentTarget.getBoundingClientRect();
     const ratio = (e.clientX - rect.left) / rect.width;
     const targetTime = ratio * effectiveDuration;
@@ -187,7 +187,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
         className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
-        onClick={isHost ? handleSeek : undefined}
+        onClick={(isHost || isCoHost) ? handleSeek : undefined}
       >
         <div
           className="absolute h-full rounded-full bg-white/20 transition-all duration-300"
@@ -207,7 +207,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
           />
         ))}
 
-        {isHost && (
+        {(isHost || isCoHost) && (
           <div
             className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
             style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
@@ -220,9 +220,9 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Play/pause */}
         <button
           onClick={togglePlay}
-          className={`btn-icon text-white ${!isHost && 'opacity-40 cursor-not-allowed'}`}
-          disabled={!isHost}
-          title={isHost ? (isPlaying ? 'Pause' : 'Play') : 'Only host can control'}
+          className={`btn-icon text-white ${(!isHost && !isCoHost) && 'opacity-40 cursor-not-allowed'}`}
+          disabled={!isHost && !isCoHost}
+          title={(isHost || isCoHost) ? (isPlaying ? 'Pause' : 'Play') : 'Only host/co-host can control'}
         >
           {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
         </button>
@@ -264,7 +264,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         <div className="flex-1" />
 
         {/* Load video button (host only) */}
-        {isHost && onLoadClick && (
+        {(isHost || isCoHost) && onLoadClick && (
           <button onClick={onLoadClick} className="btn-icon text-white" title="Change video">
             <Upload className="w-4 h-4" />
           </button>
@@ -285,9 +285,9 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         </button>
       </div>
 
-      {!isHost && (
+      {!isHost && !isCoHost && (
         <p className="text-center text-xs text-white/30 mt-1 select-none">
-          👑 Only the host can control playback
+          👑 Only the host and co-hosts can control playback
         </p>
       )}
     </div>

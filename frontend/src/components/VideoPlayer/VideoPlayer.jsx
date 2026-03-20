@@ -17,6 +17,7 @@ import { Play, Pause, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useWebRTC from '../../hooks/useWebRTC';
 import useHostTransferSync from '../../hooks/useHostTransferSync';
+import { useCoHost } from '../../hooks/useCoHost';
 import { decryptFile } from '../../utils/crypto';
 import { resolveVideoUrl } from '../../utils/videoResolver';
 
@@ -109,6 +110,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
 // ── Main VideoPlayer ─────────────────────────────────────────────────────────
 const VideoPlayer = () => {
   const { currentVideo, videoState, room, isHost, setVideoSource, syncDuration, isLiveStreamingInitialized, setIsLiveStreamingInitialized } = useRoom();
+  const { isCoHost } = useCoHost();
   const { setPremierStream, remotePremierStream, isStreamAnnounced, watchdogVideoRef } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
   const videoRef = useRef(null);
@@ -568,14 +570,14 @@ const VideoPlayer = () => {
       switch(e.code) {
         case 'ArrowLeft':
         case 'KeyJ':
-          if (isHost) {
+          if (isHost || isCoHost) {
             e.preventDefault();
             videoEl.currentTime = Math.max(0, videoEl.currentTime - 10);
           }
           break;
         case 'ArrowRight':
         case 'KeyL':
-          if (isHost) {
+          if (isHost || isCoHost) {
             e.preventDefault();
             videoEl.currentTime = Math.min(videoEl.duration || 0, videoEl.currentTime + 10);
           }
@@ -698,12 +700,12 @@ const VideoPlayer = () => {
 
     if (!videoEl) return;
 
-    // Only host controls playback
-    if (!isHost) return;
+    // Only host/co-host controls playback
+    if (!isHost && !isCoHost) return;
     
     // Only block during strict pre-live state (host hasn't started stream yet)
     if (
-      isHost &&
+      (isHost || isCoHost) &&
       isWebRTCStream &&
       !isLiveStreamingInitialized &&
       !activeSrc
@@ -726,8 +728,8 @@ const VideoPlayer = () => {
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {
     const handleTogglePlay = () => {
-      if (!isHost) {
-        toast.error('Only the host can control playback');
+      if (!isHost && !isCoHost) {
+        toast.error('Only host or co-hosts can control playback');
         return;
       }
       if (videoEl) {
@@ -1157,6 +1159,7 @@ const VideoPlayer = () => {
               duration={duration}
               buffered={buffered}
               isHost={isHost}
+              isCoHost={isCoHost}
               visible={showControls}
               onLoadClick={() => setShowSourcePicker(true)}
             />
