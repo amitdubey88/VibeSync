@@ -23,9 +23,13 @@ export default function WatchQueue() {
     
     // Quick parse for basic type inference using videoResolver
     const resolved = resolveVideoUrl(url.trim());
-    const type = resolved ? resolved.type : 'unsupported';
+    if (!resolved) return;
 
-    suggestVideo({ url: url.trim(), title: `Suggested Video (${type})`, type });
+    suggestVideo({ 
+      url: resolved.url, 
+      title: resolved.title, 
+      type: resolved.type 
+    });
     setUrl('');
   };
 

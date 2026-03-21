@@ -28,7 +28,7 @@ export const resolveVideoUrl = (url) => {
     return {
       url: ytMatch[1], // Return the 11-char ID for the YouTube iframe API
       type: 'youtube',
-      title: 'YouTube Video',
+      title: `YouTube Video (${ytMatch[1]})`,
     };
   }
 
@@ -37,7 +37,7 @@ export const resolveVideoUrl = (url) => {
     return {
       url: rawUrl,
       type: 'youtube',
-      title: 'YouTube Video',
+      title: `YouTube Video (${rawUrl})`,
     };
   }
 
