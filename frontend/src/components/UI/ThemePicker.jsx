@@ -42,7 +42,7 @@ export default function ThemePicker({ isOpen, onClose }) {
               disabled={!isHost}
               className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all ${
                 theme === t.id 
-                  ? 'border-blue-500 bg-blue-500/10' 
+                  ? 'border-accent-purple bg-accent-purple/10' 
                   : 'border-white/5 hover:border-white/20 bg-black/30'
               } ${!isHost ? 'cursor-default' : 'cursor-pointer'}`}
             >

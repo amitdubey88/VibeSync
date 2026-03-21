@@ -57,7 +57,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
                 maxLength={100}
-                className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+                className="w-full bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors"
                 autoFocus
               />
             </div>
@@ -71,7 +71,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
                   value={opt}
                   onChange={(e) => handleOptionChange(idx, e.target.value)}
                   maxLength={50}
-                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+                  className="w-full bg-black/30 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors"
                 />
               ))}
               
@@ -79,7 +79,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
                 <button 
                   type="button" 
                   onClick={addOption}
-                  className="text-xs text-blue-400 hover:text-blue-300 font-medium"
+                  className="text-xs text-accent-purple hover:text-accent-purple/80 font-medium"
                 >
                   + Add another option
                 </button>
@@ -89,7 +89,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
             <button 
               type="submit" 
               disabled={!isValid}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"
+              className="w-full mt-4 bg-accent-purple hover:bg-accent-purple/90 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-semibold py-2.5 rounded-lg transition-colors shadow-[0_4px_15px_rgba(139,92,246,0.3)]"
             >
               Start Poll
             </button>

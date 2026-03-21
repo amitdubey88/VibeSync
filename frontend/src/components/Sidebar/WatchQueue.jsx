@@ -56,12 +56,12 @@ export default function WatchQueue() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste video URL..."
-          className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+          className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors"
         />
         <button
           type="submit"
           disabled={!url.trim()}
-          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0"
+          className="bg-accent-red hover:bg-accent-red/90 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0 shadow-[0_4px_15px_rgba(229,9,20,0.3)]"
         >
           {isPrivileged ? 'Add' : 'Suggest'}
         </button>
@@ -75,8 +75,8 @@ export default function WatchQueue() {
             : urlValidationResult.type === 'youtube'
               ? 'text-accent-red'
               : urlValidationResult.type === 'hls'
-                ? 'text-blue-400'
-                : 'text-green-400'
+                ? 'text-accent-purple'
+                : 'text-accent-green'
         }`}>
           <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
           {urlValidationResult.type === 'youtube' && '▶ YouTube Video'}

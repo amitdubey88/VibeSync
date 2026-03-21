@@ -66,7 +66,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
             placeholder="Search Tenor GIFs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-blue-500 transition-colors"
+            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors"
             autoFocus
           />
         </div>
@@ -74,7 +74,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
         <div className="flex-1 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-white/10 custom-scrollbar">
           {loading ? (
             <div className="w-full h-full flex justify-center items-center">
-              <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1">
@@ -85,7 +85,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
                     const url = gif.media[0]?.gif?.url || gif.media[0]?.tinygif?.url;
                     if (url) onSelect(url, gif.title);
                   }}
-                  className="w-full h-24 bg-gray-800 rounded hover:opacity-80 transition-opacity overflow-hidden focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-24 bg-gray-800 rounded hover:opacity-80 transition-opacity overflow-hidden focus:outline-none focus:ring-2 focus:ring-accent-purple"
                 >
                   <img 
                     src={gif.media[0]?.tinygif?.url} 

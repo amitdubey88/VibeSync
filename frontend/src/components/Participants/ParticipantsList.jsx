@@ -104,7 +104,7 @@ const ParticipantsList = () => {
                     {p.username}{isMe ? ' (you)' : ''}
                   </span>
                   {isRoomHost && <Crown className="w-3.5 h-3.5 text-accent-yellow shrink-0" />}
-                  {coHosts.includes(p.userId) && !isRoomHost && <Star className="w-3.5 h-3.5 text-blue-400 shrink-0" />}
+                  {coHosts.includes(p.userId) && !isRoomHost && <Star className="w-3.5 h-3.5 text-accent-purple shrink-0" />}
                   {p.isGuest && <span className="badge bg-bg-hover text-text-muted text-[9px] px-1.5 py-0">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -159,16 +159,16 @@ const ParticipantsList = () => {
                       {coHosts.includes(p.userId) ? (
                         <button
                           onClick={() => { setConfirm({ type: 'demoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-blue-400 transition-colors"
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-purple transition-colors"
                         >
-                          <Star className="w-4 h-4 text-blue-400" /> Remove Co-host
+                          <Star className="w-4 h-4 text-accent-purple" /> Remove Co-host
                         </button>
                       ) : (
                         <button
                           onClick={() => { setConfirm({ type: 'promoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-blue-400 transition-colors"
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-purple transition-colors"
                         >
-                          <Star className="w-4 h-4 text-blue-400" /> Make Co-host
+                          <Star className="w-4 h-4 text-accent-purple" /> Make Co-host
                         </button>
                       )}
                       <button

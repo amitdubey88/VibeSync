@@ -423,7 +423,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
                   >
                     <svg
-                      className="w-4 h-4 text-blue-400"
+                      className="w-4 h-4 text-accent-purple"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
