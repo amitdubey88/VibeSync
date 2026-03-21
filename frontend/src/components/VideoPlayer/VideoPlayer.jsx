@@ -879,7 +879,9 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className="relative w-full h-full bg-black flex items-center justify-center group video-reaction-host video-container overflow-hidden rounded-2xl border border-border-light shadow-[0_0_80px_rgba(229,9,20,0.15)] transition-all duration-500"
+      className={`relative w-full h-full bg-black flex items-center justify-center group video-reaction-host video-container overflow-hidden rounded-2xl border border-border-light shadow-[0_0_80px_rgba(229,9,20,0.15)] transition-all duration-500
+        ${!showControls ? 'cursor-none' : ''}
+      `}
       onMouseMove={handleMouseMove}
       onTouchStart={handleMouseMove}
       onClick={handleMouseMove}
@@ -904,15 +906,10 @@ const VideoPlayer = () => {
         {/* Center-click overlay: transparent layer that intercepts clicks for play/pause */}
         {/* Positioned above video content but below controls. Renders for all video types. */}
         <div
-          className="absolute inset-0 z-10 cursor-pointer pointer-events-auto flex items-center justify-center group/centerclick"
+          className="absolute inset-0 z-10 pointer-events-auto flex items-center justify-center group/centerclick"
           onClick={handleCenterClick}
           style={{ touchAction: 'manipulation' }}
         >
-          {shouldShowControls && !isLoading && videoState && !videoState.isPlaying && currentVideo?.type !== 'live' && (
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center border border-white/10 shadow-xl transition-all duration-300 transform group-hover/centerclick:scale-105 animate-fade-in">
-              <Play className="w-10 h-10 sm:w-12 sm:h-12 text-white ml-2 md:opacity-80 md:group-hover/centerclick:opacity-100" />
-            </div>
-          )}
         </div>
 
         {/* Click animation flash (Play/Pause ripple) */}
