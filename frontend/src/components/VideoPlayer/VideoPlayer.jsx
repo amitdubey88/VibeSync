@@ -141,6 +141,16 @@ const VideoPlayer = () => {
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
 
+  const handleMouseMove = useCallback(() => {
+    setShowControls(true);
+    window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
+    clearTimeout(controlsTimer.current);
+    controlsTimer.current = setTimeout(() => {
+      setShowControls(false);
+      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
+    }, 3500);
+  }, []);
+
   // Participant stream swapping state
   const [isSwappingStream, setIsSwappingStream] = useState(false);
   const previousStreamTitleRef = useRef(null);
@@ -679,16 +689,6 @@ const VideoPlayer = () => {
     fetchAndDecrypt();
     return () => { active = false; };
   }, [currentVideo, roomKey, blobUrl]);
-
-  const handleMouseMove = useCallback(() => {
-    setShowControls(true);
-    window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
-    clearTimeout(controlsTimer.current);
-    controlsTimer.current = setTimeout(() => {
-      setShowControls(false);
-      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
-    }, 3500);
-  }, []);
 
   // Center-click to play/pause (host only, all video types)
   const clickAnimRef = useRef(null);
