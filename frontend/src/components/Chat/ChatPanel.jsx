@@ -181,6 +181,24 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         </button>
       </div>
 
+      {/* ── Pinned Alerts & Active Polls (Non-scrolling) ── */}
+      {(pinnedMessage || activePoll) && (
+        <div className="shrink-0 bg-[#16161D]/60 border-b border-white/5 flex flex-col z-20 overflow-hidden relative">
+          {/* Subtle Glow behind pinned content */}
+          <div className="absolute inset-0 bg-gradient-to-b from-accent-purple/5 to-transparent pointer-events-none" />
+          
+          <PinnedMessageBanner pinnedMessage={pinnedMessage} onUnpin={unpinMessage} />
+          
+          {activePoll && (
+            <div className="flex items-center gap-2 px-4 py-1.5 bg-accent-purple/5 border-t border-white/5 group/poll-pin relative z-10">
+              <div className="w-1 h-1 rounded-full bg-accent-purple animate-pulse shrink-0" />
+              <span className="text-[9px] font-black text-accent-purple/80 uppercase tracking-[0.2em] shrink-0">Poll:</span>
+              <span className="text-[11px] text-white/50 truncate font-medium flex-1">{activePoll.question}</span>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* ── Messages ── */}
       <div className="flex-1 overflow-y-auto scroll-area px-3 pt-3 pb-3 space-y-1">
         {/* E2EE Security Notice */}
@@ -191,15 +209,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           </p>
         </div>
 
-        {/* Feature 2: Pinned Message */}
-        <PinnedMessageBanner pinnedMessage={pinnedMessage} onUnpin={unpinMessage} />
-
-        {/* Persistent Active Poll (Fixed at top) */}
-        {activePoll && (
-          <div className="mx-3 my-2 animate-fade-in flex justify-center sticky top-0 z-20">
-            <PollBubble poll={activePoll} onVote={votePoll} onEnd={endPoll} />
-          </div>
-        )}
 
         {/* Swipe-to-reply guide — shown once until user dismisses */}
         {showSwipeGuide && (

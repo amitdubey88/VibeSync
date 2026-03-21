@@ -18,7 +18,7 @@ export default function PinnedMessageBanner({ pinnedMessage, onUnpin }) {
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
-          className="mx-3 mt-2 mb-2 bg-accent-yellow/10 border border-accent-yellow/20 rounded-2xl p-3 shadow-xl shadow-accent-yellow/5 flex items-start gap-3 relative z-10 backdrop-blur-xl group/pin"
+          className="bg-accent-yellow/5 border-b border-accent-yellow/20 p-3 flex items-start gap-3 relative z-10 backdrop-blur-xl group/pin"
         >
           <div className="mt-1 w-8 h-8 rounded-xl bg-accent-yellow/20 flex items-center justify-center border border-accent-yellow/30 shrink-0">
             <svg className="w-4 h-4 text-accent-yellow" fill="currentColor" viewBox="0 0 20 20">

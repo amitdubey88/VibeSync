@@ -20,7 +20,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
   const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes.length, 0);
 
   return (
-    <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-4 my-2 border border-white/10 w-full max-w-[320px] shadow-2xl shadow-black/20 animate-fade-in group/poll">
+    <div className="bg-white/[0.03] backdrop-blur-xl rounded-2xl p-4 border border-white/10 w-full max-w-[320px] shadow-2xl shadow-black/20 animate-fade-in group/poll">
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-black text-accent-purple uppercase tracking-widest opacity-80">Active Poll</span>

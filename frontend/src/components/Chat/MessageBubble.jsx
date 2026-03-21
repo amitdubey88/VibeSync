@@ -3,6 +3,8 @@ import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/help
 import { Reply, ShieldCheck, Check, CheckCheck, Pin } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
+import { usePolls } from '../../hooks/usePolls';
+import PollBubble from './PollBubble';
 
 // Swipe threshold — how many px to drag before triggering reply
 const SWIPE_THRESHOLD = 55;
@@ -26,6 +28,7 @@ const StatusTick = ({ status, isOwn }) => {
 
 const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, isCoHost }) => {
   const { reactToMessage, messageStatuses } = useRoom();
+  const { activePoll, votePoll, endPoll } = usePolls();
   const { user } = useAuth();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
@@ -99,6 +102,22 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
         <span className="text-[11px] text-text-muted bg-bg-hover/60 px-3 py-1 rounded-full">
           {message.content}
         </span>
+      </div>
+    );
+  }
+
+  // ── Poll message (In-stream card) ──────────────────────────────────────────
+  if (message.type === 'poll') {
+    // Only render the card if it's the CURRENT active poll. 
+    // If it's an old poll from history, we might want to show results only.
+    // For now, let's just show the PollBubble.
+    return (
+      <div id={`msg-${message.id}`} className="flex justify-center my-4 animate-fade-in w-full px-4">
+        <PollBubble 
+          poll={activePoll?.id === message.pollId ? activePoll : { question: message.content, options: message.options || [], active: false }} 
+          onVote={votePoll} 
+          onEnd={endPoll} 
+        />
       </div>
     );
   }

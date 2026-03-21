@@ -36,8 +36,26 @@ module.exports = (io, socket, roomStore) => {
         };
 
         room.activePoll = poll;
+        
+        // Inject into chat messages so it scrolls naturally
+        const pollMessage = {
+            id: `poll_msg_${Date.now()}`,
+            userId: 'system',
+            username: 'Poll',
+            content: poll.question,
+            options: poll.options, // Store initial options for history
+            pollId: poll.id,
+            type: 'poll',
+            createdAt: poll.createdAt
+        };
+        room.messages = room.messages || [];
+        room.messages.push(pollMessage);
+        if (room.messages.length > 500) room.messages.shift();
+
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('poll:created', { poll });
+        io.to(hashedCode).emit('chat:message', pollMessage);
+        
         console.log(`📊 Poll created in ${code}: "${poll.question}"`);
     });
 
