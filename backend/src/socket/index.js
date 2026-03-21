@@ -142,6 +142,12 @@ module.exports = (io, roomStore) => {
                 return socket.emit('room:join-error', { message: 'This room is currently locked by the host.' });
             }
 
+            if (room.bannedUsers?.includes(socket.user.id)) {
+                return socket.emit('room:join-error', { 
+                    message: 'You have been removed from this room by the host and cannot rejoin this session.' 
+                });
+            }
+
             // Leave previous room if any
             if (currentRoomCode && currentRoomCode !== code) {
                 leaveRoom(currentRoomCode);

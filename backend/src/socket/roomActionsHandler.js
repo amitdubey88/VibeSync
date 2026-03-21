@@ -184,6 +184,12 @@ module.exports = (io, socket, roomStore) => {
             targetSocket.leave(code);
         }
 
+        // Add to session ban list to prevent immediate rejoin
+        room.bannedUsers = room.bannedUsers || [];
+        if (!room.bannedUsers.includes(targetUserId)) {
+            room.bannedUsers.push(targetUserId);
+        }
+
         // Remove from participants list
         room.participants = room.participants.filter((p) => p.userId !== targetUserId);
         const hashedCode = hashRoomCode(code);

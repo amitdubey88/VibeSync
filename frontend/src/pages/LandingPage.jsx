@@ -27,6 +27,18 @@ const LandingPage = () => {
 
   // Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    if (query.get('kicked')) {
+      toast.error('You have been removed from the room by the host.', {
+        id: 'kicked-toast',
+        duration: 5000,
+        icon: '🚫'
+      });
+      // Clean up the URL
+      navigate('/', { replace: true });
+      return;
+    }
+
     const saved = sessionStorage.getItem("vibesync_session");
     // Don't auto-rejoin if they explicitly left or host ended it
     if (saved && !location.state?.roomEnded) {

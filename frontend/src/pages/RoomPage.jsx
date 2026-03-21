@@ -68,7 +68,7 @@ const RoomPage = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, guestLogin } = useAuth();
   const { socket, isConnected } = useSocket();
   const {
     room, participants, joinRoom: socketJoin, leaveRoom, isHost, deleteRoom,
@@ -96,6 +96,9 @@ const RoomPage = () => {
   const [showRoomInfo, setShowRoomInfo] = useState(false);
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false);
+  const [isGuestPromptVisible, setIsGuestPromptVisible] = useState(false);
+  const [guestName, setGuestName] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const hasJoinedRef = useRef(false);
 
   // Initialize features
@@ -198,9 +201,10 @@ const RoomPage = () => {
 
   useEffect(() => {
     if (!isAuthenticated) {
-      navigate('/', { replace: true });
+      setIsGuestPromptVisible(true);
       return;
     }
+    setIsGuestPromptVisible(false); // Hide prompt if they somehow become authenticated
     if (!socket || !isConnected) return;
     if (hasJoinedRef.current) return;
     hasJoinedRef.current = true;
@@ -366,6 +370,20 @@ const RoomPage = () => {
         duration: 3000
       });
     });
+  };
+
+  const handleGuestJoin = async () => {
+    if (!guestName.trim()) return;
+    setIsLoggingIn(true);
+    try {
+      await guestLogin(guestName.trim());
+      // isAuthenticated will change, triggering the join effect naturally
+      toast.success(`Welcome, ${guestName}!`);
+    } catch (err) {
+      toast.error('Failed to join as guest. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
+    }
   };
 
   const handleLeave = (e) => {
@@ -864,7 +882,7 @@ const RoomPage = () => {
           </div>
         }
         confirmLabel="Close"
-        onConfirm={() => setShowRoomInfo(false)}
+                onConfirm={() => setShowRoomInfo(false)}
         onCancel={() => setShowRoomInfo(false)}
       />
 
@@ -873,6 +891,69 @@ const RoomPage = () => {
         isOpen={showShortcutsHelp} 
         onClose={() => setShowShortcutsHelp(false)} 
       />
+
+      {/* Guest Join Overlay: Prompt for name if not authenticated */}
+      {isGuestPromptVisible && (
+        <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-500">
+          <div className="absolute top-12 flex flex-col items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center shadow-lg shadow-accent-purple/20">
+              <Tv2 className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-black text-white tracking-tight">VibeSync</h1>
+          </div>
+          
+          <div className="w-full max-w-md bg-[#16161D]/50 border border-white/10 p-8 rounded-[32px] backdrop-blur-lg shadow-2xl relative overflow-hidden">
+            {/* Background Glow */}
+            <div className="absolute -top-24 -left-24 w-48 h-48 bg-accent-purple/20 rounded-full blur-[80px]" />
+            <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-accent-blue/20 rounded-full blur-[80px]" />
+
+            <div className="relative z-10 text-center">
+              <h2 className="text-2xl font-bold text-white mb-2">Welcome to the Party!</h2>
+              <p className="text-white/50 text-sm mb-8">You've been invited to join <span className="text-white font-semibold">{code}</span>. What should we call you?</p>
+
+              <div className="space-y-4">
+                <div className="relative group">
+                  <input
+                    type="text"
+                    placeholder="Enter your name..."
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && guestName.trim() && !isLoggingIn && handleGuestJoin()}
+                    className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-white placeholder-white/20 focus:outline-none focus:border-accent-purple/50 focus:bg-white/10 transition-all font-medium"
+                    autoFocus
+                  />
+                </div>
+
+                <button
+                  onClick={handleGuestJoin}
+                  disabled={!guestName.trim() || isLoggingIn}
+                  className="w-full h-14 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2"
+                >
+                  {isLoggingIn ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>Join Party <Tv2 className="w-4 h-4 ml-1" /></>
+                  )}
+                </button>
+
+                <div className="pt-4 border-t border-white/5 mt-4">
+                  <p className="text-white/30 text-xs flex items-center justify-center gap-2">
+                    Already have an account? 
+                    <button 
+                      onClick={() => navigate('/', { state: { from: location.pathname } })}
+                      className="text-white hover:text-accent-purple font-semibold transition-colors"
+                    >
+                      Sign In
+                    </button>
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <p className="fixed bottom-8 text-white/20 text-[10px] uppercase tracking-[0.2em] font-bold">Secure • Real-time • Synchronized</p>
+        </div>
+      )}
 
       {/* Delete room confirmation */}
       <ConfirmDialog

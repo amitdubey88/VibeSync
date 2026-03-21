@@ -386,13 +386,18 @@ export const RoomProvider = ({ children }) => {
 
     const onKicked = ({ message }) => {
       playUISound('end');
-      toast.error(message || 'You were removed from the room.', { duration: 2000 });
+      toast.error(message || 'You were removed from the room.', { duration: 4000 });
+      
+      // Clear session to prevent auto-rejoin
+      sessionStorage.removeItem("vibesync_session");
+
       setRoom(null); setParticipants([]); setMessages([]);
       setVideoState(null); setCurrentVideo(null); setIsHost(false);
+      
       setTimeout(() => {
-        window.history.replaceState(null, '', '/');
-        window.location.href = '/';
-      }, 800);
+        // Use navigate if possible, otherwise fallback to href
+        window.location.href = '/?kicked=true';
+      }, 1500);
     };
 
     const onMuted = () => {
@@ -462,6 +467,18 @@ export const RoomProvider = ({ children }) => {
             return { ...m, reactions: nextReactions };
           } else {
             // Add reaction
+            
+            // Notify other participants (and specifically the message owner)
+            if (username !== user?.username) {
+              const isMyMessage = m.username === user?.username;
+              toast(`${username} reacted with ${displayEmoji}${isMyMessage ? ' to your message' : ''}`, {
+                icon: '✨',
+                duration: 2000,
+                id: `msg-react-${messageId}-${username}-${displayEmoji}`
+              });
+              playUISound('social');
+            }
+
             const nextReactions = { ...reactions, [displayEmoji]: [...users, username] };
             return { ...m, reactions: nextReactions };
           }
