@@ -13,6 +13,7 @@ import SyncStatusBadge from './SyncStatusBadge';
 import ReactionBurst from './ReactionBurst';
 import QuickReactionBar from './QuickReactionBar';
 import SubtitleOverlay from './SubtitleOverlay';
+import ActiveSpeakersOverlay from './ActiveSpeakersOverlay';
 import { Play, Pause, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
 import toast from 'react-hot-toast';
 import useWebRTC from '../../hooks/useWebRTC';
@@ -1125,6 +1126,10 @@ const VideoPlayer = () => {
       )}
 
       {/* Feature 11: Subtitles Overlay (always visible if active) */}
+          {/* Active Speakers Overlay */}
+          <ActiveSpeakersOverlay />
+
+          {/* Subtitles Overlay */}
       <SubtitleOverlay />
 
       {/* Controls Overlay - only render if derived state allows it */}

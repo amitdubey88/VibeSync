@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useSocket } from './SocketContext';
 import { useRoom } from './RoomContext';
@@ -64,6 +65,86 @@ export const WebRTCProvider = ({ children }) => {
 
     const roomCode = room?.code;
 
+    // ── Active Speaker Detection (Web Audio API) ───────────────────────────────
+    const analysersRef = useRef(new Map());
+    const audioContextRef = useRef(null);
+    const activeSpeakersRef = useRef(new Set());
+
+    const initAudioContext = () => {
+        if (!audioContextRef.current) {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                audioContextRef.current = new AudioContextClass();
+            }
+        }
+        if (audioContextRef.current?.state === 'suspended') {
+            audioContextRef.current.resume();
+        }
+        return audioContextRef.current;
+    };
+
+    const setupVolumeDetection = useCallback((streamId, stream) => {
+        try {
+            const ctx = initAudioContext();
+            if (!ctx) return;
+            const source = ctx.createMediaStreamSource(stream);
+            const analyser = ctx.createAnalyser();
+            analyser.fftSize = 256;
+            analyser.smoothingTimeConstant = 0.4;
+            // No destination connection — we only analyze. <audio> handles playback.
+            source.connect(analyser);
+            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+            analysersRef.current.set(streamId, { analyser, dataArray, stream, source });
+        } catch (e) {
+            console.warn(`[Voice] Volume setup failed for ${streamId}:`, e);
+        }
+    }, []);
+
+    const teardownVolumeDetection = useCallback((streamId) => {
+        const item = analysersRef.current.get(streamId);
+        if (item) {
+            try { item.analyser.disconnect(); } catch { /* ignore */ }
+            try { item.source.disconnect(); } catch { /* ignore */ }
+            analysersRef.current.delete(streamId);
+        }
+    }, []);
+
+    // 100ms interval polling to dispatch speaker status to UI overlays
+    useEffect(() => {
+        const analyzeVolumes = () => {
+            const currentSpeakers = new Set();
+            for (const [id, { analyser, dataArray }] of analysersRef.current.entries()) {
+                // Skip local user evaluation if they are currently muted
+                if (id === 'local' && isMuted) continue;
+
+                analyser.getByteFrequencyData(dataArray);
+                let sum = 0;
+                for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                const average = sum / dataArray.length;
+                
+                if (average > 15) { // Threshold for "speaking"
+                    currentSpeakers.add(id);
+                }
+            }
+            
+            const oldSet = activeSpeakersRef.current;
+            let changed = currentSpeakers.size !== oldSet.size;
+            if (!changed) {
+                for (const item of currentSpeakers) {
+                    if (!oldSet.has(item)) { changed = true; break; }
+                }
+            }
+            
+            if (changed) {
+                activeSpeakersRef.current = currentSpeakers;
+                window.dispatchEvent(new CustomEvent('voice:active-speakers', { detail: Array.from(currentSpeakers) }));
+            }
+        };
+        const interval = setInterval(analyzeVolumes, 100);
+        return () => clearInterval(interval);
+    }, [isMuted]);
+
+
     // ═══════════════════════════════════════════════════════════════════════════
     // VOICE peer connections (audio only — mic ↔ mic)
     // ═══════════════════════════════════════════════════════════════════════════
@@ -105,6 +186,8 @@ export const WebRTCProvider = ({ children }) => {
                 audio.srcObject = stream;
                 audio.muted = !isInVoiceRef.current;
                 
+                setupVolumeDetection(remoteSocketId, stream);
+                
                 // Explicitly call play() to handle potential autoplay blocks
                 if (!audio.muted) {
                     audio.play().catch(err => console.warn('[Voice] AutoPlay blocked for incoming voice:', err));
@@ -143,14 +226,15 @@ export const WebRTCProvider = ({ children }) => {
 
         peersRef.current[remoteSocketId] = pc;
         return pc;
-    }, [socket, roomKey, roomCode]);
+    }, [socket, roomKey, roomCode, setupVolumeDetection]);
 
     const closeVoicePeer = useCallback((remoteSocketId) => {
         const pc = peersRef.current[remoteSocketId];
         if (pc && typeof pc.close === 'function') pc.close();
         delete peersRef.current[remoteSocketId];
         document.querySelectorAll(`audio[data-socket-id="${remoteSocketId}"]`).forEach(a => a.remove());
-    }, []);
+        teardownVolumeDetection(remoteSocketId);
+    }, [teardownVolumeDetection]);
 
     // (closePeer alias removed — was unused duplicate of closeVoicePeer)
 
@@ -284,12 +368,14 @@ export const WebRTCProvider = ({ children }) => {
             if (localStreamRef.current) {
                 localStreamRef.current.getTracks().forEach(t => t.stop());
                 localStreamRef.current = null;
+                teardownVolumeDetection('local');
             }
             
             // Acquire microphone FIRST
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
             localStreamRef.current = stream;
             const audioTrack = stream.getAudioTracks()[0];
+            setupVolumeDetection('local', stream);
 
             if (isInVoiceRef.current) {
                 // We were already in voice passively, and are upgrading to a mic.
@@ -348,18 +434,19 @@ export const WebRTCProvider = ({ children }) => {
                 socket.emit('voice:join', { roomCode, passive: true });
             }
         }
-    }, [socket, roomCode, roomKey]);
+    }, [socket, roomCode, roomKey, setupVolumeDetection, teardownVolumeDetection]);
 
     const leaveVoice = useCallback(() => {
         if (!socket || !roomCode) return;
         localStreamRef.current?.getTracks().forEach(t => t.stop());
         localStreamRef.current = null;
+        teardownVolumeDetection('local');
         Object.keys(peersRef.current).forEach(closeVoicePeer);
         setIsInVoice(false);
         // BUGFIX: Reset to true (muted) so next join starts in correct muted state
         setIsMuted(true);
         socket.emit('voice:leave', { roomCode });
-    }, [socket, roomCode, closeVoicePeer]);
+    }, [socket, roomCode, closeVoicePeer, teardownVolumeDetection]);
 
     const toggleMute = useCallback(async () => {
         if (!localStreamRef.current) {

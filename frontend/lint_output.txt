@@ -1,7 +1,18 @@
 
-E:\VibeSync\frontend\src\pages\RoomPage.jsx
-  294:6  warning  React Hook useEffect has a missing dependency: 'navigate'. Either include it or remove the dependency array                      react-hooks/exhaustive-deps
-  339:6  warning  React Hook useEffect has missing dependencies: 'approveJoin' and 'denyJoin'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+E:\VibeSync\frontend\src\components\VideoPlayer\VideoPlayer.jsx
+  565:6  warning  React Hook useEffect has a missing dependency: 'setIsLiveStreamingInitialized'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  589:6  warning  React Hook useEffect has a missing dependency: 'setIsLiveStreamingInitialized'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  619:6  warning  React Hook useEffect has a missing dependency: 'isCoHost'. Either include it or remove the dependency array                       react-hooks/exhaustive-deps
+  744:6  warning  React Hook useCallback has a missing dependency: 'isCoHost'. Either include it or remove the dependency array                     react-hooks/exhaustive-deps
+  779:6  warning  React Hook useEffect has a missing dependency: 'isCoHost'. Either include it or remove the dependency array                       react-hooks/exhaustive-deps
 
-✖ 2 problems (0 errors, 2 warnings)
+E:\VibeSync\frontend\src\context\WebRTCContext.jsx
+  105:55  error    Empty block statement                                                                                                                                      no-empty
+  106:53  error    Empty block statement                                                                                                                                      no-empty
+  228:8   warning  React Hook useCallback has a missing dependency: 'setupVolumeDetection'. Either include it or remove the dependency array                                  react-hooks/exhaustive-deps
+  436:8   warning  React Hook useCallback has missing dependencies: 'setupVolumeDetection' and 'teardownVolumeDetection'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+  448:8   warning  React Hook useCallback has a missing dependency: 'teardownVolumeDetection'. Either include it or remove the dependency array                               react-hooks/exhaustive-deps
+  970:14  error    Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components                             react-refresh/only-export-components
+
+✖ 11 problems (3 errors, 8 warnings)
 
