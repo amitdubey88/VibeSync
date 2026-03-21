@@ -252,6 +252,10 @@ export const RoomProvider = ({ children }) => {
       }
     };
 
+    const onCoHostUpdated = ({ coHosts }) => {
+      setRoom((prev) => prev ? { ...prev, coHosts } : prev);
+    };
+
     const onChatMessage = async (msg) => {
       let displayContent = msg.content;
       if (msg.e2ee && roomKey) {
@@ -503,6 +507,7 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:participant-update', onParticipantUpdate);
     socket.on('room:voice-update', onVoiceUpdate);
     socket.on('room:host-changed', onHostChanged);
+    socket.on('room:cohost-updated', onCoHostUpdated);
     socket.on('chat:message', onChatMessage);
     socket.on('video:source-changed', onSourceChanged);
     socket.on('video:uploading', onUploading);
@@ -543,6 +548,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('room:participant-update', onParticipantUpdate);
       socket.off('room:voice-update', onVoiceUpdate);
       socket.off('room:host-changed', onHostChanged);
+      socket.off('room:cohost-updated', onCoHostUpdated);
       socket.off('chat:message', onChatMessage);
       socket.off('video:source-changed', onSourceChanged);
       socket.off('video:uploading', onUploading);

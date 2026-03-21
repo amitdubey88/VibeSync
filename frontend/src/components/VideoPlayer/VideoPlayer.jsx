@@ -222,7 +222,7 @@ const VideoPlayer = () => {
   // and the 'Start Streaming' button always reference the latest version.
   // Previously defined inside a useEffect body which created a stale closure on video switch.
   const startBroadcast = useCallback(() => {
-    if (!isHost || !videoRef.current || !videoRef.current.captureStream) return;
+    if (!(isHost || isCoHost) || !videoRef.current || !videoRef.current.captureStream) return;
     if (isStreamingActiveRef.current) return;
 
     console.log('[DirectStream] Starting WebRTC broadcast capture...');
@@ -874,7 +874,7 @@ const VideoPlayer = () => {
 
 
   // Portal modal
-  const sourcePicker = showSourcePicker && isHost && (
+  const sourcePicker = showSourcePicker && (isHost || isCoHost) && (
     <SourcePickerModal
       onClose={() => setShowSourcePicker(false)}
       onUrlSubmit={handleUrlSubmit}
@@ -935,7 +935,7 @@ const VideoPlayer = () => {
           </div>
         )}
 
-        {!isHost && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
+        {!(isHost || isCoHost) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
             <div className="relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/10 flex items-center justify-center">
@@ -943,7 +943,7 @@ const VideoPlayer = () => {
               <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-accent-red/70" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Host is Preparing to Stream</h3>
+              <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Host/Co-host is Preparing to Stream</h3>
               <p className="text-text-secondary text-xs sm:text-sm">
                 {currentVideo?.title?.replace(/^\(LIVE\)\s*/i, '') || 'Getting the stream ready…'}
               </p>
@@ -952,7 +952,7 @@ const VideoPlayer = () => {
               </p>
             </div>
           </div>
-        ) : !isHost && (remotePremierStream || isStreamAnnounced) ? (
+        ) : !(isHost || isCoHost) && (remotePremierStream || isStreamAnnounced) ? (
           /* Participant: Show Direct/Premier Feed — only visible once host presses play */
           remotePremierStream ? (
             <div className="relative w-full h-full">
@@ -1026,7 +1026,7 @@ const VideoPlayer = () => {
               onError={handleVideoError}
             />
             {/* Start Streaming Overlay for Host */}
-            {isHost && isWebRTCStream && !isLiveStreamingInitialized && (
+            {(isHost || isCoHost) && isWebRTCStream && !isLiveStreamingInitialized && (
               <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl pointer-events-auto">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
                   <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-4 sm:mb-6">
@@ -1080,12 +1080,12 @@ const VideoPlayer = () => {
               <div>
                 <h3 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2">No Video Loaded</h3>
                 <p className="text-gray-300 text-xs sm:text-sm font-medium">
-                  {isHost
+                  {(isHost || isCoHost)
                     ? 'Load a video directly, or use the extension to watch streaming platforms together.'
                     : 'Waiting for host to load a video.'}
                 </p>
               </div>
-              {isHost && (
+              {(isHost || isCoHost) && (
                 <button className="btn-primary mt-1 sm:mt-3 text-sm" onClick={() => setShowSourcePicker(true)}>
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
@@ -1147,7 +1147,7 @@ const VideoPlayer = () => {
           )}
 
           {/* Sync Status Badge */}
-          {!isHost && currentVideo && currentVideo.type !== 'live' && (
+          {!(isHost || isCoHost) && currentVideo && currentVideo.type !== 'live' && (
             <div className="absolute top-4 right-4 z-40 pointer-events-none">
               <SyncStatusBadge status={syncStatus} />
             </div>

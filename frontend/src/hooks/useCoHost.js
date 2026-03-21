@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
@@ -18,7 +19,7 @@ export const useCoHost = () => {
 
     const onCoHostUpdated = ({ coHosts: updatedCoHosts }) => setCoHosts(updatedCoHosts);
     const onCoHostAssigned = ({ assignedBy }) => {
-      // toast or similar notification can be handled in the component
+      toast.success(`👑 You have been promoted to Co-Host by ${assignedBy}!`, { duration: 4000 });
     };
 
     socket.on('room:cohost-updated', onCoHostUpdated);

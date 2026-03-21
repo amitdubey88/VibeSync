@@ -1,6 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
+import { useCoHost } from './useCoHost';
 import useSyncDataChannel from './useSyncDataChannel';
 import toast from 'react-hot-toast';
 
@@ -21,6 +22,8 @@ const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
 const useVideoSync = (videoEl) => {
     const { socket } = useSocket();
     const { room, isHost, setVideoState, currentVideo } = useRoom();
+    const { isCoHost } = useCoHost();
+    const canControl = isHost || isCoHost;
     const { sendSyncMessage, onSyncMessage } = useSyncDataChannel();
     const isSyncingRef = useRef(false);
     const [syncStatus, setSyncStatus] = useState('synced'); // 'synced' | 'catching-up' | 'buffering'
@@ -65,14 +68,14 @@ const useVideoSync = (videoEl) => {
 
     // ── Host: emit events ────────────────────────────────────────────────────
     const onHostPlay = useCallback(() => {
-        if (!socket || !roomCode) return;
+        if (!socket || !roomCode || isSyncingRef.current) return;
         const currentTime = videoEl?.currentTime || 0;
         sendSyncMessage('video:play', { roomCode, currentTime });
         setVideoState((prev) => ({ ...prev, isPlaying: true, currentTime }));
     }, [socket, roomCode, videoEl, setVideoState, sendSyncMessage]);
 
     const onHostPause = useCallback(() => {
-        if (!socket || !roomCode) return;
+        if (!socket || !roomCode || isSyncingRef.current) return;
         const currentTime = videoEl?.currentTime || 0;
         sendSyncMessage('video:pause', { roomCode, currentTime });
         setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
@@ -99,7 +102,7 @@ const useVideoSync = (videoEl) => {
     // videoEl (not videoRef) is a direct element — this effect re-runs whenever
     // the video element mounts / unmounts / changes.
     useEffect(() => {
-        if (!isHost || !videoEl) return;
+        if (!canControl || !videoEl) return;
 
         videoEl.addEventListener('play', onHostPlay);
         videoEl.addEventListener('pause', onHostPause);
@@ -114,7 +117,7 @@ const useVideoSync = (videoEl) => {
             videoEl.removeEventListener('waiting', onBufferStart);
             videoEl.removeEventListener('canplay', onBufferEnd);
         };
-    }, [isHost, videoEl, onHostPlay, onHostPause, onHostSeeked, onBufferStart, onBufferEnd]);
+    }, [canControl, videoEl, onHostPlay, onHostPause, onHostSeeked, onBufferStart, onBufferEnd]);
 
     // ── Host: Adaptive Continuous Heartbeat ──────────────────────────────────
     const syncIntervalRef = useRef(4000);
@@ -195,37 +198,39 @@ const useVideoSync = (videoEl) => {
         };
 
         const onPlay = ({ currentTime }) => {
-            if (!videoEl || isHost) return;
+            if (!videoEl) return;
+            isSyncingRef.current = true;
             if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
                 applyTimeIfNeeded(currentTime);
             }
             safePlay();
             setVideoState((prev) => ({ ...prev, isPlaying: true, currentTime }));
+            setTimeout(() => { isSyncingRef.current = false; }, 100);
         };
 
         const onPause = ({ currentTime }) => {
-            if (!videoEl || isHost) return;
+            if (!videoEl) return;
+            isSyncingRef.current = true;
             // For live/upload streams, DO NOT pause the video element.
-            // The participant's video element has srcObject from captureStream (WebRTC).
-            // Calling .pause() on it causes a black screen — the frozen last frame
-            // from the captureStream is the correct 'paused' visual. Just update state.
             if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
                 setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
+                setTimeout(() => { isSyncingRef.current = false; }, 100);
                 return;
             }
             videoEl.pause();
             applyTimeIfNeeded(currentTime);
             setVideoState((prev) => ({ ...prev, isPlaying: false, currentTime }));
+            setTimeout(() => { isSyncingRef.current = false; }, 100);
         };
 
         const onSeek = ({ currentTime }) => {
-            if (!videoEl || isHost) return;
+            if (!videoEl) return;
+            isSyncingRef.current = true;
             if (currentVideo?.type !== 'live' && currentVideo?.type !== 'uploading') {
-                isSyncingRef.current = true;
                 videoEl.currentTime = currentTime;
-                setTimeout(() => { isSyncingRef.current = false; }, 300);
             }
             setVideoState((prev) => ({ ...prev, currentTime }));
+            setTimeout(() => { isSyncingRef.current = false; }, 300);
         };
 
         const onSyncState = ({ videoState: vs, currentVideo: remoteVideo }) => {

@@ -18,7 +18,14 @@ module.exports = (io, socket, roomStore) => {
         if (!code) return { error: 'Room not found' };
         const room = roomStore.get(code);
         if (!room) return { error: 'Room not found' };
-        if (socket.user?.id !== room.hostId) return { error: 'Only the host can control playback' };
+        
+        const isHost = socket.user?.id === room.hostId;
+        const isCoHost = (room.coHosts || []).includes(socket.user?.id);
+        
+        if (!isHost && !isCoHost) {
+            return { error: 'Only the host or co-host can control playback' };
+        }
+        
         return { room, code };
     };
 
