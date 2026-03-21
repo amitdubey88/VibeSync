@@ -681,7 +681,7 @@ const RoomPage = () => {
           <div className="flex w-full overflow-x-auto scrollbar-hide">
             <button 
               onClick={() => setActiveMobileTab('chat')}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
             >
             <MessageSquare className="w-4.5 h-4.5 mb-1" />
             <span>CHAT</span>
@@ -689,7 +689,7 @@ const RoomPage = () => {
           </button>
           <button 
             onClick={() => setActiveMobileTab('people')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
           >
             <Users className="w-4.5 h-4.5 mb-1" />
             <span>PEOPLE ({onlineCount})</span>
@@ -697,14 +697,14 @@ const RoomPage = () => {
           </button>
           <button 
             onClick={() => setActiveMobileTab('queue')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
           >
             <ListVideo className="w-4.5 h-4.5 mb-1" />
             <span>QUEUE</span>
           </button>
           <button 
             onClick={() => setActiveMobileTab('activity')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
           >
             <Activity className="w-4.5 h-4.5 mb-1" />
             <span>ACTIVITY</span>

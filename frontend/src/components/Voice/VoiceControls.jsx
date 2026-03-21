@@ -13,8 +13,8 @@ const VoiceControls = () => {
   const { isHost, muteAllParticipants } = useRoom();
 
   return (
-    <div className="px-4 py-3 border-t border-border-dark">
-      <div className="flex items-center justify-between mb-2.5">
+    <div className="px-2 py-1.5 md:px-4 md:py-3 border-t border-border-dark shrink-0">
+      <div className="hidden md:flex items-center justify-between mb-2.5">
         <span className="text-xs font-bold text-text-secondary uppercase tracking-wider">
           Voice Chat
         </span>

@@ -145,7 +145,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   return (
     <div className="flex flex-col h-full">
       {/* ── Chat Header ── */}
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/5 bg-white/[0.03] backdrop-blur-md shrink-0">
+      <div className="flex items-center justify-between px-3 py-1.5 md:px-5 md:py-3 border-b border-white/5 bg-white/[0.03] backdrop-blur-md shrink-0">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 rounded-xl bg-accent-purple/15 flex items-center justify-center border border-accent-purple/20">
             <MessageSquare className="w-4 h-4 text-accent-purple" />
@@ -352,7 +352,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
         <form
           onSubmit={handleSend}
-          className="flex items-center gap-2 px-4 py-3"
+          className="flex items-center gap-2 px-2 py-1.5 md:px-4 md:py-3"
         >
           <div className="relative attach-menu-container flex items-center">
             <button
