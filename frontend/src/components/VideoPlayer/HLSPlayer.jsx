@@ -9,7 +9,7 @@ import Hls from 'hls.js';
  * 
  * Hands its ref back to VideoPlayer.jsx via `onReady` for native sync.
  */
-const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
+const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady, onError }) => {
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
@@ -65,6 +65,7 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
               default:
                 // cannot recover
                 hls.destroy();
+                if (onError) onError(new Error('HLS Fatal Error'));
                 break;
             }
           }
@@ -73,6 +74,9 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         // Native HLS fallback (Safari)
         video.src = src;
+        video.addEventListener('error', () => {
+          if (active && onError) onError(new Error('Native HLS Error'));
+        });
         video.addEventListener('loadedmetadata', () => {
           if (!active) return;
           if (onCanPlay) onCanPlay();

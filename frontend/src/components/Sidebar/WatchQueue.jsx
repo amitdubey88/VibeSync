@@ -3,6 +3,7 @@ import { useWatchQueue } from '../../hooks/useWatchQueue';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { resolveVideoUrl } from '../../utils/videoResolver';
 
 export default function WatchQueue() {
   const { queue, suggestVideo, approveItem, removeItem, reorderQueue } = useWatchQueue();
@@ -14,14 +15,15 @@ export default function WatchQueue() {
   const isCoHost = room?.coHosts?.includes(user?.id);
   const isPrivileged = isHost || isCoHost;
 
+  const urlValidationResult = url.trim() ? resolveVideoUrl(url.trim()) : null;
+
   const handleSuggest = (e) => {
     e.preventDefault();
     if (!url.trim()) return;
     
-    // Quick parse for basic type inference
-    let type = 'direct';
-    if (url.includes('youtube.com') || url.includes('youtu.be')) type = 'youtube';
-    else if (url.includes('.m3u8')) type = 'hls';
+    // Quick parse for basic type inference using videoResolver
+    const resolved = resolveVideoUrl(url.trim());
+    const type = resolved ? resolved.type : 'unsupported';
 
     suggestVideo({ url: url.trim(), title: `Suggested Video (${type})`, type });
     setUrl('');
@@ -55,11 +57,33 @@ export default function WatchQueue() {
         <button
           type="submit"
           disabled={!url.trim()}
-          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          className="bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors shrink-0"
         >
           {isPrivileged ? 'Add' : 'Suggest'}
         </button>
       </form>
+
+      {/* Live type indicator */}
+      {url.trim() && urlValidationResult && (
+        <div className={`mb-4 -mt-2 flex items-center gap-1.5 text-xs font-medium ${
+          urlValidationResult.type === 'unsupported'
+            ? 'text-orange-400'
+            : urlValidationResult.type === 'youtube'
+              ? 'text-accent-red'
+              : urlValidationResult.type === 'hls'
+                ? 'text-blue-400'
+                : 'text-green-400'
+        }`}>
+          <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+          {urlValidationResult.type === 'youtube' && '▶ YouTube Video'}
+          {urlValidationResult.type === 'direct' && '📁 Direct Video'}
+          {urlValidationResult.type === 'hls' && '📡 HLS Stream'}
+          {urlValidationResult.type === 'unsupported' && '⚠ Unsupported link'}
+        </div>
+      )}
+      {url.trim() && !urlValidationResult && (
+        <p className="mb-4 -mt-2 text-xs text-orange-400">⚠ Invalid or unrecognized URL</p>
+      )}
 
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {queue.length === 0 ? (

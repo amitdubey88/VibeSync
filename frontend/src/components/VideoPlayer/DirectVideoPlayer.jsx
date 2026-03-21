@@ -8,7 +8,7 @@ import { useEffect, useRef } from 'react';
  * 
  * Hands its ref back to VideoPlayer.jsx via `onReady` for native sync.
  */
-const DirectVideoPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
+const DirectVideoPlayer = ({ src, autoPlay, onCanPlay, onReady, onError }) => {
   const videoRef = useRef(null);
 
   useEffect(() => {
@@ -47,6 +47,7 @@ const DirectVideoPlayer = ({ src, autoPlay, onCanPlay, onReady }) => {
         preload="auto"
         autoPlay={autoPlay}
         onCanPlay={onCanPlay}
+        onError={onError}
         // Prevent the browser's native controls from appearing (e.g. pressing F opens browser fullscreen)
         controlsList="nodownload nofullscreen noremoteplayback"
         disablePictureInPicture

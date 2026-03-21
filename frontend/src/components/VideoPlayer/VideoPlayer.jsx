@@ -240,6 +240,12 @@ const VideoPlayer = () => {
     setIsLoading(false);
   }, [setVideoRef]);
 
+  const handleVideoError = useCallback((err) => {
+    console.error('[VideoPlayer] Video failed to load:', err);
+    setIsLoading(false);
+    toast.error('Video could not be loaded or link is invalid.', { duration: 5000 });
+  }, []);
+
   useClockSync();
   const { syncStatus } = useVideoSync(videoEl);
   const { bufferingUsers } = useBufferSync(videoEl);
@@ -815,7 +821,7 @@ const VideoPlayer = () => {
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
-  const handleUrlSubmit = async (e) => {
+  const handleUrlSubmit = (e) => {
     e.preventDefault();
     const url = urlInput.trim();
     if (!url) return;
@@ -830,25 +836,6 @@ const VideoPlayer = () => {
     if (resolved.type === 'unsupported') {
       toast.error('Unsupported link format or platform.');
       return;
-    }
-
-    if (resolved.type === 'direct') {
-      const validateToast = toast.loading('Checking video link...');
-      try {
-        await new Promise((resolve, reject) => {
-          const vid = document.createElement('video');
-          vid.preload = 'metadata';
-          vid.onloadedmetadata = () => resolve(true);
-          vid.onerror = () => reject(new Error('Not a playable video'));
-          setTimeout(() => reject(new Error('Timeout checking video')), 10000);
-          vid.src = resolved.url;
-        });
-        toast.dismiss(validateToast);
-      } catch {
-        toast.dismiss(validateToast);
-        toast.error('The link does not contain a valid or playable video.');
-        return; // Reject the link, don't broadcast to room
-      }
     }
 
     // Explicitly clean up any previous blob/streaming state since we are moving to a URL
@@ -1003,7 +990,7 @@ const VideoPlayer = () => {
               key={currentVideo.url}
               videoId={currentVideo.url} 
               onReady={handlePlayerReady}
-              onError={() => setIsLoading(false)}
+              onError={handleVideoError}
             />
           </div>
         ) : currentVideo?.type === 'hls' ? (
@@ -1015,6 +1002,7 @@ const VideoPlayer = () => {
               autoPlay={isHost}
               onCanPlay={() => setIsLoading(false)}
               onReady={handlePlayerReady} 
+              onError={handleVideoError}
             />
           </div>
         ) : activeSrc ? (
@@ -1026,6 +1014,7 @@ const VideoPlayer = () => {
               autoPlay={isHost && !!blobUrl && currentVideo?.type !== 'live'}
               onCanPlay={() => setIsLoading(false)}
               onReady={handlePlayerReady}
+              onError={handleVideoError}
             />
             {/* Start Streaming Overlay for Host */}
             {isHost && isWebRTCStream && !isLiveStreamingInitialized && (
