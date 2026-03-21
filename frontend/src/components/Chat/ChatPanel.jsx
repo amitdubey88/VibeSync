@@ -194,6 +194,13 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         {/* Feature 2: Pinned Message */}
         <PinnedMessageBanner pinnedMessage={pinnedMessage} onUnpin={unpinMessage} />
 
+        {/* Persistent Active Poll (Fixed at top) */}
+        {activePoll && (
+          <div className="mx-3 my-2 animate-fade-in flex justify-center sticky top-0 z-20">
+            <PollBubble poll={activePoll} onVote={votePoll} onEnd={endPoll} />
+          </div>
+        )}
+
         {/* Swipe-to-reply guide — shown once until user dismisses */}
         {showSwipeGuide && (
           <div className="mb-3 rounded-2xl border border-accent-purple/30 bg-accent-purple/10 backdrop-blur-sm overflow-hidden animate-fade-in">
@@ -263,12 +270,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           );
         })}
 
-        {/* Feature 1: Active Poll */}
-        {activePoll && (
-          <div className="flex justify-center my-4 animate-fade-in">
-            <PollBubble poll={activePoll} onVote={votePoll} onEnd={endPoll} />
-          </div>
-        )}
 
         <div ref={bottomRef} />
       </div>

@@ -56,6 +56,9 @@ export const RoomProvider = ({ children }) => {
   const [clips, setClips] = useState([]); // List of timestamp highlights
   const [hostAway, setHostAway] = useState(false); // true when host temporarily disconnects
   
+  const [watchQueue, setWatchQueue] = useState([]);
+  const [activePoll, setActivePoll] = useState(null);
+  
   // Refs to avoid stale closures in socket handlers
   const roomRef = useRef(null);
   const participantsRef = useRef([]);
@@ -548,13 +551,11 @@ export const RoomProvider = ({ children }) => {
     socket.on('room:host-away', onHostAway);
     socket.on('room:host-back', onHostBack);
     socket.on('room:host-left', onHostLeft);
-    socket.on('chat:typing', onTyping);
-    socket.on('chat:message-reaction', onMessageReaction);
-    socket.on('chat:delivered', onDelivered);
-    socket.on('chat:read', onRead);
+    const onQueueUpdated = ({ queue }) => {
+      setWatchQueue(queue);
+      setRoom(prev => prev ? { ...prev, watchQueue: queue } : null);
+    };
 
-
-    // Feature 10: Watch Queue — host receives approved video and loads it
     const onQueueLoadVideo = ({ video }) => {
       if (!video?.url) return;
       setVideoSource({
@@ -563,6 +564,17 @@ export const RoomProvider = ({ children }) => {
         type: video.type || 'direct',
       });
     };
+
+    const onPollUpdate = ({ poll }) => setActivePoll(poll);
+
+    socket.on('chat:typing', onTyping);
+    socket.on('chat:message-reaction', onMessageReaction);
+    socket.on('chat:delivered', onDelivered);
+    socket.on('chat:read', onRead);
+    socket.on('poll:created', onPollUpdate);
+    socket.on('poll:updated', onPollUpdate);
+    socket.on('poll:ended', onPollUpdate);
+    socket.on('queue:updated', onQueueUpdated);
     socket.on('queue:load-video', onQueueLoadVideo);
 
     return () => {
@@ -594,7 +606,10 @@ export const RoomProvider = ({ children }) => {
       socket.off('chat:message-reaction', onMessageReaction);
       socket.off('chat:delivered', onDelivered);
       socket.off('chat:read', onRead);
-
+      socket.off('poll:created', onPollUpdate);
+      socket.off('poll:updated', onPollUpdate);
+      socket.off('poll:ended', onPollUpdate);
+      socket.off('queue:updated', onQueueUpdated);
       socket.off('queue:load-video', onQueueLoadVideo);
     };
   }, [socket, user, roomKey]);
@@ -809,6 +824,48 @@ export const RoomProvider = ({ children }) => {
     socket.emit('video:set-speed', { roomCode: room.code, speed });
   }, [socket, room]);
 
+  // ── Watch Queue Helpers ──
+  const suggestVideo = useCallback((video) => {
+    if (!socket || !room) return;
+    socket.emit('queue:suggest', { roomCode: room.code, video });
+  }, [socket, room]);
+
+  const approveQueueItem = useCallback((itemId) => {
+    if (!socket || !room) return;
+    socket.emit('queue:approve', { roomCode: room.code, itemId });
+  }, [socket, room]);
+
+  const removeFromQueue = useCallback((itemId) => {
+    if (!socket || !room) return;
+    socket.emit('queue:remove', { roomCode: room.code, itemId });
+  }, [socket, room]);
+
+  const reorderQueue = useCallback((orderedIds) => {
+    if (!socket || !room) return;
+    socket.emit('queue:reorder', { roomCode: room.code, orderedIds });
+    // Optimistic UI update
+    setWatchQueue(prev => {
+      const qMap = Object.fromEntries(prev.map(item => [item.id, item]));
+      return orderedIds.map(id => qMap[id]).filter(Boolean);
+    });
+  }, [socket, room]);
+
+  // ── Poll Helpers ──
+  const createPoll = useCallback((question, options) => {
+    if (!socket || !room) return;
+    socket.emit('poll:create', { roomCode: room.code, question, options });
+  }, [socket, room]);
+
+  const votePoll = useCallback((pollId, optionId) => {
+    if (!socket || !room) return;
+    socket.emit('poll:vote', { roomCode: room.code, pollId, optionId });
+  }, [socket, room]);
+
+  const endPoll = useCallback((pollId) => {
+    if (!socket || !room) return;
+    socket.emit('poll:end', { roomCode: room.code, pollId });
+  }, [socket, room]);
+
   // Marks messages as seen from the current user's perspective;
   // called by ChatPanel when the user focuses on the chat.
   const markChatRead = useCallback((messageIds) => {
@@ -839,6 +896,8 @@ export const RoomProvider = ({ children }) => {
       messageStatuses, markChatRead,
       isLiveStreamingInitialized, setIsLiveStreamingInitialized,
       updatePlaybackSpeed, // Feature 12
+      watchQueue, suggestVideo, approveQueueItem, removeFromQueue, reorderQueue,
+      activePoll, createPoll, votePoll, endPoll,
     }}>
       {children}
     </RoomContext.Provider>
