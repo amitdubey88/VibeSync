@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import { useCoHost } from './useCoHost';
@@ -49,7 +49,7 @@ const useVideoSync = (videoEl) => {
                     videoEl.play().catch(() => {});
                     // Muted local state is synced via VideoControls.jsx DOM listener!
                     toast('Audio blocked by browser. Tap speaker icon to unmute.', { 
-                        icon: <VolumeX className="w-5 h-5 text-accent-yellow" />, 
+                        icon: React.createElement(VolumeX, { className: "w-5 h-5 text-accent-yellow" }), 
                         duration: 4000 
                     });
                 }
