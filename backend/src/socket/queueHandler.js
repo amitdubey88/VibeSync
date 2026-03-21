@@ -36,6 +36,7 @@ module.exports = (io, socket, roomStore) => {
 
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('queue:updated', { queue: room.watchQueue });
+        io.to(hashedCode).emit('queue:suggested', { item });
         console.log(`📋 Queue suggestion in ${code}: "${item.title}" by ${socket.user.username}`);
     });
 

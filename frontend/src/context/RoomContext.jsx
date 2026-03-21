@@ -562,6 +562,11 @@ export const RoomProvider = ({ children }) => {
       });
     };
 
+    const onQueueSuggested = ({ item }) => {
+      if (item.suggestedById === user?.id) return;
+      toast(`${item.suggestedBy} suggested: ${item.title || 'a video'}`, { icon: '🎬' });
+    };
+
     const onPollUpdate = ({ poll }) => setActivePoll(poll?.active ? poll : null);
 
     socket.on('chat:typing', onTyping);
@@ -572,6 +577,7 @@ export const RoomProvider = ({ children }) => {
     socket.on('poll:updated', onPollUpdate);
     socket.on('poll:ended', onPollUpdate);
     socket.on('queue:updated', onQueueUpdated);
+    socket.on('queue:suggested', onQueueSuggested);
     socket.on('queue:load-video', onQueueLoadVideo);
 
     return () => {
@@ -607,6 +613,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('poll:updated', onPollUpdate);
       socket.off('poll:ended', onPollUpdate);
       socket.off('queue:updated', onQueueUpdated);
+      socket.off('queue:suggested', onQueueSuggested);
       socket.off('queue:load-video', onQueueLoadVideo);
     };
   }, [socket, user, roomKey]);
