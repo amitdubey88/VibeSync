@@ -248,7 +248,17 @@ const VideoPlayer = () => {
   const handlePlayerReady = useCallback((playerInstance) => {
     setVideoRef(playerInstance);
     setIsLoading(false);
-    handleMouseMove(); // Flash controls when a new video successfully loads
+    
+    // Explicitly reset local timings to prevent race conditions where 
+    // the old player fires a late 'timeupdate' right before unmounting.
+    setCurrentTime(0);
+    currentTimeRef.current = 0;
+    setBuffered(0);
+    setDuration(playerInstance?.duration || 0);
+
+    if (playerInstance) {
+      handleMouseMove(); // Flash controls when a new video successfully loads
+    }
   }, [setVideoRef, handleMouseMove]);
 
   const handleVideoError = useCallback((err) => {
