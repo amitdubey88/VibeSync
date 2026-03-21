@@ -73,8 +73,8 @@ const useSyncDataChannel = () => {
     useEffect(() => {
         if (!isHost || !room?.participants || !socket) return;
 
-        room.participants.forEach(async (p) => {
-            if (p.userId === room.hostId || !p.socketId) return; // Skip self
+        room?.participants?.forEach(async (p) => {
+            if (p.userId === room?.hostId || !p.socketId) return; // Skip self
 
             if (!peersRef.current[p.socketId]) {
                 const pc = createPeer(p.socketId);

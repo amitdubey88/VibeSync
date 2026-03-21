@@ -19,15 +19,15 @@ const useBufferSync = (videoEl) => {
         if (!room?.participants || !videoEl) return;
 
         // Skip buffer synchronization for Live WebRTC streams as they cannot truly be paused safely.
-        if (room.currentVideo?.type === 'live' || room.currentVideo?.type === 'uploading') {
+        if (room?.currentVideo?.type === 'live' || room?.currentVideo?.type === 'uploading') {
             setBufferingUsers([]);
             return;
         }
 
         // Filter out the host, we only care if guests are struggling to keep up
-        const currentlyBuffering = room.participants.filter(
-            (p) => p.isBuffering && String(p.userId) !== String(room.hostId)
-        );
+        const currentlyBuffering = room?.participants?.filter(
+            (p) => p.isBuffering && String(p.userId) !== String(room?.hostId)
+        ) || [];
         setBufferingUsers(currentlyBuffering);
 
         if (!isHost) return;

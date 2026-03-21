@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import { decryptData } from '../utils/crypto';
@@ -23,9 +24,13 @@ export const usePinnedMessage = () => {
 
     const onPinned = ({ pinnedMessage: msg }) => {
       setRawPinnedMessage(msg || null);
+      toast('📌 Message pinned!', { duration: 3000, style: { background: '#2C2B35', color: '#fff' } });
     };
 
-    const onUnpinned = () => setRawPinnedMessage(null);
+    const onUnpinned = () => {
+      setRawPinnedMessage(null);
+      toast('Message unpinned', { icon: '📴', duration: 2000, style: { background: '#2C2B35', color: '#fff' } });
+    };
 
     socket.on('chat:pinned', onPinned);
     socket.on('chat:unpinned', onUnpinned);

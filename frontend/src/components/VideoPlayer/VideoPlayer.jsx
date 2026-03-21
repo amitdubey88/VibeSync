@@ -415,6 +415,9 @@ const VideoPlayer = () => {
     const onProgress = () => updateBuffered();
     const onPlayEv = () => {
       isPlayingRef.current = true;
+      setClickAnim('play');
+      clearTimeout(clickAnimRef.current);
+      clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
     };
 
     const onPlayingEv = () => {
@@ -434,6 +437,9 @@ const VideoPlayer = () => {
     };
     const onPauseEv = () => {
       isPlayingRef.current = false;
+      setClickAnim('pause');
+      clearTimeout(clickAnimRef.current);
+      clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
       // When host pauses, do NOT stop the stream.
       // captureStream keeps sending the frozen current frame — participants
       // see the paused frame rather than the 'Connecting to Feed...' screen.
@@ -731,16 +737,12 @@ const VideoPlayer = () => {
       return;
     }
     
-    const isPaused = videoEl.paused;
-    if (isPaused) {
+    if (videoEl.paused) {
       videoEl.play().catch(() => {});
     } else {
       videoEl.pause();
     }
-    
-    setClickAnim(isPaused ? 'play' : 'pause');
-    clearTimeout(clickAnimRef.current);
-    clickAnimRef.current = setTimeout(() => setClickAnim(null), 600);
+    // Animation is now triggered by onPlayEv/onPauseEv listeners for all interaction methods
   }, [videoEl, isHost, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
 
   // ── Keyboard Shortcut Event Listeners ──

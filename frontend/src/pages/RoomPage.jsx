@@ -353,7 +353,20 @@ const RoomPage = () => {
   }, [joinRequests, isHost]);
 
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
-  const copyRoomLink = () => navigator.clipboard.writeText(window.location.href).then(() => toast.success('Link copied!'));
+  
+  const copyRoomLink = () => {
+    // Construct the absolute backend invite URL for rich OG previews
+    // In production, VITE_API_URL should be the full backend domain (e.g. https://api.vibesync.live)
+    const backendBase = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+    const inviteUrl = `${backendBase}/invite/${code}`;
+    
+    navigator.clipboard.writeText(inviteUrl).then(() => {
+      toast.success('Invite link (with preview) copied!', {
+        icon: '🔗',
+        duration: 3000
+      });
+    });
+  };
 
   const handleLeave = (e) => {
     // If Shift key is pressed, bypass confirmation

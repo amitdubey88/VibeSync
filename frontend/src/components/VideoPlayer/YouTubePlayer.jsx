@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { Loader2, AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 // ── YouTube URL → Video ID extractor ─────────────────────────────────────────
 // Handles all known YouTube URL formats:
@@ -378,10 +378,8 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       {/* Loading State - only show if status is 'loading' to prevent double spinners with parent */}
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20 transition-opacity duration-300">
-          <div className="relative">
-            <div className="w-12 h-12 rounded-full bg-accent-red/10 flex items-center justify-center">
-              <Loader2 className="w-6 h-6 text-accent-red animate-spin" />
-            </div>
+          <div className="relative mb-2">
+            <div className="w-2.5 h-2.5 rounded-full bg-accent-red animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
           </div>
           <div className="text-center">
             <p className="text-white/90 font-bold text-xs">Loading YouTube Video</p>
