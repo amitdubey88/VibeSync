@@ -15,7 +15,7 @@ import QuickReactionBar from './QuickReactionBar';
 import SubtitleOverlay from './SubtitleOverlay';
 import ActiveSpeakersOverlay from './ActiveSpeakersOverlay';
 import { Play, Pause, Upload, Loader2, X, Clock, Zap } from 'lucide-react';
-import toast from 'react-hot-toast';
+import toast, { Toaster } from 'react-hot-toast';
 import useWebRTC from '../../hooks/useWebRTC';
 import useHostTransferSync from '../../hooks/useHostTransferSync';
 import { useCoHost } from '../../hooks/useCoHost';
@@ -1176,6 +1176,32 @@ const VideoPlayer = () => {
       )}
 
       {sourcePicker}
+
+      {/* Feature: Fullscreen Notifications — ensures alerts are visible while player is maximized */}
+      {isFullscreen && (
+        <Toaster
+          position="top-right"
+          containerStyle={{
+            position: 'absolute',
+            top: '20px',
+            right: '20px',
+            zIndex: 999999,
+          }}
+          toastOptions={{
+            duration: 3500,
+            style: {
+              background: '#13131f',
+              color: '#f1f1f1',
+              border: '1px solid #1e1e30',
+              borderRadius: '12px',
+              fontSize: '14px',
+              backdropFilter: 'blur(8px)',
+            },
+            success: { iconTheme: { primary: '#10b981', secondary: '#f1f1f1' } },
+            error: { iconTheme: { primary: '#e50914', secondary: '#f1f1f1' } },
+          }}
+        />
+      )}
     </div>
   );
 };
