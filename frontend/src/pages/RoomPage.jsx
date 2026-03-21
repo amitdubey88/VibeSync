@@ -518,18 +518,6 @@ const RoomPage = () => {
                   <>Join Party <Tv2 className="w-4 h-4 ml-1" /></>
                 )}
               </button>
-
-              <div className="pt-4 border-t border-white/5 mt-4">
-                <p className="text-white/30 text-xs flex items-center justify-center gap-2">
-                  Already have an account? 
-                  <button 
-                    onClick={() => navigate('/', { state: { from: location.pathname } })}
-                    className="text-white hover:text-accent-purple font-semibold transition-colors"
-                  >
-                    Sign In
-                  </button>
-                </p>
-              </div>
             </div>
           </div>
         </div>
