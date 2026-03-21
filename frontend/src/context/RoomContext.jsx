@@ -100,62 +100,52 @@ export const RoomProvider = ({ children }) => {
     const key = await deriveKey(roomCode);
     setRoomKey(key);
 
+    // Optional: Fetch history from API, but we'll rely on onRoomState for hydration
+    // to avoid race conditions.
     try {
-      const { messages: history } = await getRoomMessages(roomCode);
-      // Decrypt history if encrypted (heuristic: content is an object or base64)
-      const decryptedHistory = await Promise.all((history || []).map(async (m) => {
-        let content = m.content;
-        let replyTo = m.replyTo;
-        // STRONG heuristic: trust the e2ee flag first; fall back to content analysis
-        const isE2EE = m.e2ee === true || (
-          m.e2ee !== false &&
-          typeof m.content === 'string' &&
-          m.content.length > 20 &&
-          !m.content.includes(' ') &&
-          /^[a-zA-Z0-9+/]*={0,2}$/.test(m.content)
-        );
-
-        if (isE2EE && key) {
-          try { content = await decryptData(content, key); }
-          catch (_) { content = m.content; } // keep encrypted string visible rather than crashing
-        }
-        
-        if (replyTo && isE2EE && replyTo.content && typeof replyTo.content === 'string') {
-          try {
-            const decryptedReplyContent = await decryptData(replyTo.content, key);
-            replyTo = { ...replyTo, content: decryptedReplyContent };
-          } catch (_) {}
-        }
-
-        if (isE2EE && m.systemType === 'video-source') {
-          content = `Video set to: ${content}`;
-        }
-
-        // Ensure reactions is a plain object for the UI
-        // Also decrypt reaction emoji keys (they may be stored encrypted from older sessions)
-        let rawReactions = m.reactions || {};
-        if (rawReactions instanceof Map) {
-          rawReactions = Object.fromEntries(rawReactions);
-        }
-        
-        // Decrypt each emoji key; merge collisions (same emoji, different ciphertexts)
-        const reactions = {};
-        await Promise.all(Object.entries(rawReactions).map(async ([emojiKey, users]) => {
-          let displayKey = emojiKey;
-          // Heuristic: if the key looks like a base64-encoded ciphertext, try to decrypt
-          if (isE2EE && key && emojiKey.length > 6 && /^[a-zA-Z0-9+/=]+$/.test(emojiKey)) {
-            try { displayKey = await decryptData(emojiKey, key); } catch (_) {}
-          }
-          if (!reactions[displayKey]) reactions[displayKey] = [];
-          // Merge users, deduplicating by username
-          users.forEach(u => { if (!reactions[displayKey].includes(u)) reactions[displayKey].push(u); });
-        }));
-
-        return { ...m, content, replyTo, reactions };
-      }));
-      setMessages(decryptedHistory);
+      await getRoomMessages(roomCode);
     } catch (_) {}
   }, [socket]);
+
+  const decryptMessageHistory = async (history, key) => {
+    if (!key || !history) return history || [];
+    return Promise.all(history.map(async (m) => {
+      let content = m.content;
+      let replyTo = m.replyTo;
+      const isE2EE = m.e2ee === true || (
+        m.e2ee !== false &&
+        typeof m.content === 'string' &&
+        m.content.length > 20 &&
+        !m.content.includes(' ') &&
+        /^[a-zA-Z0-9+/]*={0,2}$/.test(m.content)
+      );
+
+      if (isE2EE) {
+        try { content = await decryptData(content, key); } catch (_) {}
+        if (replyTo?.content && typeof replyTo.content === 'string') {
+          try {
+            const dec = await decryptData(replyTo.content, key);
+            replyTo = { ...replyTo, content: dec };
+          } catch (_) {}
+        }
+      }
+      
+      // Handle reactions
+      let reactions = m.reactions || {};
+      if (reactions instanceof Map) reactions = Object.fromEntries(reactions);
+      const decReactions = {};
+      await Promise.all(Object.entries(reactions).map(async ([emojiKey, users]) => {
+        let displayKey = emojiKey;
+        if (isE2EE && emojiKey.length > 6 && /^[a-zA-Z0-9+/=]+$/.test(emojiKey)) {
+          try { displayKey = await decryptData(emojiKey, key); } catch (_) {}
+        }
+        if (!decReactions[displayKey]) decReactions[displayKey] = [];
+        users.forEach(u => { if (!decReactions[displayKey].includes(u)) decReactions[displayKey].push(u); });
+      }));
+
+      return { ...m, content, replyTo, reactions: decReactions };
+    }));
+  };
 
   const leaveRoom = useCallback((explicit = false) => {
     if (!socket || !room) return;
@@ -198,14 +188,19 @@ export const RoomProvider = ({ children }) => {
 
     const onRoomState = async ({ room: r }) => {
       setRoom(r);
+      const key = await deriveKey(r.code);
+      setRoomKey(key);
+
       setParticipants(r.participants || []);
       const activeVoice = (r.voiceParticipants || []).filter(p => !p.isPassive);
       setVoiceParticipants(activeVoice);
       setVideoState(r.videoState);
       
+      const decryptedMessages = await decryptMessageHistory(r.messages, key);
+      setMessages(decryptedMessages);
+
       // Decrypt video source if needed
       if (r.currentVideo && r.currentVideo.e2ee) {
-        const key = await deriveKey(r.code);
         try {
           const decryptedUrl = await decryptData(r.currentVideo.url, key);
           const decryptedTitle = await decryptData(r.currentVideo.title, key);
@@ -232,7 +227,6 @@ export const RoomProvider = ({ children }) => {
       setIsLocked(r.isLocked || false);
       setActivePoll(r.activePoll?.active ? r.activePoll : null);
       setWatchQueue(r.watchQueue || []);
-      setMessages(r.messages || []);
       setJoinStatus('joined'); // receiving full state means we're in
     };
 
