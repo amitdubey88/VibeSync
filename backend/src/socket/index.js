@@ -257,6 +257,7 @@ module.exports = (io, roomStore) => {
                     currentTheme: room.currentTheme || 'default',
                     bannedWords: room.hostId === socket.user.id ? (room.bannedWords || []) : [],
                     scheduledAt: room.scheduledAt || null,
+                    messages: room.messages || [],
                 },
             });
 

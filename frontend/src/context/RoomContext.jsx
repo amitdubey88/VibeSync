@@ -232,6 +232,7 @@ export const RoomProvider = ({ children }) => {
       setIsLocked(r.isLocked || false);
       setActivePoll(r.activePoll?.active ? r.activePoll : null);
       setWatchQueue(r.watchQueue || []);
+      setMessages(r.messages || []);
       setJoinStatus('joined'); // receiving full state means we're in
     };
 
