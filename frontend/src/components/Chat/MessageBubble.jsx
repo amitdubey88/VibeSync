@@ -136,7 +136,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const avatarBg = message.avatar || getAvatarColor(message.username);
   const swipeProgress = Math.min(dragX / SWIPE_THRESHOLD, 1);
 
-  // WhatsApp-style bubble radius: own messages have sharp top-right, others have sharp top-left
+  //  bubble radius: own messages have sharp top-right, others have sharp top-left
   const bubbleRadius = isOwn
     ? isContinuation ? 'rounded-[18px]' : 'rounded-[18px] rounded-tr-[4px]'
     : isContinuation ? 'rounded-[18px]' : 'rounded-[18px] rounded-tl-[4px]';

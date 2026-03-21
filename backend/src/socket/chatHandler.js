@@ -112,7 +112,7 @@ module.exports = (io, socket, roomStore) => {
     });
 
     // ── chat:message-reaction ─────────────────────────────────────────────────
-    // Reaction to a specific chat message (WhatsApp style)
+    // Reaction to a specific chat message 
     socket.on('chat:message-reaction', async ({ roomCode, messageId, emoji, e2ee }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);

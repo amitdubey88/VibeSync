@@ -162,10 +162,14 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             <MessageSquare className="w-4 h-4 text-accent-purple" />
           </div>
           <div className="flex flex-col">
-            <h2 className="text-sm font-bold text-text-primary tracking-tight">Live Chat</h2>
+            <h2 className="text-sm font-bold text-text-primary tracking-tight">
+              Live Chat
+            </h2>
             <div className="flex items-center gap-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-accent-green animate-pulse" />
-              <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">Connected</span>
+              <span className="text-[10px] font-black text-text-muted uppercase tracking-widest">
+                Connected
+              </span>
             </div>
           </div>
         </div>
@@ -177,13 +181,19 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               ? "text-red-400 bg-red-500/10 border-red-500/30 ring-4 ring-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
               : "text-text-muted bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 hover:text-text-primary shadow-inner"
           }`}
-          title={chatMuted ? "Unmute chat notifications" : "Mute chat notifications"}
+          title={
+            chatMuted ? "Unmute chat notifications" : "Mute chat notifications"
+          }
         >
-          <div className={`p-1 rounded-full transition-colors ${chatMuted ? 'bg-red-500/20' : 'bg-white/10 group-hover:bg-accent-purple/20'}`}>
+          <div
+            className={`p-1 rounded-full transition-colors ${chatMuted ? "bg-red-500/20" : "bg-white/10 group-hover:bg-accent-purple/20"}`}
+          >
             {chatMuted ? (
               <BellOff className="w-3 h-3" />
             ) : (
-              <Bell className={`w-3 h-3 transition-colors ${chatMuted ? '' : 'group-hover:text-accent-purple'}`} />
+              <Bell
+                className={`w-3 h-3 transition-colors ${chatMuted ? "" : "group-hover:text-accent-purple"}`}
+              />
             )}
           </div>
           <span className="text-[10px] font-bold uppercase tracking-wider">
@@ -197,18 +207,27 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         <div className="shrink-0 bg-[#16161D]/60 border-b border-white/5 flex flex-col z-20 overflow-hidden relative">
           {/* Subtle Glow behind pinned content */}
           <div className="absolute inset-0 bg-gradient-to-b from-accent-purple/5 to-transparent pointer-events-none" />
-          
-          <PinnedMessageBanner pinnedMessage={pinnedMessage} onUnpin={unpinMessage} />
-          
+
+          <PinnedMessageBanner
+            pinnedMessage={pinnedMessage}
+            onUnpin={unpinMessage}
+          />
+
           {activePoll && (
-            <button 
+            <button
               onClick={scrollToPoll}
               className="flex items-center gap-2 px-4 py-1.5 bg-accent-purple/5 border-t border-white/5 group/poll-pin relative z-10 hover:bg-accent-purple/10 active:scale-[0.99] transition-all text-left w-full"
             >
               <div className="w-1 h-1 rounded-full bg-accent-purple animate-pulse shrink-0" />
-              <span className="text-[9px] font-black text-accent-purple/80 uppercase tracking-[0.2em] shrink-0">Poll Active:</span>
-              <span className="text-[11px] text-white/50 truncate font-medium flex-1 group-hover/poll-pin:text-white/80 transition-colors uppercase tracking-tight">{activePoll.question}</span>
-              <span className="text-[9px] font-bold text-accent-purple/40 opacity-0 group-hover/poll-pin:opacity-100 transition-opacity">Tap to Jump</span>
+              <span className="text-[9px] font-black text-accent-purple/80 uppercase tracking-[0.2em] shrink-0">
+                Poll Active:
+              </span>
+              <span className="text-[11px] text-white/50 truncate font-medium flex-1 group-hover/poll-pin:text-white/80 transition-colors uppercase tracking-tight">
+                {activePoll.question}
+              </span>
+              <span className="text-[9px] font-bold text-accent-purple/40 opacity-0 group-hover/poll-pin:opacity-100 transition-opacity">
+                Tap to Jump
+              </span>
             </button>
           )}
         </div>
@@ -223,7 +242,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             End-to-end encrypted
           </p>
         </div>
-
 
         {/* Swipe-to-reply guide — shown once until user dismisses */}
         {showSwipeGuide && (
@@ -240,8 +258,8 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
                 <span className="font-semibold text-accent-purple">
                   rightward
                 </span>{" "}
-                to reply to it — just like WhatsApp! A reply icon appears as you
-                swipe, and releases when you let go.
+                to reply to it — A reply icon appears as you swipe, and releases
+                when you let go.
               </p>
               <div className="mt-2.5 flex items-center gap-2">
                 {/* Animated demo */}
@@ -293,7 +311,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             />
           );
         })}
-
 
         <div ref={bottomRef} />
       </div>
@@ -382,11 +399,16 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           <div className="relative attach-menu-container flex items-center">
             <button
               type="button"
-              onClick={() => { setShowAttachMenu(!showAttachMenu); setShowEmoji(false); }}
+              onClick={() => {
+                setShowAttachMenu(!showAttachMenu);
+                setShowEmoji(false);
+              }}
               className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showAttachMenu ? "text-accent-purple bg-accent-purple/10" : "text-text-secondary hover:text-text-primary hover:bg-white/5"}`}
               title="Attach"
             >
-              <Plus className={`w-5 h-5 transition-transform duration-200 ${showAttachMenu ? 'rotate-45' : ''}`} />
+              <Plus
+                className={`w-5 h-5 transition-transform duration-200 ${showAttachMenu ? "rotate-45" : ""}`}
+              />
             </button>
 
             {showAttachMenu && (
@@ -394,21 +416,39 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
                 {canCreatePoll && (
                   <button
                     type="button"
-                    onClick={() => { setShowPollModal(true); setShowAttachMenu(false); }}
+                    onClick={() => {
+                      setShowPollModal(true);
+                      setShowAttachMenu(false);
+                    }}
                     className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
                   >
-                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    <svg
+                      className="w-4 h-4 text-blue-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                      />
                     </svg>
                     Create a Poll
                   </button>
                 )}
                 <button
                   type="button"
-                  onClick={() => { setShowGif(true); setShowAttachMenu(false); }}
+                  onClick={() => {
+                    setShowGif(true);
+                    setShowAttachMenu(false);
+                  }}
                   className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
                 >
-                  <span className="text-[10px] font-black border-2 border-accent-green text-accent-green px-1 rounded uppercase tracking-wider flex items-center justify-center w-5 h-5 shrink-0">G</span>
+                  <span className="text-[10px] font-black border-2 border-accent-green text-accent-green px-1 rounded uppercase tracking-wider flex items-center justify-center w-5 h-5 shrink-0">
+                    G
+                  </span>
                   Search Tenor GIF
                 </button>
               </div>
@@ -417,7 +457,10 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
           <button
             type="button"
-            onClick={() => { setShowEmoji((s) => !s); setShowGif(false); }}
+            onClick={() => {
+              setShowEmoji((s) => !s);
+              setShowGif(false);
+            }}
             className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showEmoji ? "text-accent-yellow bg-accent-yellow/10" : "text-text-secondary hover:text-text-primary hover:bg-white/5"}`}
             title="Emoji / Reactions"
           >
@@ -443,7 +486,9 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             />
           </div>
           <div className="relative">
-            {isSlowMode && <SlowModeTimer remaining={remainingCooldown} isHost={isHost} />}
+            {isSlowMode && (
+              <SlowModeTimer remaining={remainingCooldown} isHost={isHost} />
+            )}
             <button
               type="submit"
               disabled={!input.trim() || (isSlowMode && remainingCooldown > 0)}
@@ -456,18 +501,22 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         </form>
       </div>
 
-      <CreatePollModal 
-        isOpen={showPollModal} 
+      <CreatePollModal
+        isOpen={showPollModal}
         onClose={() => setShowPollModal(false)}
         onSubmit={createPoll}
       />
-      
-      <GifPicker 
-        isOpen={showGif} 
+
+      <GifPicker
+        isOpen={showGif}
         onClose={() => setShowGif(false)}
         onSelect={(url, title) => {
           if (socket && room?.code) {
-            socket.emit('chat:send-gif', { roomCode: room.code, gifUrl: url, gifTitle: title });
+            socket.emit("chat:send-gif", {
+              roomCode: room.code,
+              gifUrl: url,
+              gifTitle: title,
+            });
           }
           setShowGif(false);
         }}
