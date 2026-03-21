@@ -1,11 +1,47 @@
-/**
- * Watch Queue Socket Handler
- * New socket events: queue:suggest, queue:approve, queue:remove, queue:reorder
- *
- * On approval, emits video:set-source to trigger host's existing setVideo flow
- * via the room's host socket — does NOT rewrite any sync logic.
- */
 const { hashRoomCode } = require('../utils/hash');
+const https = require('https');
+
+/**
+ * Helper to fetch video metadata from external sources (oEmbed, etc)
+ */
+async function getVideoMetadata(url, type) {
+    if (type === 'youtube') {
+        // Clean URL for oEmbed
+        const cleanUrl = url.includes('youtube.com') || url.includes('youtu.be') 
+            ? url 
+            : `https://www.youtube.com/watch?v=${url}`;
+            
+        return new Promise((resolve) => {
+            const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(cleanUrl)}&format=json`;
+            const req = https.get(oembedUrl, (res) => {
+                if (res.statusCode !== 200) return resolve(null);
+                let data = '';
+                res.on('data', (chunk) => data += chunk);
+                res.on('end', () => {
+                    try {
+                        const json = JSON.parse(data);
+                        resolve(json.title || null);
+                    } catch (e) { resolve(null); }
+                });
+            });
+            req.on('error', () => resolve(null));
+            req.setTimeout(3000, () => { req.destroy(); resolve(null); });
+        });
+    }
+    
+    // Direct link title extraction (extract filename)
+    if (type === 'direct' || type === 'hls') {
+        try {
+            const parts = url.split('/').pop().split('?')[0];
+            if (parts) {
+                const name = decodeURIComponent(parts).replace(/\.[a-z0-9]+$/i, '');
+                return name || null;
+            }
+        } catch (e) { return null; }
+    }
+    
+    return null;
+}
 
 module.exports = (io, socket, roomStore) => {
     const isPrivileged = (room) => {
@@ -15,16 +51,20 @@ module.exports = (io, socket, roomStore) => {
     };
 
     // ── queue:suggest ─────────────────────────────────────────────────────────
-    socket.on('queue:suggest', ({ roomCode, video }) => {
+    socket.on('queue:suggest', async ({ roomCode, video }) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room) return;
+
+        // Fetch real title from backend if possible
+        const fetchedTitle = await getVideoMetadata(video?.url, video?.type);
+        const finalTitle = fetchedTitle || video?.title || 'Untitled Video';
 
         const item = {
             id: `q_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`,
             suggestedBy: socket.user.username,
             suggestedById: socket.user.id,
-            title: String(video?.title || 'Untitled').slice(0, 100),
+            title: String(finalTitle).slice(0, 100),
             url: String(video?.url || '').slice(0, 2000),
             type: video?.type || 'url',
             status: 'pending', // 'pending' | 'approved' | 'rejected'
@@ -37,7 +77,7 @@ module.exports = (io, socket, roomStore) => {
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('queue:updated', { queue: room.watchQueue });
         io.to(hashedCode).emit('queue:suggested', { item });
-        console.log(`📋 Queue suggestion in ${code}: "${item.title}" by ${socket.user.username}`);
+        console.log(`📋 Queue suggestion in ${code}: "${item.title}" (Fetched: ${!!fetchedTitle}) by ${socket.user.username}`);
     });
 
     // ── queue:approve ─────────────────────────────────────────────────────────
