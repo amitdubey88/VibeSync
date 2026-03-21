@@ -1101,8 +1101,12 @@ const VideoPlayer = () => {
 
       {/* Buffering/Loading Indicator */}
       {(isLoading || isDecrypting || isSwappingStream) && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-none z-50 gap-3">
-          <Loader2 className="w-12 h-12 text-accent-red animate-spin" />
+        <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-50 gap-3 transition-opacity duration-300
+          ${(isDecrypting || isSwappingStream) ? 'bg-black/60 backdrop-blur-sm' : ''}
+        `}>
+          <div className={(isLoading && !isDecrypting && !isSwappingStream) ? 'bg-black/60 p-4 rounded-full backdrop-blur-md shadow-2xl' : ''}>
+            <Loader2 className="w-12 h-12 text-accent-red animate-spin drop-shadow-[0_0_15px_rgba(229,9,20,0.5)]" />
+          </div>
           {isSwappingStream && (
             <div className="text-center animate-fade-in">
               <p className="text-white font-bold text-lg">Loading Next Stream...</p>
