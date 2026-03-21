@@ -56,7 +56,7 @@ export default function CountdownLobby() {
 
         <div className="flex items-center gap-2 md:gap-4 text-center">
           <div className="flex flex-col items-center">
-            <div className="text-3xl md:text-7xl font-mono font-bold text-blue-500 bg-blue-500/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-blue-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+            <div className="text-3xl md:text-7xl font-mono font-bold text-accent-red bg-accent-red/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-accent-red/20 w-24 md:w-32 shadow-[0_0_30px_rgba(229,9,20,0.2)]">
               {String(hours).padStart(2, '0')}
             </div>
             <span className="text-gray-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4">Hours</span>
@@ -65,7 +65,7 @@ export default function CountdownLobby() {
           <span className="text-2xl md:text-4xl text-gray-700 font-bold -mt-6 md:-mt-8">:</span>
 
           <div className="flex flex-col items-center">
-            <div className="text-3xl md:text-7xl font-mono font-bold text-blue-500 bg-blue-500/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-blue-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+            <div className="text-3xl md:text-7xl font-mono font-bold text-accent-red bg-accent-red/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-accent-red/20 w-24 md:w-32 shadow-[0_0_30px_rgba(229,9,20,0.2)]">
               {String(minutes).padStart(2, '0')}
             </div>
             <span className="text-gray-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4">Minutes</span>

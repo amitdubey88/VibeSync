@@ -479,7 +479,7 @@ const RoomPage = () => {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-500 min-h-screen overflow-y-auto">
         <div className="absolute top-12 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-accent-blue flex items-center justify-center shadow-lg shadow-accent-purple/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-accent-red flex items-center justify-center shadow-lg shadow-accent-purple/20">
             <Tv2 className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-black text-white tracking-tight">VibeSync</h1>
@@ -488,7 +488,7 @@ const RoomPage = () => {
         <div className="w-full max-w-md bg-[#16161D]/50 border border-white/10 p-8 rounded-[32px] backdrop-blur-lg shadow-2xl relative overflow-hidden my-auto">
           {/* Background Glow */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-accent-purple/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-accent-blue/20 rounded-full blur-[80px]" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-accent-red/20 rounded-full blur-[80px]" />
 
           <div className="relative z-10 text-center">
             <h2 className="text-2xl font-bold text-white mb-2">Welcome to the Party!</h2>
