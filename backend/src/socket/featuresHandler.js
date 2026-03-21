@@ -24,8 +24,18 @@ module.exports = (io, socket, roomStore) => {
         const code = roomCode?.toUpperCase();
         const room = roomStore.get(code);
         if (!room || !isPrivileged(room)) return socket.emit('error', { message: 'Only the host or co-host can create polls' });
+        
+        const hashedCode = hashRoomCode(code);
+
+        // Auto-replace: If there is an existing active poll, officially end it
+        if (room.activePoll) {
+            room.activePoll.active = false;
+            io.to(hashedCode).emit('poll:ended', { poll: room.activePoll });
+        }
+
         if (!question?.trim() || !Array.isArray(options) || options.length < 2) return;
 
+        const messageId = `poll_msg_${Date.now()}`;
         const poll = {
             id: `poll_${Date.now()}`,
             question: question.trim().slice(0, 200),
@@ -33,17 +43,18 @@ module.exports = (io, socket, roomStore) => {
             createdBy: socket.user.username,
             createdAt: new Date().toISOString(),
             active: true,
+            messageId: messageId // Store for scrolling functionality
         };
 
         room.activePoll = poll;
         
         // Inject into chat messages so it scrolls naturally
         const pollMessage = {
-            id: `poll_msg_${Date.now()}`,
+            id: messageId,
             userId: 'system',
             username: 'Poll',
             content: poll.question,
-            options: poll.options, // Store initial options for history
+            options: poll.options,
             pollId: poll.id,
             type: 'poll',
             createdAt: poll.createdAt
@@ -52,11 +63,10 @@ module.exports = (io, socket, roomStore) => {
         room.messages.push(pollMessage);
         if (room.messages.length > 500) room.messages.shift();
 
-        const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('poll:created', { poll });
         io.to(hashedCode).emit('chat:message', pollMessage);
         
-        console.log(`📊 Poll created in ${code}: "${poll.question}"`);
+        console.log(`📊 Poll created in ${code}: "${poll.question}" (Replacing existing if any)`);
     });
 
     socket.on('poll:vote', ({ roomCode, pollId, optionId }) => {

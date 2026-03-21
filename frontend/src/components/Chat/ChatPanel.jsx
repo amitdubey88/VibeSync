@@ -70,6 +70,17 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
   const canCreatePoll = isHost || isCoHost;
 
+  const scrollToPoll = () => {
+    if (activePoll?.messageId) {
+      const el = document.getElementById(`msg-${activePoll.messageId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: "smooth", block: "center" });
+        el.classList.add("animate-pulse-purple-ring");
+        setTimeout(() => el.classList.remove("animate-pulse-purple-ring"), 2000);
+      }
+    }
+  };
+
   const dismissSwipeGuide = () => {
     localStorage.setItem("vs_swipe_guide_seen", "true");
     setShowSwipeGuide(false);
@@ -190,11 +201,15 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           <PinnedMessageBanner pinnedMessage={pinnedMessage} onUnpin={unpinMessage} />
           
           {activePoll && (
-            <div className="flex items-center gap-2 px-4 py-1.5 bg-accent-purple/5 border-t border-white/5 group/poll-pin relative z-10">
+            <button 
+              onClick={scrollToPoll}
+              className="flex items-center gap-2 px-4 py-1.5 bg-accent-purple/5 border-t border-white/5 group/poll-pin relative z-10 hover:bg-accent-purple/10 active:scale-[0.99] transition-all text-left w-full"
+            >
               <div className="w-1 h-1 rounded-full bg-accent-purple animate-pulse shrink-0" />
-              <span className="text-[9px] font-black text-accent-purple/80 uppercase tracking-[0.2em] shrink-0">Poll:</span>
-              <span className="text-[11px] text-white/50 truncate font-medium flex-1">{activePoll.question}</span>
-            </div>
+              <span className="text-[9px] font-black text-accent-purple/80 uppercase tracking-[0.2em] shrink-0">Poll Active:</span>
+              <span className="text-[11px] text-white/50 truncate font-medium flex-1 group-hover/poll-pin:text-white/80 transition-colors uppercase tracking-tight">{activePoll.question}</span>
+              <span className="text-[9px] font-bold text-accent-purple/40 opacity-0 group-hover/poll-pin:opacity-100 transition-opacity">Tap to Jump</span>
+            </button>
           )}
         </div>
       )}

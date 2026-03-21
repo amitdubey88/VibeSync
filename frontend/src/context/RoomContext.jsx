@@ -230,6 +230,8 @@ export const RoomProvider = ({ children }) => {
       setIsHost(r.hostId === user?.id);
       setRequiresApproval(r.requiresApproval || false);
       setIsLocked(r.isLocked || false);
+      setActivePoll(r.activePoll?.active ? r.activePoll : null);
+      setWatchQueue(r.watchQueue || []);
       setJoinStatus('joined'); // receiving full state means we're in
     };
 
@@ -565,7 +567,7 @@ export const RoomProvider = ({ children }) => {
       });
     };
 
-    const onPollUpdate = ({ poll }) => setActivePoll(poll);
+    const onPollUpdate = ({ poll }) => setActivePoll(poll?.active ? poll : null);
 
     socket.on('chat:typing', onTyping);
     socket.on('chat:message-reaction', onMessageReaction);
