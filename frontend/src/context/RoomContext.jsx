@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { Play, Star, MessageSquare, MicOff, Lock, Unlock, Radio, LogOut, XCircle } from 'lucide-react';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
 import { getRoomMessages } from '../services/api';
@@ -257,7 +258,10 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onCoHostAssigned = ({ assignedBy }) => {
-      toast.success(`👑 You have been promoted to Co-Host by ${assignedBy}!`, { duration: 4000 });
+      toast.success(`You have been promoted to Co-Host by ${assignedBy}!`, { 
+        icon: <Star className="w-5 h-5 text-accent-purple" />,
+        duration: 4000 
+      });
     };
 
     const onChatMessage = async (msg) => {
@@ -304,9 +308,9 @@ export const RoomProvider = ({ children }) => {
             } else {
               playUISound('message');
               setEnergy(prev => Math.min(prev + 10, 100)); // Boost energy
-              toast(`💬 ${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
+              toast(`${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
                 duration: 2000,
-                icon: '📩',
+                icon: <MessageSquare className="w-5 h-5 text-accent-purple" />,
                 id: `chat-${msg.id}`
               });
             }
@@ -402,7 +406,10 @@ export const RoomProvider = ({ children }) => {
 
     const onMuted = () => {
       setIsMutedByHost(true);
-      toast('🔇 You were muted by the host', { duration: 2000 });
+      toast('You were muted by the host', { 
+        icon: <MicOff className="w-5 h-5 text-red-500" />,
+        duration: 2000 
+      });
     };
 
     const onJoinRequest = (req) => {
@@ -415,21 +422,33 @@ export const RoomProvider = ({ children }) => {
     const onJoinPending = () => setJoinStatus('pending');
     const onJoinDenied = ({ message }) => {
       setJoinStatus('denied');
-      toast.error(message || 'Your join request was declined.', { duration: 2000 });
+      toast.error(message || 'Your join request was declined.', { 
+        icon: <XCircle className="w-5 h-5 text-red-500" />,
+        duration: 2000 
+      });
       setTimeout(() => { window.location.href = '/'; }, 2000);
     };
     const onApprovalChanged = ({ requiresApproval: ra }) => setRequiresApproval(ra);
     
     const onLockChanged = ({ isLocked: locked }) => {
       setIsLocked(locked);
-      if (locked) toast('The room has been locked by the host.', { icon: '🔒', duration: 2000 });
-      else toast('The room is now unlocked.', { icon: '🔓', duration: 2000 });
+      if (locked) toast('The room has been locked by the host.', { 
+        icon: <Lock className="w-5 h-5 text-accent-purple" />, 
+        duration: 2000 
+      });
+      else toast('The room is now unlocked.', { 
+        icon: <Unlock className="w-5 h-5 text-accent-green" />, 
+        duration: 2000 
+      });
     };
 
     // ── Host away/back events (BUG-13) ───────────────────────────────────────
     const onHostAway = ({ message }) => {
       setHostAway(true);
-      toast(message || 'Host disconnected…', { icon: '⚠️', duration: 4000 });
+      toast(message || 'Host disconnected…', { 
+        icon: <Radio className="w-5 h-5 text-accent-red animate-pulse" />, 
+        duration: 4000 
+      });
     };
     const onHostBack = ({ message }) => {
       setHostAway(false);
@@ -437,7 +456,10 @@ export const RoomProvider = ({ children }) => {
     };
     const onHostLeft = ({ message }) => {
       setHostAway(false);
-      toast(message || 'The host has left.', { icon: '👑', duration: 5000 });
+      toast(message || 'The host has left.', { 
+        icon: <LogOut className="w-5 h-5 text-accent-red" />, 
+        duration: 5000 
+      });
     };
 
     const onTyping = ({ username, timestamp }) => {
@@ -564,7 +586,9 @@ export const RoomProvider = ({ children }) => {
 
     const onQueueSuggested = ({ item }) => {
       if (item.suggestedById === user?.id) return;
-      toast(`${item.suggestedBy} suggested: ${item.title || 'a video'}`, { icon: '🎬' });
+      toast(`${item.suggestedBy} suggested: ${item.title || 'a video'}`, { 
+        icon: <Play className="w-5 h-5 text-accent-red" /> 
+      });
     };
 
     const onPollUpdate = ({ poll }) => setActivePoll(poll?.active ? poll : null);

@@ -3,6 +3,7 @@ import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
 import { useCoHost } from './useCoHost';
 import useSyncDataChannel from './useSyncDataChannel';
+import { VolumeX } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const DRIFT_THRESHOLD = 3.5; // seconds before enforcing a hard seek
@@ -47,7 +48,10 @@ const useVideoSync = (videoEl) => {
                     videoEl.muted = true;
                     videoEl.play().catch(() => {});
                     // Muted local state is synced via VideoControls.jsx DOM listener!
-                    toast('Audio blocked by browser. Tap speaker icon to unmute.', { icon: '🔇', duration: 4000 });
+                    toast('Audio blocked by browser. Tap speaker icon to unmute.', { 
+                        icon: <VolumeX className="w-5 h-5 text-accent-yellow" />, 
+                        duration: 4000 
+                    });
                 }
             });
         }

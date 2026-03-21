@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Pin, PinOff } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useRoom } from '../context/RoomContext';
@@ -24,12 +25,20 @@ export const usePinnedMessage = () => {
 
     const onPinned = ({ pinnedMessage: msg }) => {
       setRawPinnedMessage(msg || null);
-      toast('📌 Message pinned!', { duration: 3000, style: { background: '#2C2B35', color: '#fff' } });
+      toast('Message pinned!', { 
+        duration: 3000, 
+        icon: <Pin className="w-5 h-5 text-accent-purple" />,
+        style: { background: '#2C2B35', color: '#fff' } 
+      });
     };
 
     const onUnpinned = () => {
       setRawPinnedMessage(null);
-      toast('Message unpinned', { icon: '📴', duration: 2000, style: { background: '#2C2B35', color: '#fff' } });
+      toast('Message unpinned', { 
+        icon: <PinOff className="w-5 h-5 text-text-muted" />, 
+        duration: 2000, 
+        style: { background: '#2C2B35', color: '#fff' } 
+      });
     };
 
     socket.on('chat:pinned', onPinned);

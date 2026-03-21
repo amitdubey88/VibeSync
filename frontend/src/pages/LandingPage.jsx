@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
-import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puzzle, ShieldCheck } from 'lucide-react';
+import { Play, Users, Lock, Globe, ArrowRight, Tv2, Zap, MessageSquare, Mic, Puzzle, ShieldCheck, LogIn, PlusCircle, Calendar, Ban } from 'lucide-react';
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
@@ -32,7 +32,7 @@ const LandingPage = () => {
       toast.error('You have been removed from the room by the host.', {
         id: 'kicked-toast',
         duration: 5000,
-        icon: '🚫'
+        icon: <Ban className="w-5 h-5 text-red-500" />
       });
       // Clean up the URL
       navigate('/', { replace: true });
@@ -228,10 +228,10 @@ const LandingPage = () => {
                 <button
                   key={t}
                   onClick={() => setTab(t)}
-                  className={`flex-1 py-2 rounded-lg text-sm font-semibold transition-all duration-200
+                  className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-sm font-semibold transition-all duration-200
                     ${tab === t ? 'bg-accent-red text-white shadow-lg' : 'text-text-secondary hover:text-text-primary'}`}
                 >
-                  {t === 'join' ? '🚪 Join Room' : '✨ Create Room'}
+                  {t === 'join' ? <><LogIn className="w-4 h-4" /> Join Room</> : <><PlusCircle className="w-4 h-4" /> Create Room</>}
                 </button>
               ))}
             </div>
@@ -334,7 +334,7 @@ const LandingPage = () => {
                       onChange={(e) => setScheduleToggle(e.target.checked)}
                       className="rounded border-border-dark bg-black/50 text-accent-purple focus:ring-accent-purple/50 w-4 h-4 cursor-pointer"
                     />
-                    Schedule for later ⏰
+                    <Calendar className="w-4 h-4" /> Schedule for later
                   </label>
                   {scheduleToggle && (
                     <div className="mt-3 animate-fade-in pl-6">

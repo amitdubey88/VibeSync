@@ -13,7 +13,7 @@ import ConfirmDialog from '../components/UI/ConfirmDialog';
 import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
 import Tooltip from '../components/UI/Tooltip';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical, Trash, Palette, ListVideo, ShieldAlert } from 'lucide-react';
+import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical, Trash, Palette, ListVideo, ShieldAlert, Link, Radio, User } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
@@ -366,7 +366,7 @@ const RoomPage = () => {
     
     navigator.clipboard.writeText(inviteUrl).then(() => {
       toast.success('Invite link (with preview) copied!', {
-        icon: '🔗',
+        icon: <Link className="w-5 h-5 text-accent-red" />,
         duration: 3000
       });
     });
@@ -378,7 +378,9 @@ const RoomPage = () => {
     try {
       await guestLogin(guestName.trim());
       // isAuthenticated will change, triggering the join effect naturally
-      toast.success(`Welcome, ${guestName}!`);
+      toast.success(`Welcome, ${guestName}!`, { 
+        icon: <User className="w-5 h-5 text-accent-purple" /> 
+      });
     } catch (err) {
       toast.error('Failed to join as guest. Please try again.');
     } finally {
@@ -396,7 +398,7 @@ const RoomPage = () => {
     // BUG-14: Block host from leaving mid-live-stream
     if (isHost && currentVideo?.type === 'live') {
       toast.error('Stop your live stream before leaving the room.', {
-        icon: '📡',
+        icon: <Radio className="w-5 h-5 text-red-500" />,
         duration: 3000,
       });
       return;
