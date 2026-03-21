@@ -238,7 +238,8 @@ const VideoPlayer = () => {
   const handlePlayerReady = useCallback((playerInstance) => {
     setVideoRef(playerInstance);
     setIsLoading(false);
-  }, [setVideoRef]);
+    handleMouseMove(); // Flash controls when a new video successfully loads
+  }, [setVideoRef, handleMouseMove]);
 
   const handleVideoError = useCallback((err) => {
     console.error('[VideoPlayer] Video failed to load:', err);
