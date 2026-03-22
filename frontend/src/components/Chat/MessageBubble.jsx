@@ -24,7 +24,7 @@ const StatusTick = ({ status, isOwn }) => {
   );
 };
 
-const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, isCoHost }) => {
+const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGroup, isHost, isCoHost }) => {
   const { reactToMessage, messageStatuses } = useRoom();
   const { activePoll, votePoll, endPoll } = usePolls();
   const { user } = useAuth();
@@ -230,13 +230,15 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
           )}
         </div>
 
-        {/* Timestamp row — OUTSIDE bubble as per image */}
-        <div className={`flex items-center mt-2 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-          <span className="text-[10px] font-bold text-[#52525b] tracking-widest">
-            {displayTime}
-          </span>
-          <StatusTick status={status} isOwn={isOwn} />
-        </div>
+        {/* Timestamp row — OUTSIDE bubble, shown only if last in group or significant gap */}
+        {isLastInGroup && (
+          <div className={`flex items-center mt-2 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+            <span className="text-[10px] font-bold text-[#52525b] tracking-widest">
+              {displayTime}
+            </span>
+            <StatusTick status={status} isOwn={isOwn} />
+          </div>
+        )}
 
         {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
         {showActions && (

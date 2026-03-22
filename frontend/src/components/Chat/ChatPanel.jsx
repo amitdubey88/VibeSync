@@ -282,6 +282,18 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           const isOwn =
             msg.userId === user?.id || msg.username === user?.username;
           const prevMsg = idx > 0 ? messages[idx - 1] : null;
+          const nextMsg = idx < messages.length - 1 ? messages[idx + 1] : null;
+          
+          // A message is the "last in group" if:
+          // 1. It's the very last message in the array
+          // 2. The next message is from a different sender
+          // 3. The next message is a system message
+          // 4. The next message was sent more than 5 minutes later
+          const isLastInGroup = !nextMsg || 
+            nextMsg.type === "system" ||
+            nextMsg.userId !== msg.userId || 
+            (new Date(nextMsg.createdAt) - new Date(msg.createdAt)) > 5 * 60 * 1000;
+
           return (
             <MessageBubble
               key={msg.id}
@@ -290,6 +302,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               onReply={setReplyToMessage}
               onPin={pinMessage}
               prevMessage={prevMsg}
+              isLastInGroup={isLastInGroup}
               isHost={isHost}
               isCoHost={isCoHost}
             />
