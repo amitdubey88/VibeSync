@@ -137,7 +137,7 @@ const LandingPage = () => {
       <header className="fixed top-0 left-0 w-full z-50 bg-neutral-950/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <span className="material-symbols-outlined text-obsidian-primary text-3xl">blur_on</span>
+            <img src="/favicon-192.png" alt="VibeSync" className="w-9 h-9 object-contain drop-shadow-[0_0_15px_rgba(189,157,255,0.4)] rounded-xl" />
             <span className="text-2xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase">VIBESYNC</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">

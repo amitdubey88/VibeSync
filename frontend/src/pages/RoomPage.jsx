@@ -506,13 +506,13 @@ const RoomPage = () => {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-500 min-h-screen overflow-y-auto">
         <div className="absolute top-12 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim flex items-center justify-center shadow-lg shadow-obsidian-primary/20">
-            <Tv2 className="w-6 h-6 text-white" />
+          <div className="w-12 h-12 bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim flex items-center justify-center shadow-lg shadow-obsidian-primary/20 overflow-hidden relative p-2">
+            <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-xl font-black text-white tracking-tight">VibeSync</h1>
         </div>
         
-        <div className="w-full max-w-md bg-[#16161D]/50 border border-white/10 p-8 rounded-[32px] backdrop-blur-lg shadow-2xl relative overflow-hidden my-auto">
+        <div className="w-full max-w-md bg-[#0a0a0b]/80 border border-white/5 p-8  backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] relative overflow-hidden my-auto">
           {/* Background Glow */}
           <div className="absolute -top-24 -left-24 w-48 h-48 bg-obsidian-primary/20 rounded-full blur-[80px]" />
           <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-obsidian-primary/80/20 rounded-full blur-[80px]" />
@@ -525,11 +525,11 @@ const RoomPage = () => {
               <div className="relative group">
                 <input
                   type="text"
-                  placeholder="Enter your name..."
+                  placeholder="YOUR ALIAS (REQUIRED)"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && guestName.trim() && !isLoggingIn && handleGuestJoin()}
-                  className="w-full h-14 bg-white/5 border border-white/10 rounded-2xl px-5 text-white placeholder-white/20 focus:outline-none focus:border-accent-purple/50 focus:bg-white/10 transition-all font-medium"
+                  className="w-full h-14 bg-transparent border-0 border-b border-obsidian-outline-variant py-4 px-0 text-white font-headline placeholder:text-neutral-600 focus:ring-0 focus:border-obsidian-primary transition-all uppercase tracking-widest text-base"
                   autoFocus
                 />
               </div>
@@ -537,7 +537,7 @@ const RoomPage = () => {
               <button
                 onClick={handleGuestJoin}
                 disabled={!guestName.trim() || isLoggingIn}
-                className="w-full h-14 bg-white text-black font-bold rounded-2xl hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:scale-100 transition-all shadow-xl shadow-white/10 flex items-center justify-center gap-2"
+                className="w-full py-5 bg-obsidian-surface-high border border-obsidian-outline-variant text-white font-headline font-bold tracking-widest uppercase hover:border-obsidian-primary/50 hover:bg-obsidian-surface-highest hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoggingIn ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
@@ -586,16 +586,16 @@ const RoomPage = () => {
       <OfflineShell />
 
       {/* ── Top bar ── */}
-      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 dark:border-white/5 bg-obsidian-surface/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] shrink-0 gap-2 relative z-[100]">
+      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 dark:border-white/5 bg-[#0a0a0b]/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-b border-white/5 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0 group">
-            <span className="material-symbols-outlined text-obsidian-primary text-3xl group-hover:scale-110 transition-transform duration-500">movie_filter</span>
+            <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_10px_rgba(189,157,255,0.4)]" />
             <span className="text-xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase hidden sm:block">VIBESYNC</span>
           </button>
           
           <div className="w-px h-5 bg-white/10 mx-1 md:mx-2 hidden sm:block" />
           
-          <h1 className="text-sm font-headline font-bold text-white truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">{room?.name || code}</h1>
+          <h1 className="text-sm font-headline font-bold uppercase tracking-widest text-obsidian-primary truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">{room?.name || code}</h1>
           
           <div className="hidden lg:flex flex-col border-l border-white/10 pl-4 mx-2 animate-fade-in max-w-[200px]">
             <span className="text-[9px] text-obsidian-on-surface-variant font-bold font-headline uppercase tracking-[0.2em]">Now Watching</span>
@@ -604,7 +604,7 @@ const RoomPage = () => {
             </span>
           </div>
 
-          <div className="hidden xs:flex items-center gap-1.5 bg-obsidian-surface-container-high px-2 py-1 rounded-sm border border-white/5 ml-2">
+          <div className="hidden xs:flex items-center gap-1.5 bg-[#13131a] px-3 py-1 border border-white/5 shadow-inner ml-2">
             <ShieldCheck className="w-3.5 h-3.5 text-accent-green" />
             <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">E2EE</span>
           </div>
@@ -623,7 +623,7 @@ const RoomPage = () => {
             <EnergyMeter />
           </div>
 
-          <div className="hidden md:flex items-center gap-2 bg-obsidian-surface-container-high px-3 py-1.5 rounded-full border border-white/5 shrink min-w-0">
+          <div className="hidden md:flex items-center gap-2 bg-[#13131a] px-4 py-1.5 border border-white/5 shadow-inner shrink min-w-0">
             <span className="flex items-center gap-1.5 shrink-0 text-obsidian-on-surface-variant text-[10px] font-bold font-headline uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
               {participants.filter(p => p.isOnline !== false).length}
@@ -646,7 +646,7 @@ const RoomPage = () => {
           <Tooltip text="Copy room code" position="bottom">
             <button
               onClick={copyRoomCode}
-              className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/10 rounded px-2 py-1.5 text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
+              className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/5 px-3 py-1.5 shadow-lg text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
             >
               <span className="text-obsidian-on-surface-variant group-hover:text-white hidden sm:inline">CODE</span>
               <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">{code}</span>
@@ -672,7 +672,7 @@ const RoomPage = () => {
               </button>
             </Tooltip>
             {isMoreMenuOpen && (
-              <div className="absolute top-full right-0 mt-3 w-56 bg-obsidian-surface-container-high border border-white/10 rounded shadow-2xl overflow-hidden z-[100] animate-fade-in origin-top-right">
+              <div className="absolute top-full right-0 mt-3 w-56 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.9)] overflow-hidden z-[100] animate-fade-in origin-top-right">
                 <div className="flex flex-col py-2">
                   <button
                     onClick={() => setShowShortcutsHelp(true)}
@@ -713,7 +713,7 @@ const RoomPage = () => {
           <Tooltip text="Leave Room (Shift+Click to skip)" position="bottom">
             <button
               onClick={(e) => handleLeave(e)}
-              className="flex items-center gap-1.5 py-1.5 px-3 rounded border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-obsidian-outline hover:text-red-400 transition-all font-headline text-[10px] font-bold uppercase tracking-widest"
+              className="flex items-center gap-1.5 py-1.5 px-3 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-obsidian-outline hover:text-red-400 transition-all font-headline text-[10px] font-bold uppercase tracking-widest"
             >
               <LogOut className="w-3.5 h-3.5" />
               <span className="hidden xl:inline">Leave</span>
@@ -723,7 +723,7 @@ const RoomPage = () => {
           <Tooltip text={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'} position="bottom">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-obsidian-on-surface-variant hover:text-white transition-colors hidden md:flex items-center justify-center p-1.5 rounded-sm hover:bg-white/5 ml-2"
+              className="text-obsidian-on-surface-variant hover:text-white transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-white/5 ml-2"
             >
               {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
             </button>
@@ -743,7 +743,7 @@ const RoomPage = () => {
           {/* Reconnection Banner */}
           {!isConnected && (
             <div className="absolute top-0 left-0 right-0 z-50 animate-slide-up">
-              <div className="bg-red-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
+              <div className="bg-red-600/80 backdrop-blur-2xl border-b border-red-500/30 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <WifiOff className="w-4 h-4 animate-pulse" />
                 <span className="text-xs font-bold tracking-wide uppercase">Connection lost. Attempting to reconnect...</span>
               </div>
@@ -753,7 +753,7 @@ const RoomPage = () => {
           {/* Host Away Banner — shown to all participants when host disconnects temporarily (BUG-13) */}
           {hostAway && !isHost && (
             <div className="absolute top-0 left-0 right-0 z-40 animate-slide-up">
-              <div className="bg-amber-600/90 backdrop-blur-md text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
+              <div className="bg-amber-600/80 backdrop-blur-2xl border-b border-amber-500/30 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <span className="text-base">⚠️</span>
                 <span className="text-xs font-bold tracking-wide uppercase">Host disconnected — Waiting for them to return…</span>
               </div>
@@ -763,7 +763,7 @@ const RoomPage = () => {
         </div>
 
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
-        <div className="md:hidden flex flex-col bg-obsidian-surface-container-high/90 backdrop-blur-md border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] shrink-0 z-40 relative">
+        <div className="md:hidden flex flex-col bg-[#0a0a0b]/90 backdrop-blur-3xl border-t border-white/5 shadow-[0_-20px_50px_rgba(0,0,0,0.9)] shrink-0 z-40 relative">
           
 
           <div className="flex w-full overflow-x-auto scrollbar-hide">
@@ -807,12 +807,12 @@ const RoomPage = () => {
             // Wake up sidebar if user hovers over it
             window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
           }}
-          className={`flex flex-col bg-obsidian-background border-l border-t md:border-t-0 border-white/5 overflow-hidden transition-all duration-500 ease-in-out shrink-0
+          className={`flex flex-col bg-[#0a0a0b]/95 border-l border-t md:border-t-0 border-white/5 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 ease-in-out shrink-0
           ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-[380px]' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-white/5 shrink-0 px-6 pt-4 gap-6">
+          <div className="hidden md:flex border-b border-white/5 shrink-0 px-6 pt-4 gap-8 bg-[#0a0a0b]">
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
@@ -927,7 +927,7 @@ const RoomPage = () => {
                 <input 
                   readOnly 
                   value={window.location.href}
-                  className="flex-1 bg-black/30 border border-white/10 rounded px-2 py-1.5 text-xs text-obsidian-on-surface-variant outline-none focus:border-accent-purple/50"
+                  className="flex-1 bg-black/30 border border-white/5 px-3 py-1.5 shadow-lg text-xs text-obsidian-on-surface-variant outline-none focus:border-accent-purple/50"
                 />
                 <button onClick={copyRoomLink} className="btn-ghost p-1.5 h-auto">
                   <Copy className="w-3.5 h-3.5" />
@@ -981,10 +981,10 @@ const RoomPage = () => {
 
       {/* ── Room Ended by Host modal moved to LandingPage ── */}
       {showLeaveModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
-          <div className="card w-full max-w-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl animate-fade-in">
+          <div className="bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 p-8 shadow-[0_30px_60px_rgba(0,0,0,0.9)] w-full max-w-sm">
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-accent-yellow/10 flex items-center justify-center shrink-0">
+              <div className="w-10 h-10 bg-accent-yellow/10 flex items-center justify-center shrink-0">
                 <Crown className="w-5 h-5 text-accent-yellow" />
               </div>
               <div>
@@ -1001,7 +1001,7 @@ const RoomPage = () => {
                     key={p.userId}
                     type="button"
                     onClick={() => { setShowLeaveModal(false); confirmLeave(p.userId); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-obsidian-surface-container-high hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-transparent transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#13131a] hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-white/5 shadow-lg transition-all text-left"
                   >
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
