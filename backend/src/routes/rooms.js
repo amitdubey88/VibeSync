@@ -4,7 +4,7 @@ const bcrypt = require('bcryptjs');
 const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { ROOM_TYPE } = require('../config/constants');
-const { hashRoomCode } = require('../utils/hash');
+const { hashRoomCode, verifyInviteToken } = require('../utils/hash');
 const { getVideoMetadata } = require('../utils/videoMetadata');
 const { endedRooms } = require('../socket/sharedState');
 
@@ -161,7 +161,7 @@ router.get('/:code', async (req, res) => {
 // for initial sync.
 router.post('/:code/join', authenticate, async (req, res) => {
     const { code } = req.params;
-    const { password } = req.body;
+    const { password, inviteToken } = req.body;
     // Try in-memory first; fall back to MongoDB (handles server restarts)
     const room = await hydrateRoom(req, code.toUpperCase());
 
@@ -186,9 +186,10 @@ router.post('/:code/join', authenticate, async (req, res) => {
     // But hydrateRoom ensures we get a consistent object.
     // If room has a password, we need to verify it.
     if (room.password) {
-        // If the stored password doesn't match the input, try bcrypt comparison 
-        // (handles cases where password in memory is the hash from DB)
-        if (room.password !== password) {
+        // If the join is via a valid invite link, bypass the password requirement
+        const isInviteValid = verifyInviteToken(code.toUpperCase(), inviteToken);
+        
+        if (!isInviteValid && room.password !== password) {
             const isMatch = await bcrypt.compare(password, room.password).catch(() => false);
             if (!isMatch) {
                 return res.status(403).json({ success: false, message: 'Incorrect password' });

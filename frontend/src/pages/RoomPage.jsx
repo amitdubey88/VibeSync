@@ -229,7 +229,9 @@ const RoomPage = () => {
     const init = async () => {
       try {
         const password = location.state?.password;
-        await joinRoom(code, password);
+        const query = new URLSearchParams(location.search);
+        const inviteToken = query.get('t');
+        await joinRoom(code, password, inviteToken);
         socketJoin(code);
         // After joining, explicitly request fresh participant list
         // (fixes 'no participants visible' on rejoin / server restart)

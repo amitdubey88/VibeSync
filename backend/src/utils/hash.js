@@ -19,6 +19,29 @@ function hashRoomCode(code) {
         .digest('hex');
 }
 
+/**
+ * Generates a short, verifiable token for invite-link bypass.
+ */
+function generateInviteToken(code) {
+    if (!code) return null;
+    return crypto
+        .createHmac('sha256', HASH_SECRET)
+        .update(`invite:${code.toUpperCase()}`)
+        .digest('hex')
+        .slice(0, 12);
+}
+
+/**
+ * Verifies if an invite token is valid for a given room code.
+ */
+function verifyInviteToken(code, token) {
+    if (!code || !token) return false;
+    const expected = generateInviteToken(code);
+    return expected === token;
+}
+
 module.exports = {
-    hashRoomCode
+    hashRoomCode,
+    generateInviteToken,
+    verifyInviteToken
 };

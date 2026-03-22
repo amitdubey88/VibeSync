@@ -38,8 +38,8 @@ export const createRoom = (payload) =>
 export const getRoomInfo = (code) =>
     api.get(`/rooms/${code}`).then((r) => r.data);
 
-export const joinRoom = (code, password) =>
-    api.post(`/rooms/${code}/join`, { password }).then((r) => r.data);
+export const joinRoom = (code, password, inviteToken) =>
+    api.post(`/rooms/${code}/join`, { password, inviteToken }).then((r) => r.data);
 
 export const getRoomMessages = (code) =>
     api.get(`/rooms/${code}/messages`).then((r) => r.data);

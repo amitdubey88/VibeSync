@@ -65,6 +65,7 @@ export const RoomProvider = ({ children }) => {
   const participantsRef = useRef([]);
   const messagesRef = useRef([]);
   useEffect(() => { roomRef.current = room; }, [room]);
+  useEffect(() => { participantsRef.current = participants; }, [participants]);
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   // Always-current ref for isHost so socket closures don't go stale (BUG-7)
   const isHostRef = useRef(false);

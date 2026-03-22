@@ -1,11 +1,12 @@
 const express = require('express');
 const router = express.Router();
 const Room = require('../models/Room');
-const { hashRoomCode } = require('../utils/hash');
+const { hashRoomCode, generateInviteToken } = require('../utils/hash');
 
 // GET /invite/:roomCode - Renders a simple HTML page with Open Graph tags
 router.get('/:roomCode', async (req, res) => {
   const code = req.params.roomCode.toUpperCase();
+  const t = generateInviteToken(code);
   // roomStore is attached to app.locals in server.js — access it via req.app.locals
   const roomStore = req.app.locals.roomStore;
   
@@ -42,7 +43,7 @@ router.get('/:roomCode', async (req, res) => {
   }
 
   const frontendUrl = process.env.FRONTEND_URL || 'https://vibesync.live';
-  const joinUrl = `${frontendUrl}/room/${code}`;
+  const joinUrl = `${frontendUrl}/room/${code}?t=${t}`;
 
   const html = `
 <!DOCTYPE html>
