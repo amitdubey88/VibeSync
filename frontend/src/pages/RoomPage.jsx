@@ -69,7 +69,7 @@ const LiveTimeTracker = ({ videoState, currentVideo }) => {
   if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
     return <span className="text-obsidian-primary font-black tracking-widest animate-pulse">LIVE</span>;
   }
-  return <span className="font-mono flex items-center gap-1.5"><Clock size={12} /> {formatTime(displayTime)}</span>;
+  return <span className="font-mono flex items-center gap-1.5"><ClockIcon size={12} /> {formatTime(displayTime)}</span>;
 };
 
 const RoomPage = () => {
@@ -363,13 +363,13 @@ const RoomPage = () => {
               onClick={() => { approveJoin(req.userId); toast.dismiss(t.id); }}
               className="flex items-center gap-1 bg-accent-green/20 text-accent-green px-3 py-1.5 text-xs font-semibold hover:bg-accent-green/30 transition-colors"
             >
-              <CheckCircle className="w-3.5 h-3.5" /> Approve
+              <CheckIcon className="w-3.5 h-3.5" /> Approve
             </button>
             <button
               onClick={() => { denyJoin(req.userId); toast.dismiss(t.id); }}
               className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1.5 text-xs font-semibold hover:bg-red-500/30 transition-colors"
             >
-              <XCircle className="w-3.5 h-3.5" /> Deny
+              <XIcon className="w-3.5 h-3.5" /> Deny
             </button>
           </div>
         </div>
@@ -380,7 +380,7 @@ const RoomPage = () => {
 
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
   
-  const copyRoomLink = () => {
+  const copyInviteLink = () => {
     // Construct the absolute backend invite URL for rich OG previews
     // In production, VITE_API_URL should be the full backend domain (e.g. https://api.vibesync.live)
     const backendBase = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
@@ -388,7 +388,7 @@ const RoomPage = () => {
     
     navigator.clipboard.writeText(inviteUrl).then(() => {
       toast.success('Invite link (with preview) copied!', {
-        icon: <Link className="w-5 h-5 text-obsidian-primary" />,
+        icon: <LinkIcon size={20} className="text-obsidian-primary" />,
         duration: 3000
       });
     });
@@ -412,7 +412,7 @@ const RoomPage = () => {
       
       setIsNameConfirmed(true);
       toast.success(`Welcome, ${guestName}!`, { 
-        icon: <User className="w-5 h-5 text-accent-purple" /> 
+        icon: <UserIcon size={20} className="text-accent-purple" /> 
       });
     } catch {
       toast.error('Failed to join. Please try again.');
@@ -431,7 +431,7 @@ const RoomPage = () => {
     // BUG-14: Block host from leaving mid-live-stream
     if (isHost && currentVideo?.type === 'live') {
       toast.error('Stop your live stream before leaving the room.', {
-        icon: <Radio className="w-5 h-5 text-red-500" />,
+        icon: <ActivityIcon size={20} className="text-red-500" />,
         duration: 3000,
       });
       return;
@@ -477,7 +477,7 @@ const RoomPage = () => {
       <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
         <div className="card text-center max-w-sm">
           <div className="w-20 h-20 bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <Clock className="w-9 h-9 text-accent-purple" />
+            <ClockIcon className="w-9 h-9 text-accent-purple" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Waiting for Approval</h2>
           <p className="text-obsidian-on-surface-variant text-sm mb-4">
@@ -550,7 +550,7 @@ const RoomPage = () => {
                 {isLoggingIn ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <>Join Party <Tv2 className="w-4 h-4 ml-1" /></>
+                  <>Join Party <ActivityIcon className="w-4 h-4 ml-1" /></>
                 )}
               </button>
             </div>
@@ -661,7 +661,7 @@ const RoomPage = () => {
               {participants.filter((p) => p.isOnline !== false).length}
             </span>
             {isLocked && (
-              <Lock className="w-3 h-3 text-red-400 shrink-0 ml-1" />
+              <LockIcon className="w-3 h-3 text-red-400 shrink-0 ml-1" />
             )}
             <span className="truncate shrink text-[10px] font-bold font-headline tracking-widest text-obsidian-primary/80 ml-2 border-l border-white/10 pl-2">
               <LiveTimeTracker
@@ -699,7 +699,7 @@ const RoomPage = () => {
 
           <Tooltip text="Copy invite link" position="bottom">
             <button
-              onClick={copyRoomLink}
+              onClick={copyInviteLink}
               className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 text-[10px] font-black font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
             >
               <LinkIcon size={14} />
@@ -795,7 +795,7 @@ const RoomPage = () => {
           {!isConnected && (
             <div className="absolute top-0 left-0 right-0 z-50 animate-slide-up">
               <div className="bg-red-600/80 backdrop-blur-2xl border-b border-red-500/30 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
-                <WifiOff className="w-4 h-4 animate-pulse" />
+                <WifiIcon className="w-4 h-4 animate-pulse" />
                 <span className="text-xs font-bold tracking-wide uppercase">
                   Connection lost. Attempting to reconnect...
                 </span>
