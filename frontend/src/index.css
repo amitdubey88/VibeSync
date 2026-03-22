@@ -22,6 +22,33 @@
     --text-secondary: 160 160 184;
     --border-dark: 30 30 48;
     --border-light: 42 42 64;
+    
+    /* ── Obsidian Design Tokens (Default) ───────────────────── */
+    --obsidian-bg: 14 14 15;
+    --obsidian-surface: 14 14 15;
+    --obsidian-surface-bright: 44 44 45;
+    --obsidian-surface-dim: 14 14 15;
+    --obsidian-surface-low: 19 19 20;
+    --obsidian-surface-container: 26 25 27;
+    --obsidian-surface-high: 32 31 33;
+    --obsidian-surface-highest: 38 38 39;
+    --obsidian-primary: 189 157 255;
+    --obsidian-primary-dim: 138 76 252;
+    --obsidian-primary-container: 178 140 255;
+    --obsidian-secondary: 195 139 245;
+    --obsidian-secondary-dim: 190 134 239;
+    --obsidian-secondary-container: 97 43 143;
+    --obsidian-tertiary: 255 151 178;
+    --obsidian-tertiary-dim: 241 119 153;
+    --obsidian-tertiary-container: 254 129 164;
+    --obsidian-error: 255 110 132;
+    --obsidian-error-dim: 215 51 87;
+    --obsidian-error-container: 167 1 56;
+    --obsidian-outline: 118 117 118;
+    --obsidian-outline-variant: 72 72 73;
+    --obsidian-on-surface: 255 255 255;
+    --obsidian-on-surface-variant: 173 170 171;
+    --obsidian-on-primary: 60 0 137;
 
     /* ── Animation timing tokens ─────────────────────────────── */
     --dur-hover:  120ms;   /* button hover lift */

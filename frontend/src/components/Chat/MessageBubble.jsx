@@ -140,7 +140,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const bubbleRadius = '';
 
   const bubbleColors = isOwn
-    ? 'bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim text-obsidian-on-primary-fixed shadow-[0_0_15px_rgba(139,92,246,0.2)] font-headline tracking-wide'
+    ? 'bg-gradient-to-br from-obsidian-primary-dim to-obsidian-secondary-container text-white shadow-[0_0_15px_rgba(0,0,0,0.3)] font-headline tracking-wide'
     : 'bg-obsidian-surface-high border border-white/5 text-white font-headline tracking-wide';
 
   return (
@@ -235,7 +235,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               {message.e2ee && (
                 <ShieldCheck className={`w-2.5 h-2.5 shrink-0 ${isOwn ? 'text-white/40' : 'text-zinc-500/40'}`} title="E2EE" />
               )}
-              <span className={`text-[10px] select-none ${isOwn ? 'text-white/50' : 'text-zinc-500/60'}`}>
+              <span className={`text-[10px] select-none ${isOwn ? 'text-white/70' : 'text-zinc-500/80'}`}>
                 {formatMessageTime(message.createdAt)}
               </span>
               <StatusTick status={status} isOwn={isOwn} />

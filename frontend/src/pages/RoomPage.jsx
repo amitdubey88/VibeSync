@@ -586,7 +586,7 @@ const RoomPage = () => {
       <OfflineShell />
 
       {/* ── Top bar ── */}
-      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 dark:border-white/5 bg-[#0a0a0b]/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-b border-white/5 shrink-0 gap-2 relative z-[100]">
+      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 bg-obsidian-surface/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-b border-white/5 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate("/")}
@@ -617,7 +617,7 @@ const RoomPage = () => {
             </span>
           </div>
 
-          <div className="hidden xs:flex items-center gap-1.5 bg-[#13131a] px-3 py-1 border border-white/5 shadow-inner ml-2">
+          <div className="hidden xs:flex items-center gap-1.5 bg-obsidian-surface-container px-3 py-1 border border-white/5 shadow-inner ml-2">
             <ShieldCheck className="w-3.5 h-3.5 text-accent-green" />
             <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">
               E2EE
@@ -646,7 +646,7 @@ const RoomPage = () => {
             <EnergyMeter />
           </div>
 
-          <div className="hidden md:flex items-center gap-2 bg-[#13131a] px-4 py-1.5 border border-white/5 shadow-inner shrink min-w-0">
+          <div className="hidden md:flex items-center gap-2 bg-obsidian-surface-container px-4 py-1.5 border border-white/5 shadow-inner shrink min-w-0">
             <span className="flex items-center gap-1.5 shrink-0 text-obsidian-on-surface-variant text-[10px] font-bold font-headline uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
               {participants.filter((p) => p.isOnline !== false).length}
@@ -711,7 +711,7 @@ const RoomPage = () => {
               </button>
             </Tooltip>
             {isMoreMenuOpen && (
-              <div className="absolute top-full right-0 mt-3 w-56 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.9)] overflow-hidden z-[100] animate-fade-in origin-top-right">
+              <div className="absolute top-full right-0 mt-3 w-56 bg-obsidian-surface/95 backdrop-blur-3xl border border-white/5 shadow-[0_30px_60px_rgba(0,0,0,0.9)] overflow-hidden z-[100] animate-fade-in origin-top-right">
                 <div className="flex flex-col py-2">
                   <button
                     onClick={() => setShowShortcutsHelp(true)}
@@ -907,21 +907,19 @@ const RoomPage = () => {
 
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Tab Logic: Hybrid Mobile/Desktop */}
-            {sidebarTab === "chat" ||
-            (activeMobileTab === "chat" && isMobile) ? (
+            {(isMobile ? activeMobileTab === "chat" : sidebarTab === "chat") ? (
               <div
-                key={sidebarTab}
-                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "chat" ? "hidden" : "flex"}`}
+                key="chat-tab"
+                className="flex-1 flex flex-col overflow-hidden animate-tab-fade"
               >
                 <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />
               </div>
             ) : null}
 
-            {sidebarTab === "participants" ||
-            (activeMobileTab === "people" && isMobile) ? (
+            {(isMobile ? activeMobileTab === "people" : sidebarTab === "participants") ? (
               <div
-                key={sidebarTab}
-                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "people" ? "hidden" : "flex"}`}
+                key="people-tab"
+                className="flex-1 flex flex-col overflow-hidden animate-tab-fade"
               >
                 {/* Host: controls sidebar block */}
                 {isHost && (
@@ -952,21 +950,19 @@ const RoomPage = () => {
               </div>
             ) : null}
 
-            {sidebarTab === "activity" ||
-            (activeMobileTab === "activity" && isMobile) ? (
+            {(isMobile ? activeMobileTab === "activity" : sidebarTab === "activity") ? (
               <div
-                key={sidebarTab}
-                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "activity" ? "hidden" : "flex"}`}
+                key="activity-tab"
+                className="flex-1 flex flex-col overflow-hidden animate-tab-fade"
               >
                 <ActivityFeed />
               </div>
             ) : null}
 
-            {sidebarTab === "queue" ||
-            (activeMobileTab === "queue" && isMobile) ? (
+            {(isMobile ? activeMobileTab === "queue" : sidebarTab === "queue") ? (
               <div
-                key={sidebarTab}
-                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "queue" ? "hidden" : "flex"}`}
+                key="queue-tab"
+                className="flex-1 flex flex-col overflow-hidden animate-tab-fade"
               >
                 <WatchQueue />
               </div>
