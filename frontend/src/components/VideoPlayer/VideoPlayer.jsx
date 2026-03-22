@@ -30,13 +30,13 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-[#0e0e0f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl w-full sm:max-w-md rounded-t-3xl sm:rounded-2xl p-6 pb-8 sm:pb-6 animate-slide-up">
+      <div className="bg-[#0e0e0f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl w-full sm:max-w-md rounded-t-3xl sm: p-6 pb-8 sm:pb-6 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-xl font-bold text-white">Change Video</h3>
             <p className="text-zinc-500 text-xs mt-0.5">Replace the video for everyone in the room</p>
           </div>
-          <button onClick={onClose} className="p-2 rounded-xl hover:bg-white/5 text-zinc-500 hover:text-white transition-colors">
+          <button onClick={onClose} className="p-2  hover:bg-white/5 text-zinc-500 hover:text-white transition-colors">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -47,7 +47,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
             Select Video File
           </label>
           
-          <label className={`flex flex-col items-center justify-center gap-2 p-4 rounded-xl border-2 border-dashed transition-all
+          <label className={`flex flex-col items-center justify-center gap-2 p-4  border-2 border-dashed transition-all
             border-violet-500/50 hover:border-violet-500/50/60 hover:bg-violet-500/10 cursor-pointer`}>
             <input type="file" accept="video/*" className="hidden" onChange={(e) => onFileUpload(e)} />
             <Zap className="w-6 h-6 text-violet-400" />
@@ -72,13 +72,13 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
           <div className="flex gap-2">
             <input
               type="text"
-              className="w-full bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all font-body"
+              className="w-full bg-black/50 border border-white/10  px-4 py-2 text-white placeholder-zinc-600 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/50 transition-all font-body"
               placeholder="https://youtube.com/watch?v=..."
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               autoFocus
             />
-            <button type="submit" className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)] rounded-xl py-2 font-bold px-5">Go</button>
+            <button type="submit" className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)]  py-2 font-bold px-5">Go</button>
           </div>
           {/* Live type indicator */}
           {urlInput.trim() && urlValidationResult && (
@@ -91,7 +91,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
                     ? 'text-blue-400'
                     : 'text-green-400'
             }`}>
-              <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+              <span className="w-1.5 h-1.5  bg-current inline-block" />
               {urlValidationResult.type === 'youtube' && '▶ YouTube Video'}
               {urlValidationResult.type === 'direct' && '📁 Direct Video'}
               {urlValidationResult.type === 'hls' && '📡 HLS Stream'}
@@ -907,7 +907,7 @@ const VideoPlayer = () => {
   // ── Regular / file / URL video ────────────────────────────────────────────
   return (
     <div
-      className={`relative w-full h-full bg-black flex items-center justify-center group video-reaction-host video-container overflow-hidden rounded-2xl border border-white/10 shadow-[0_0_80px_rgba(139,92,246,0.15)] transition-all duration-500
+      className={`relative w-full h-full bg-black flex items-center justify-center group video-reaction-host video-container overflow-hidden  border border-white/10 shadow-[0_0_80px_rgba(139,92,246,0.15)] transition-all duration-500
         ${!showControls ? 'cursor-none' : ''}
       `}
       onMouseMove={handleMouseMove}
@@ -921,7 +921,7 @@ const VideoPlayer = () => {
       {/* LIVE Badge (Visible to everyone during live streaming) */}
       {(currentVideo?.type === 'live' || isDirectStreaming) && (
         <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10 opacity-60">
-          <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+          <span className="w-2 h-2  bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
             Direct Live
           </span>
@@ -943,7 +943,7 @@ const VideoPlayer = () => {
         {/* Click animation flash (Play/Pause ripple) */}
         {clickAnim && (
           <div className="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
-            <div className="w-16 h-16 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center animate-ping-once">
+            <div className="w-16 h-16  bg-black/40 backdrop-blur-sm flex items-center justify-center animate-ping-once">
               {clickAnim === 'play'
                 ? <Play className="w-7 h-7 text-white" />
                 : <Pause className="w-7 h-7 text-white" />}
@@ -954,9 +954,9 @@ const VideoPlayer = () => {
         {!(isDirectStreaming) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
-            <div className="relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-violet-500/10 flex items-center justify-center">
-              <span className="absolute inset-0 rounded-full bg-violet-500/20 animate-ping" />
-              <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-violet-500/70" />
+            <div className="relative w-12 h-12 sm:w-20 sm:h-20  bg-violet-500/10 flex items-center justify-center">
+              <span className="absolute inset-0  bg-violet-500/20 animate-ping" />
+              <span className="w-5 h-5 sm:w-8 sm:h-8  bg-violet-500/70" />
             </div>
             <div>
               <h3 className="text-sm sm:text-lg font-bold text-white mb-1">Broadcaster is Preparing to Stream</h3>
@@ -990,15 +990,15 @@ const VideoPlayer = () => {
           ) : (
             /* Waiting UI inside the player — stream announced but WebRTC not connected yet */
             <div className="flex flex-col items-center gap-3 sm:gap-4 p-4 sm:p-8 text-center animate-pulse">
-              <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-violet-500/10 flex items-center justify-center text-violet-400">
+              <div className="w-12 h-12 sm:w-20 sm:h-20  bg-violet-500/10 flex items-center justify-center text-violet-400">
                 <Loader2 className="w-6 h-6 sm:w-9 sm:h-9 animate-spin" />
               </div>
               <div>
                 <h3 className="text-sm sm:text-lg font-bold text-white mb-1">Connecting to Feed…</h3>
                 <p className="text-zinc-300 text-xs sm:text-sm font-medium">{currentVideo?.title || 'Waiting for host…'}</p>
                 <div className="flex items-center justify-center gap-2 mt-2 sm:mt-3 mb-1 sm:mb-2">
-                  <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1 rounded-full bg-red-500/20 border border-red-500/30 text-red-500">
-                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-pulse" />
+                  <div className="flex items-center gap-1.5 px-2 sm:px-3 py-1  bg-red-500/20 border border-red-500/30 text-red-500">
+                    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2  bg-red-500 animate-pulse" />
                     <span className="text-[9px] sm:text-[10px] font-black tracking-widest uppercase">Live Link Active</span>
                   </div>
                 </div>
@@ -1043,10 +1043,10 @@ const VideoPlayer = () => {
             />
             {/* Start Streaming Overlay for Host */}
             {isDirectStreaming && !isLiveStreamingInitialized && (
-              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl pointer-events-auto">
+              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm  pointer-events-auto">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
-                  <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-violet-500/20 flex items-center justify-center mb-4 sm:mb-6">
-                    <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-violet-500 animate-pulse shadow-[0_0_30px_rgba(139,92,246,0.3)]" />
+                  <div className="w-12 h-12 sm:w-20 sm:h-20  bg-violet-500/20 flex items-center justify-center mb-4 sm:mb-6">
+                    <span className="w-5 h-5 sm:w-8 sm:h-8  bg-violet-500 animate-pulse shadow-[0_0_30px_rgba(139,92,246,0.3)]" />
                   </div>
                   <h3 className="text-lg sm:text-2xl font-bold text-white mb-2">
                     {isPendingNextStream ? 'Ready to Stream Next Video' : 'Ready to Go Live'}
@@ -1075,7 +1075,7 @@ const VideoPlayer = () => {
                         el.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
                       }
                     }}
-                    className={`flex items-center justify-center gap-2 font-bold py-2 sm:py-3 px-6 sm:px-8 text-sm sm:text-base rounded-full shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all ${
+                    className={`flex items-center justify-center gap-2 font-bold py-2 sm:py-3 px-6 sm:px-8 text-sm sm:text-base  shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all ${
                        (!videoRef.current && !videoEl) ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-violet-500 hover:bg-violet-500/90 text-white hover:scale-105'
                     }`}
                   >
@@ -1090,7 +1090,7 @@ const VideoPlayer = () => {
           /* Landing / Empty State */
           <div className="relative z-40 flex flex-col items-center justify-center gap-3 sm:gap-6 p-4 sm:p-8 text-center h-full overflow-y-auto">
             <div className="flex flex-col items-center max-w-md w-full gap-3 sm:gap-6">
-              <div className="hidden sm:flex w-24 h-24 rounded-full bg-white/5 items-center justify-center animate-pulse-glow shrink-0">
+              <div className="hidden sm:flex w-24 h-24  bg-white/5 items-center justify-center animate-pulse-glow shrink-0">
                 <Play className="w-10 h-10 text-violet-400 ml-1" />
               </div>
               <div>
@@ -1102,7 +1102,7 @@ const VideoPlayer = () => {
                 </p>
               </div>
               {(isHost || isCoHost) && (
-                <button className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)] rounded-xl py-2 font-bold mt-1 sm:mt-3 text-sm" onClick={() => setShowSourcePicker(true)}>
+                <button className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)]  py-2 font-bold mt-1 sm:mt-3 text-sm" onClick={() => setShowSourcePicker(true)}>
                   <Upload className="w-4 h-4" /> Load Video File / URL
                 </button>
               )}
@@ -1110,7 +1110,7 @@ const VideoPlayer = () => {
             
             {/* Buffering Indicator Overlay (Host and Guests both see this if anyone buffers) */}
             {bufferingUsers.length > 0 && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-black/80/90 backdrop-blur border border-white/10 px-4 py-2 rounded-full flex items-center gap-3 animate-fade-in pointer-events-none">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-black/80/90 backdrop-blur border border-white/10 px-4 py-2  flex items-center gap-3 animate-fade-in pointer-events-none">
                 <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
                 <span className="text-sm font-medium text-white">
                   Waiting for {bufferingUsers.length === 1 ? bufferingUsers[0].username : `${bufferingUsers.length} users`} to buffer...
@@ -1129,7 +1129,7 @@ const VideoPlayer = () => {
         <div className={`absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-50 gap-3 transition-opacity duration-300
           ${(isDecrypting || isSwappingStream) ? 'bg-black/60 backdrop-blur-sm' : ''}
         `}>
-          <div className={(isLoading && !isDecrypting && !isSwappingStream) ? 'bg-black/60 p-4 rounded-full backdrop-blur-md shadow-2xl' : ''}>
+          <div className={(isLoading && !isDecrypting && !isSwappingStream) ? 'bg-black/60 p-4  backdrop-blur-md shadow-2xl' : ''}>
             <Loader2 className="w-12 h-12 text-violet-400 animate-spin drop-shadow-[0_0_15px_rgba(229,9,20,0.5)]" />
           </div>
           {isSwappingStream && (

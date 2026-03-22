@@ -812,7 +812,7 @@ const RoomPage = () => {
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-white/5 shrink-0 px-6 pt-4 gap-8 bg-[#0a0a0b]">
+          <div className="hidden md:flex border-b border-white/5 shrink-0 px-4 pt-4 justify-between bg-[#0a0a0b]">
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },

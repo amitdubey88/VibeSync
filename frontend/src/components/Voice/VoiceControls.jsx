@@ -21,7 +21,7 @@ const VoiceControls = () => {
       </div>
 
       {voiceError && (
-        <div className="flex items-center gap-2 text-xs text-red-400 bg-red-400/10 rounded-lg px-3 py-2 mb-3 border border-red-400/20">
+        <div className="flex items-center gap-2 text-xs text-red-400 bg-red-400/10  px-3 py-2 mb-3 border border-red-400/20">
           <AlertCircle className="w-3.5 h-3.5 shrink-0" />
           {voiceError}
         </div>
@@ -32,9 +32,9 @@ const VoiceControls = () => {
         <button
           onClick={toggleMute}
           title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-xl transition-all font-bold tracking-wide
+          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3  transition-all font-bold tracking-wide
             ${isMuted 
-              ? 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20 shadow-[0_0_10px_rgba(239,68,68,0.15)]' 
+              ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-headline uppercase tracking-widest shadow-[0_0_10px_rgba(239,68,68,0.15)]' 
               : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.15)]'}`}
         >
           {isMuted
@@ -49,7 +49,7 @@ const VoiceControls = () => {
             title="Mute Everyone"
             className="
               flex items-center justify-center gap-1.5 px-3
-              rounded-xl text-xs font-bold font-headline tracking-wide
+               text-xs font-bold font-headline tracking-wide
               bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20
               hover:bg-fuchsia-500/20 transition-all duration-150 shadow-[0_0_10px_rgba(217,70,239,0.15)] active:scale-[0.97]
             "

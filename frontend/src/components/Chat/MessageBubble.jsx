@@ -99,7 +99,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   if (message.type === 'system') {
     return (
       <div id={`msg-${message.id}`} className="flex justify-center my-1.5">
-        <span className="text-[11px] text-zinc-400 bg-white/5 border border-white/5 px-3 py-1 rounded-full">
+        <span className="text-[11px] text-zinc-400 bg-white/5 border border-white/5 px-3 py-1 ">
           {message.content}
         </span>
       </div>
@@ -162,7 +162,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
     >
       {/* Reply hint behind bubble */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-accent-purple/20 border border-accent-purple/40 text-fuchsia-400 ${isOwn ? 'right-10' : 'left-10'} pointer-events-none`}
+        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center  bg-accent-purple/20 border border-accent-purple/40 text-fuchsia-400 ${isOwn ? 'right-10' : 'left-10'} pointer-events-none`}
         style={{
           width: `${22 + swipeProgress * 12}px`,
           height: `${22 + swipeProgress * 12}px`,
@@ -211,7 +211,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
             {message.replyTo && (
               <div
                 onClick={(e) => { e.stopPropagation(); scrollToOriginal(); }}
-                className={`mb-1.5 pl-2.5 pr-2 py-1 rounded-lg border-l-[3px] cursor-pointer transition-all hover:brightness-110 overflow-hidden text-[12px]
+                className={`mb-1.5 pl-2.5 pr-2 py-1  border-l-[3px] cursor-pointer transition-all hover:brightness-110 overflow-hidden text-[12px]
                   ${isOwn ? 'bg-black/20 border-white/20 text-white/90' : 'bg-white/5 border-fuchsia-500/30 text-zinc-400'}`}
               >
                 <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-fuchsia-400'}`}>
@@ -225,7 +225,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
 
             {/* Message text or GIF */}
             {message.type === 'gif' ? (
-              <div className="mt-1 mb-1 relative rounded-lg overflow-hidden border border-white/10 group-hover/bubble:brightness-110 transition-all">
+              <div className="mt-1 mb-1 relative  overflow-hidden border border-white/10 group-hover/bubble:brightness-110 transition-all">
                 <img src={message.content} alt={message.title || 'GIF'} className="max-w-full h-auto min-w-[150px] object-cover" loading="lazy" />
               </div>
             ) : (
@@ -252,7 +252,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
                   key={emoji}
                   onClick={(e) => { e.stopPropagation(); reactToMessage(message.id, emoji); }}
                   title={users.join(', ')}
-                  className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all
+                  className={`flex items-center gap-1 px-1.5 py-0.5  text-[11px] font-semibold border transition-all
                     ${users.includes(user?.username)
                       ? 'bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-400'
                       : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'}`}
@@ -267,7 +267,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
           {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
           {showActions && (
             <div
-              className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5 rounded-2xl bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
+              className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5  bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
                 ${isOwn ? 'right-0' : 'left-0'}`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -276,7 +276,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
                 <button
                   key={emoji}
                   onClick={() => { reactToMessage(message.id, emoji); setShowActions(false); }}
-                  className="text-lg hover:scale-125 transition-transform active:scale-150 p-0.5 rounded-lg"
+                  className="text-lg hover:scale-125 transition-transform active:scale-150 p-0.5 "
                 >
                   {emoji}
                 </button>
@@ -288,7 +288,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               {onReply && (
                 <button
                   onClick={() => { onReply(message); setShowActions(false); }}
-                  className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
+                  className="p-1  text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
                   title="Reply"
                 >
                   <Reply className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               {(isHost || isCoHost) && onPin && (
                 <button
                   onClick={() => { onPin(message.id); setShowActions(false); }}
-                  className="p-1 rounded-lg text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
+                  className="p-1  text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
                   title="Pin message"
                 >
                   <Pin className="w-3.5 h-3.5" />

@@ -151,7 +151,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       {/* ── Chat Header ── */}
       <div className="flex items-center justify-between px-3 py-1.5 md:px-5 md:py-3 border-b border-white/5 bg-white/[0.03] backdrop-blur-md shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-fuchsia-500/10 flex items-center justify-center border border-fuchsia-500/20">
+          <div className="w-8 h-8  bg-fuchsia-500/10 flex items-center justify-center border border-fuchsia-500/20">
             <MessageSquare className="w-4 h-4 text-fuchsia-400" />
           </div>
           <div className="flex flex-col">
@@ -159,7 +159,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               Live Chat
             </h2>
             <div className="flex items-center gap-1.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="w-1.5 h-1.5  bg-emerald-400 animate-pulse" />
               <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest">
                 Connected
               </span>
@@ -169,7 +169,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
         <button
           onClick={() => setChatMuted(!chatMuted)}
-          className={`group flex items-center gap-2 pl-2 pr-3 py-1.5 rounded-full transition-all active:scale-95 border ${
+          className={`group flex items-center gap-2 pl-2 pr-3 py-1.5  transition-all active:scale-95 border ${
             chatMuted
               ? "text-red-400 bg-red-500/10 border-red-500/30 ring-4 ring-red-500/5 shadow-[0_0_15px_rgba(239,68,68,0.1)]"
               : "text-zinc-500 bg-white/5 border-white/10 hover:border-white/20 hover:bg-white/10 hover:text-zinc-200 shadow-inner"
@@ -179,7 +179,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
           }
         >
           <div
-            className={`p-1 rounded-full transition-colors ${chatMuted ? "bg-red-500/20" : "bg-white/10 group-hover:bg-fuchsia-500/20"}`}
+            className={`p-1  transition-colors ${chatMuted ? "bg-red-500/20" : "bg-white/10 group-hover:bg-fuchsia-500/20"}`}
           >
             {chatMuted ? (
               <BellOff className="w-3 h-3" />
@@ -211,7 +211,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               onClick={scrollToPoll}
               className="flex items-center gap-2 px-4 py-1.5 bg-fuchsia-500/5 border-t border-white/5 group/poll-pin relative z-10 hover:bg-fuchsia-500/10 active:scale-[0.99] transition-all text-left w-full"
             >
-              <div className="w-1 h-1 rounded-full bg-fuchsia-500 animate-pulse shrink-0" />
+              <div className="w-1 h-1  bg-fuchsia-500 animate-pulse shrink-0" />
               <span className="text-[9px] font-black text-fuchsia-400/80 uppercase tracking-[0.2em] shrink-0">
                 Poll Active:
               </span>
@@ -229,7 +229,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       {/* ── Messages ── */}
       <div className="flex-1 overflow-y-auto scroll-area px-3 pt-3 pb-3 space-y-1">
         {/* E2EE Security Notice */}
-        <div className="flex items-center gap-2.5 py-2.5 px-4 mb-4 bg-amber-500/5 border border-amber-500/10 rounded-xl justify-center">
+        <div className="flex items-center gap-2.5 py-2.5 px-4 mb-4 bg-amber-500/5 border border-amber-500/10  justify-center">
           <ShieldCheck className="w-3.5 h-3.5 text-amber-500/60 shrink-0" />
           <p className="text-[10px] text-amber-400/80 font-medium tracking-wide uppercase">
             End-to-end encrypted
@@ -238,7 +238,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
         {/* Swipe-to-reply guide — shown once until user dismisses */}
         {showSwipeGuide && (
-          <div className="mb-3 rounded-2xl border border-fuchsia-500/30 bg-fuchsia-500/10 backdrop-blur-sm overflow-hidden animate-fade-in">
+          <div className="mb-3  border border-fuchsia-500/30 bg-fuchsia-500/10 backdrop-blur-sm overflow-hidden animate-fade-in">
             <div className="px-4 pt-3 pb-2">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">👈</span>
@@ -256,9 +256,9 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               </p>
               <div className="mt-2.5 flex items-center gap-2">
                 {/* Animated demo */}
-                <div className="flex-1 flex items-center gap-2 bg-white/10 rounded-xl px-3 py-1.5">
-                  <div className="w-5 h-5 rounded-full bg-fuchsia-500/40 shrink-0" />
-                  <div className="flex-1 h-2 rounded-full bg-white/10" />
+                <div className="flex-1 flex items-center gap-2 bg-white/10  px-3 py-1.5">
+                  <div className="w-5 h-5  bg-fuchsia-500/40 shrink-0" />
+                  <div className="flex-1 h-2  bg-white/10" />
                   <span className="text-xs text-fuchsia-400 animate-bounce">
                     →
                   </span>
@@ -276,7 +276,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
         {messages.filter((m) => m.type !== "system").length === 0 && (
           <div className="flex flex-col items-center justify-center py-10 px-6 text-center animate-fade-in">
-            <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4 text-3xl shadow-inner border border-white/5">
+            <div className="w-16 h-16  bg-white/5 flex items-center justify-center mb-4 text-3xl shadow-inner border border-white/5">
               💬
             </div>
             <h4 className="text-sm font-bold text-zinc-200 mb-1">
@@ -312,9 +312,9 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       {Object.keys(typingUsers).length > 0 && (
         <div className="px-4 py-1.5 flex items-center gap-2.5 animate-fade-in border-t border-white/5 bg-gradient-to-r from-accent-purple/5 to-transparent shrink-0">
           <div className="flex gap-[3px] items-center">
-            <span className="w-1 h-1 bg-fuchsia-500/70 rounded-full animate-typing-dot-1" />
-            <span className="w-1 h-1 bg-fuchsia-500/70 rounded-full animate-typing-dot-2" />
-            <span className="w-1 h-1 bg-fuchsia-500 rounded-full animate-typing-dot-3" />
+            <span className="w-1 h-1 bg-fuchsia-500/70  animate-typing-dot-1" />
+            <span className="w-1 h-1 bg-fuchsia-500/70  animate-typing-dot-2" />
+            <span className="w-1 h-1 bg-fuchsia-500  animate-typing-dot-3" />
           </div>
           <span className="text-[10px] text-fuchsia-400/80 font-semibold tracking-wide uppercase">
             {Object.keys(typingUsers).length === 1
@@ -326,7 +326,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
       {/* ── Emoji picker ── */}
       {showEmoji && (
-        <div className="absolute bottom-20 right-2 z-30 bg-black/80 backdrop-blur-xl border border-white/10 rounded-2xl p-3 shadow-2xl w-72 border border-white/10 animate-fade-in">
+        <div className="absolute bottom-20 right-2 z-30 bg-black/80 backdrop-blur-xl border border-white/10  p-3 shadow-2xl w-72 border border-white/10 animate-fade-in">
           <div className="mb-2">
             <p className="text-xs text-zinc-500 mb-2 font-semibold uppercase tracking-wide">
               Add to message
@@ -336,7 +336,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
                 {row.map((e) => (
                   <button
                     key={e}
-                    className="text-xl w-8 h-8 flex items-center justify-center rounded-lg hover:bg-white/10 transition-all hover:scale-125"
+                    className="text-xl w-8 h-8 flex items-center justify-center  hover:bg-white/10 transition-all hover:scale-125"
                     onClick={() => handleEmojiSelect(e)}
                   >
                     {e}
@@ -361,7 +361,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
         {replyToMessage && (
           <div className="flex items-center justify-between px-4 py-3 bg-fuchsia-500/5 text-xs border-b border-white/5 animate-slide-up">
             <div className="flex items-center gap-3 overflow-hidden">
-              <div className="w-1 h-8 bg-fuchsia-500 rounded-full shrink-0" />
+              <div className="w-1 h-8 bg-fuchsia-500  shrink-0" />
               <div className="flex flex-col min-w-0">
                 <span className="text-[10px] font-black text-fuchsia-400 tracking-wider uppercase">
                   Replying to {replyToMessage.username}
@@ -377,7 +377,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             </div>
             <button
               onClick={() => setReplyToMessage(null)}
-              className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all active:scale-95"
+              className="p-1.5 text-zinc-500 hover:text-red-400 hover:bg-red-500/10  transition-all active:scale-95"
               title="Cancel reply"
             >
               <X className="w-4 h-4" />
@@ -396,7 +396,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
                 setShowAttachMenu(!showAttachMenu);
                 setShowEmoji(false);
               }}
-              className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showAttachMenu ? "text-fuchsia-400 bg-fuchsia-500/10" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"}`}
+              className={`flex items-center justify-center p-2  transition-all active:scale-90 ${showAttachMenu ? "text-fuchsia-400 bg-fuchsia-500/10" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"}`}
               title="Attach"
             >
               <Plus
@@ -405,7 +405,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             </button>
 
             {showAttachMenu && (
-              <div className="absolute bottom-full left-0 mb-2 py-2 w-48 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 rounded-xl shadow-2xl z-50 animate-slide-up origin-bottom-left">
+              <div className="absolute bottom-full left-0 mb-2 py-2 w-48 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5  shadow-2xl z-50 animate-slide-up origin-bottom-left">
                 {canCreatePoll && (
                   <button
                     type="button"
@@ -454,7 +454,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               setShowEmoji((s) => !s);
               setShowGif(false);
             }}
-            className={`flex items-center justify-center p-2 rounded-xl transition-all active:scale-90 ${showEmoji ? "text-amber-400 bg-amber-500/10" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"}`}
+            className={`flex items-center justify-center p-2  transition-all active:scale-90 ${showEmoji ? "text-amber-400 bg-amber-500/10" : "text-zinc-400 hover:text-zinc-200 hover:bg-white/5"}`}
             title="Emoji / Reactions"
           >
             <Smile className="w-5 h-5" />
@@ -464,7 +464,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             <input
               ref={inputRef}
               type="text"
-              className="w-full px-4 py-2.5 rounded-xl bg-white/5 border border-white/10 text-zinc-200 placeholder:text-zinc-600 text-[14px] transition-all focus:outline-none focus:border-fuchsia-500/50 focus:ring-4 focus:ring-fuchsia-500/10 selection:bg-fuchsia-500/30"
+              className="w-full px-4 py-2.5  bg-obsidian-surface-high border-b border-obsidian-primary/50 text-obsidian-primary text-zinc-200 placeholder:text-zinc-600 text-[14px] transition-all focus:outline-none focus:border-fuchsia-500/50 focus:ring-4 focus:ring-fuchsia-500/10 selection:bg-fuchsia-500/30"
               placeholder="Send a message…"
               value={input}
               onChange={(e) => {
@@ -485,7 +485,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             <button
               type="submit"
               disabled={!input.trim() || (isSlowMode && remainingCooldown > 0)}
-              className="flex items-center justify-center w-10 h-10 rounded-xl bg-fuchsia-500 text-white shadow-lg shadow-accent-purple/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:grayscale disabled:hover:scale-100 disabled:shadow-none relative z-20"
+              className="flex items-center justify-center w-10 h-10  bg-fuchsia-500 text-white shadow-lg shadow-accent-purple/20 transition-all hover:scale-105 active:scale-95 disabled:opacity-30 disabled:hover:scale-100 disabled:grayscale disabled:hover:scale-100 disabled:shadow-none relative z-20"
               title="Send"
             >
               <Send className="w-4 h-4" />

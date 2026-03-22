@@ -100,7 +100,7 @@ const ParticipantsList = () => {
               {/* Name + badges */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`text-sm font-medium truncate ${isMe ? 'text-fuchsia-400 font-bold' : 'text-zinc-200 font-medium'}`}>
+                  <span className={`text-sm tracking-widest uppercase font-headline truncate ${isMe ? 'text-obsidian-primary font-bold' : 'text-zinc-200 font-bold'}`}>
                     {p.username}{isMe ? ' (you)' : ''}
                   </span>
                   {isRoomHost && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}

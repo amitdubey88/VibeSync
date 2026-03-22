@@ -38,12 +38,12 @@ const QuickReactionBar = ({ visible, className, isOverlay }) => {
 
   return (
     <div className={`transition-all duration-300 animate-slide-up ${positionClasses} ${className || ''}`}>
-      <div className="flex gap-2 p-1.5 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.8)] px-2 py-2">
+      <div className="flex gap-2 p-1.5 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] px-2 py-2">
         {emojis.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="w-12 h-12 flex items-center justify-center text-2xl hover:bg-white/5 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] rounded-2xl transition-all duration-300 hover:-translate-y-2 hover:scale-110 active:scale-95"
+            className="w-12 h-12 flex items-center justify-center text-2xl hover:bg-white/5 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300 hover:-translate-y-2 hover:scale-110 active:scale-95"
             title={`React with ${emoji}`}
           >
             {emoji}
