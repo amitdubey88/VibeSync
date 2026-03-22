@@ -188,15 +188,15 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
-        className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
+        className={`relative h-1.5 bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
         onClick={(isHost || isCoHost) ? handleSeek : undefined}
       >
         <div
-          className="absolute h-full rounded-full bg-white/20 transition-all duration-300"
+          className="absolute h-full bg-white/20 transition-all duration-300"
           style={{ width: `${Math.min(bufferedProgress, 100)}%` }}
         />
         <div
-          className="relative h-full rounded-full bg-obsidian-primary transition-all duration-150 shadow-[0_0_15px_rgba(139,92,246,0.6)]"
+          className="relative h-full bg-obsidian-primary transition-all duration-150 shadow-[0_0_15px_rgba(139,92,246,0.6)]"
           style={{ width: `${progress}%` }}
         />
         {/* Clip Markers */}
@@ -211,7 +211,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
 
         {(isHost || isCoHost) && (
           <div
-            className="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
+            className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-white shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity"
             style={{ left: `${progress}%`, transform: 'translate(-50%, -50%)' }}
           />
         )}
@@ -226,12 +226,12 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
           disabled={!isHost && !isCoHost}
           title={(isHost || isCoHost) ? (isPlaying ? 'Pause' : 'Play') : 'Only host/co-host can control'}
         >
-          {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+          {isPlaying ? <Pause className="w-5 h-5" fill="currentColor" /> : <Play className="w-5 h-5" fill="currentColor" />}
         </button>
 
         {/* Volume */}
         <button onClick={toggleMuteVideo} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors">
-          {isMutedLocal || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+          {isMutedLocal || volume === 0 ? <VolumeX className="w-4 h-4" fill="currentColor" /> : <Volume2 className="w-4 h-4" fill="currentColor" />}
         </button>
         <input
           type="range" min="0" max="1" step="0.05"
@@ -248,17 +248,17 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Mic toggle */}
         <div className="flex items-center gap-1.5 ml-2">
           {voiceError ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse pointer-events-none">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse pointer-events-none">
               <MicOff className="w-3 h-3" />
               <span>Mic Denied</span>
             </div>
           ) : (
             <button
               onClick={toggleMute}
-              className={`btn-icon rounded-full w-8 h-8 transition-all ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}
+              className={`btn-icon w-8 h-8 transition-all ${isMuted ? 'bg-red-500/20 text-red-500' : 'bg-green-500/20 text-green-500'}`}
               title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
             >
-              {isMuted ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+              {isMuted ? <MicOff className="w-4 h-4" fill="currentColor" /> : <Mic className="w-4 h-4" fill="currentColor" />}
             </button>
           )}
         </div>
@@ -268,7 +268,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Load video button (host only) */}
         {(isHost || isCoHost) && onLoadClick && (
           <button onClick={onLoadClick} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors" title="Change video">
-            <Upload className="w-4 h-4" />
+            <Upload className="w-4 h-4" fill="currentColor" />
           </button>
         )}
 
@@ -278,12 +278,12 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
           className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors  transition-colors" 
           title="Clip This Moment"
         >
-          <Pin className="w-4 h-4" />
+          <Pin className="w-4 h-4" fill="currentColor" />
         </button>
 
         {/* Fullscreen */}
         <button type="button" onClick={toggleFullscreen} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors" title="Fullscreen">
-          {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+          {isFullscreen ? <Minimize2 className="w-4 h-4" fill="currentColor" /> : <Maximize2 className="w-4 h-4" fill="currentColor" />}
         </button>
       </div>
 

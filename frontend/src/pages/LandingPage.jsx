@@ -137,12 +137,12 @@ const LandingPage = () => {
       <header className="fixed top-0 left-0 w-full z-50 bg-neutral-950/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)]">
         <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
           <div className="flex items-center gap-3">
-            <img src="/favicon-192.png" alt="VibeSync" className="w-9 h-9 object-contain drop-shadow-[0_0_15px_rgba(189,157,255,0.4)] rounded-xl" />
+            <img src="/favicon-192.png" alt="VibeSync" className="w-9 h-9 object-contain drop-shadow-[0_0_15px_rgba(189,157,255,0.4)]" />
             <span className="text-2xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase">VIBESYNC</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
             <span className="text-obsidian-primary font-bold font-headline text-sm tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-obsidian-primary animate-pulse blur-[1px]"></span>
+              <span className="w-1.5 h-1.5 bg-obsidian-primary animate-pulse blur-[1px]"></span>
               REAL-TIME SYNC
             </span>
             <span className="text-obsidian-outline font-headline text-sm tracking-widest flex items-center gap-2">
@@ -168,7 +168,7 @@ const LandingPage = () => {
       {location.state?.roomEnded && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
           <div className="glass-panel p-10 max-w-sm w-full border border-obsidian-outline-variant text-center shadow-[0_0_50px_rgba(220,38,38,0.2)]">
-            <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
               <span className="material-symbols-outlined text-red-500 text-3xl">dangerous</span>
             </div>
             <h2 className="text-xl font-headline font-bold tracking-widest uppercase text-white mb-2">SESSION TERMINATED</h2>
@@ -235,7 +235,7 @@ const LandingPage = () => {
 
         {/* Join Room Form Section */}
         <section id="access-hub" className="py-24 px-6 relative z-20">
-          <div className="max-w-xl mx-auto glass-panel p-8 md:p-14 rounded-lg relative overflow-hidden group border border-obsidian-outline-variant/30">
+          <div className="max-w-xl mx-auto glass-panel p-8 md:p-14 relative overflow-hidden group border border-obsidian-outline-variant/30">
             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-obsidian-primary to-transparent opacity-50"></div>
             <div className="relative z-10">
               <h2 className="font-headline text-3xl font-bold tracking-tighter uppercase mb-2">ACCESS HUB</h2>
@@ -357,7 +357,7 @@ const LandingPage = () => {
 
                   <div className="pt-2 border-t border-white/5">
                     <label className="flex items-center gap-3 cursor-pointer group/toggle w-fit">
-                      <div className="relative flex items-center justify-center w-5 h-5 rounded border border-obsidian-outline transition-colors group-hover/toggle:border-obsidian-primary">
+                      <div className="relative flex items-center justify-center w-5 h-5 border border-obsidian-outline transition-colors group-hover/toggle:border-obsidian-primary">
                         <input 
                           type="checkbox" 
                           checked={scheduleToggle} 
@@ -365,7 +365,7 @@ const LandingPage = () => {
                           className="absolute w-full h-full opacity-0 cursor-pointer z-10"
                         />
                         {scheduleToggle && (
-                          <div className="w-2.5 h-2.5 bg-obsidian-primary rounded-sm shadow-[0_0_8px_rgba(189,157,255,0.8)]"></div>
+                          <div className="w-2.5 h-2.5 bg-obsidian-primary shadow-[0_0_8px_rgba(189,157,255,0.8)]"></div>
                         )}
                       </div>
                       <span className="font-headline text-xs tracking-widest uppercase text-obsidian-outline group-hover/toggle:text-white transition-colors">
@@ -414,9 +414,9 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
             {/* Feature 1 */}
-            <div className="glass-panel p-8 rounded-lg flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
+            <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
-                <div className="w-14 h-14 bg-obsidian-primary/10 flex items-center justify-center rounded-full border border-obsidian-primary/20">
+                <div className="w-14 h-14 bg-obsidian-primary/10 flex items-center justify-center border border-obsidian-primary/20">
                    <span className="material-symbols-outlined text-obsidian-primary text-3xl">sync</span>
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">01</span>
@@ -429,9 +429,9 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="glass-panel p-8 rounded-lg flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
+            <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
-                <div className="w-14 h-14 bg-red-500/10 flex items-center justify-center rounded-full border border-red-500/20">
+                <div className="w-14 h-14 bg-red-500/10 flex items-center justify-center border border-red-500/20">
                    <span className="material-symbols-outlined text-red-500 text-3xl">enhanced_encryption</span>
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">02</span>
@@ -444,9 +444,9 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="glass-panel p-8 rounded-lg flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
+            <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
-                <div className="w-14 h-14 bg-cyan-500/10 flex items-center justify-center rounded-full border border-cyan-500/20">
+                <div className="w-14 h-14 bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
                    <span className="material-symbols-outlined text-cyan-500 text-3xl">forum</span>
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">03</span>
@@ -464,7 +464,7 @@ const LandingPage = () => {
         <section className="py-32 bg-obsidian-surface-low overflow-hidden relative border-y border-white/5">
           <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
             <div className="relative">
-              <div className="aspect-video bg-obsidian-surface rounded-lg border border-white/5 shadow-2xl overflow-hidden group">
+              <div className="aspect-video bg-obsidian-surface border border-white/5 shadow-2xl overflow-hidden group">
                 <img 
                   alt="Cinematic Interface" 
                   className="w-full h-full object-cover opacity-60 group-hover:scale-105 transition-transform duration-1000" 
@@ -472,7 +472,7 @@ const LandingPage = () => {
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian-background via-transparent to-transparent"></div>
                 <div className="absolute bottom-8 left-8 flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-full bg-obsidian-primary/20 flex items-center justify-center backdrop-blur-md border border-obsidian-primary/30">
+                  <div className="w-12 h-12 bg-obsidian-primary/20 flex items-center justify-center backdrop-blur-md border border-obsidian-primary/30">
                     <span className="material-symbols-outlined text-obsidian-primary">play_arrow</span>
                   </div>
                   <div className="font-headline text-sm font-bold tracking-widest uppercase text-white shadow-sm">LIVE PREVIEW</div>
@@ -487,9 +487,9 @@ const LandingPage = () => {
               <h2 className="font-headline text-4xl md:text-6xl font-bold tracking-tighter uppercase leading-[0.95]">THE VIEWPORT IS YOUR CANVAS.</h2>
               <p className="text-obsidian-on-surface-variant text-lg font-light leading-relaxed">We don't just stream video. We curate atmosphere. Our "Glass" interface adapts to the colors of your content, bleeding the emotional tone of every frame into your physical space.</p>
               <div className="flex flex-wrap gap-4 mt-4">
-                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase rounded-full border border-white/5 text-obsidian-outline">DYNAMIC BLUR</span>
-                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase rounded-full border border-white/5 text-obsidian-outline">ADAPTIVE GAIN</span>
-                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase rounded-full border border-white/5 text-obsidian-outline">CINEMATIC FX</span>
+                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase border border-white/5 text-obsidian-outline">DYNAMIC BLUR</span>
+                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase border border-white/5 text-obsidian-outline">ADAPTIVE GAIN</span>
+                <span className="px-4 py-2 bg-obsidian-surface-bright/10 text-[10px] font-headline font-bold tracking-widest uppercase border border-white/5 text-obsidian-outline">CINEMATIC FX</span>
               </div>
             </div>
           </div>
@@ -510,10 +510,10 @@ const LandingPage = () => {
             <a className="font-headline text-xs tracking-widest text-neutral-500 hover:text-white transition-colors uppercase" href="#">Support</a>
           </div>
           <div className="flex gap-4">
-            <div className="w-10 h-10 border border-white/5 flex items-center justify-center rounded-sm hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
+            <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
               <span className="material-symbols-outlined text-neutral-500 group-hover:text-obsidian-primary transition-colors text-xl">language</span>
             </div>
-            <div className="w-10 h-10 border border-white/5 flex items-center justify-center rounded-sm hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
+            <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
               <span className="material-symbols-outlined text-neutral-500 group-hover:text-obsidian-primary transition-colors text-xl">share</span>
             </div>
           </div>

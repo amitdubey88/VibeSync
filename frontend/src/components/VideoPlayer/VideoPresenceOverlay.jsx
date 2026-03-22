@@ -31,7 +31,7 @@ const VideoPresenceOverlay = ({ visible }) => {
     <div className={`absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`}>
       {/* Top Row: Viewer Count & Sync/Status (Simplified) */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1 rounded-full text-[10px] font-bold text-white shadow-xl pointer-events-auto">
+        <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1  text-[10px] font-bold text-white shadow-xl pointer-events-auto">
           <Users className="w-3 h-3 text-violet-400" />
           <span>{onlineCount} watching</span>
         </div>
@@ -41,7 +41,7 @@ const VideoPresenceOverlay = ({ visible }) => {
       {Object.entries(reactionCounts).length > 0 && (
         <div className="flex flex-wrap gap-2 animate-bounce">
           {Object.entries(reactionCounts).map(([emoji, count]) => (
-            <div key={emoji} className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/20 rounded-full px-2 py-0.5 text-xs font-bold text-white shadow-lg pointer-events-auto">
+            <div key={emoji} className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/20  px-2 py-0.5 text-xs font-bold text-white shadow-lg pointer-events-auto">
               <span>{emoji}</span>
               <span className="text-violet-400">x{count}</span>
             </div>
@@ -58,7 +58,7 @@ const VideoPresenceOverlay = ({ visible }) => {
           return (
             <div 
               key={p.userId} 
-              className={`relative flex items-center justify-center w-8 h-8 rounded-full text-[10px] font-bold text-white shadow-2xl border-2 border-[#0e0e0f] transition-all hover:z-10 hover:-translate-y-1 group
+              className={`relative flex items-center justify-center w-8 h-8  text-[10px] font-bold text-white shadow-2xl border-2 border-[#0e0e0f] transition-all hover:z-10 hover:-translate-y-1 group
                 ${isSpeaking ? 'ring-2 ring-emerald-400 trigger-pulse-ring' : ''}`}
               style={{ backgroundColor: p.avatar || getAvatarColor(p.username), zIndex: 10 - idx }}
               title={p.username}
@@ -67,7 +67,7 @@ const VideoPresenceOverlay = ({ visible }) => {
               
               {/* Speaking Indicator Dot */}
               {isSpeaking && (
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400 rounded-full border border-[#0e0e0f] animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400  border border-[#0e0e0f] animate-pulse" />
               )}
 
               {/* Host Crown Indicator */}
@@ -85,7 +85,7 @@ const VideoPresenceOverlay = ({ visible }) => {
           );
         })}
         {onlineCount > activeParticipants.length && (
-          <div className="w-8 h-8 rounded-full bg-white/10 border-2 border-[#0e0e0f] flex items-center justify-center text-[10px] font-black text-zinc-500 z-0">
+          <div className="w-8 h-8  bg-white/10 border-2 border-[#0e0e0f] flex items-center justify-center text-[10px] font-black text-zinc-500 z-0">
             +{onlineCount - activeParticipants.length}
           </div>
         )}

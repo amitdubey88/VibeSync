@@ -58,7 +58,7 @@ const IconButton = ({
       disabled={disabled}
       aria-label={title}
       className={`
-        inline-flex items-center justify-center rounded-lg shrink-0
+        inline-flex items-center justify-center shrink-0
         transition-all duration-150
         hover:-translate-y-px active:scale-90
         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0

@@ -353,13 +353,13 @@ const RoomPage = () => {
           <div className="flex gap-2">
             <button
               onClick={() => { approveJoin(req.userId); toast.dismiss(t.id); }}
-              className="flex items-center gap-1 bg-accent-green/20 text-accent-green px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-accent-green/30 transition-colors"
+              className="flex items-center gap-1 bg-accent-green/20 text-accent-green px-3 py-1.5 text-xs font-semibold hover:bg-accent-green/30 transition-colors"
             >
               <CheckCircle className="w-3.5 h-3.5" /> Approve
             </button>
             <button
               onClick={() => { denyJoin(req.userId); toast.dismiss(t.id); }}
-              className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-red-500/30 transition-colors"
+              className="flex items-center gap-1 bg-red-500/20 text-red-400 px-3 py-1.5 text-xs font-semibold hover:bg-red-500/30 transition-colors"
             >
               <XCircle className="w-3.5 h-3.5" /> Deny
             </button>
@@ -468,7 +468,7 @@ const RoomPage = () => {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
         <div className="card text-center max-w-sm">
-          <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
+          <div className="w-20 h-20 bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
             <Clock className="w-9 h-9 text-accent-purple" />
           </div>
           <h2 className="text-xl font-bold text-white mb-2">Waiting for Approval</h2>
@@ -477,7 +477,7 @@ const RoomPage = () => {
           </p>
           <div className="flex gap-1.5 justify-center mb-6">
             {[0, 1, 2].map(i => (
-              <span key={i} className="w-2.5 h-2.5 rounded-full bg-accent-purple/60 animate-bounce"
+              <span key={i} className="w-2.5 h-2.5 bg-accent-purple/60 animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
@@ -514,8 +514,8 @@ const RoomPage = () => {
         
         <div className="w-full max-w-md bg-[#0a0a0b]/80 border border-white/5 p-8  backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] relative overflow-hidden my-auto">
           {/* Background Glow */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-obsidian-primary/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-obsidian-primary/80/20 rounded-full blur-[80px]" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-obsidian-primary/20 blur-[80px]" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-obsidian-primary/80/20 blur-[80px]" />
 
           <div className="relative z-10 text-center">
             <h2 className="text-2xl font-bold text-white mb-2">Welcome to the Party!</h2>
@@ -648,7 +648,7 @@ const RoomPage = () => {
 
           <div className="hidden md:flex items-center gap-2 bg-obsidian-surface-container px-4 py-1.5 border border-white/5 shadow-inner shrink min-w-0">
             <span className="flex items-center gap-1.5 shrink-0 text-obsidian-on-surface-variant text-[10px] font-bold font-headline uppercase tracking-widest">
-              <span className="w-2 h-2 rounded-full bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
+              <span className="w-2 h-2 bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
               {participants.filter((p) => p.isOnline !== false).length}
             </span>
             {isLocked && (
@@ -663,7 +663,7 @@ const RoomPage = () => {
           </div>
 
           {isHost && (
-            <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30 rounded-sm animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+            <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30  animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
               <Crown className="w-3.5 h-3.5 text-accent-yellow drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
               <span className="text-[9px] font-bold font-headline text-accent-yellow uppercase tracking-widest">
                 Host
@@ -691,7 +691,7 @@ const RoomPage = () => {
           <Tooltip text="Copy invite link" position="bottom">
             <button
               onClick={copyRoomLink}
-              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 rounded text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
+              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
             >
               <span className="material-symbols-outlined text-[14px]">
                 link
@@ -704,7 +704,7 @@ const RoomPage = () => {
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? "bg-obsidian-primary/10 text-obsidian-primary" : ""}`}
+                className={`text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors p-1.5 bg-transparent ${isMoreMenuOpen ? "bg-obsidian-primary/10 text-obsidian-primary" : ""}`}
                 onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 250)}
               >
                 <MoreVertical className="w-4 h-4" />
@@ -818,36 +818,36 @@ const RoomPage = () => {
           <div className="flex w-full overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveMobileTab("chat")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <MessageSquare className="w-4.5 h-4.5 mb-1" />
+              <MessageSquare className="w-5 h-5 mb-1" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
               <span>CHAT</span>
               {unreadChatCount > 0 && (
-                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
+                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
               )}
             </button>
             <button
               onClick={() => setActiveMobileTab("people")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <Users className="w-4.5 h-4.5 mb-1" />
+              <Users className="w-5 h-5 mb-1" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
               <span>PEOPLE ({onlineCount})</span>
               {joinRequests.length > 0 && (
-                <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80 rounded-full" />
+                <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80" />
               )}
             </button>
             <button
               onClick={() => setActiveMobileTab("queue")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <ListVideo className="w-4.5 h-4.5 mb-1" />
+              <ListVideo className="w-5 h-5 mb-1" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
               <span>QUEUE</span>
             </button>
             <button
               onClick={() => setActiveMobileTab("activity")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <Activity className="w-4.5 h-4.5 mb-1" />
+              <Activity className="w-5 h-5 mb-1" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
               <span>ACTIVITY</span>
             </button>
           </div>
@@ -867,7 +867,7 @@ const RoomPage = () => {
           ${isSidebarDimmed && isSidebarOpen ? "md:opacity-30 hover:opacity-100" : "opacity-100"}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-white/5 shrink-0 px-4 pt-4 justify-between bg-[#0a0a0b]">
+          <div className="hidden md:flex border-b border-white/5 shrink-0 px-2 pt-5 pb-2 justify-between bg-[#0a0a0b] relative z-10">
             {[
               { id: "chat", icon: MessageSquare, label: "Chat" },
               {
@@ -883,23 +883,20 @@ const RoomPage = () => {
                 <button
                   key={id}
                   onClick={() => handleTabChange(id)}
-                  className={`font-headline uppercase text-xs tracking-widest font-bold pb-2 transition-colors relative flex items-center gap-2 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant hover:text-white"}`}
+                  className={`flex-1 flex flex-col items-center justify-center gap-2 group relative transition-all duration-300 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant opacity-40 hover:opacity-100"}`}
                 >
-                  <TabIcon className="w-4 h-4" />
-                  <span className="hidden xl:inline">{label}</span>
+                  <TabIcon className="w-6 h-6 mb-1" fill={sidebarTab === id ? "currentColor" : "none"} />
+                  <span className="text-[9px] font-black uppercase tracking-[0.15em]">
+                    {id === "participants" ? `People (${participants?.length || 0})` : id}
+                  </span>
+                  
                   {sidebarTab === id && (
-                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_10px_rgba(189,157,255,0.5)]"></div>
+                    <div className="absolute -bottom-2 translate-y-[1px] left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_15px_rgba(189,157,255,0.8)]"></div>
                   )}
-                  {id === "chat" &&
-                    unreadChatCount > 0 &&
-                    sidebarTab !== "chat" && (
-                      <span
-                        key={unreadChatCount}
-                        className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
-                      >
-                        {unreadChatCount > 9 ? "9+" : unreadChatCount}
-                      </span>
-                    )}
+                  
+                  {id === "chat" && unreadChatCount > 0 && sidebarTab !== "chat" && (
+                    <span className="absolute top-0 right-1/4 w-3 h-3 bg-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.8)] animate-badge-bounce" />
+                  )}
                 </button>
               );
             })}
@@ -937,10 +934,10 @@ const RoomPage = () => {
                       </div>
                       <button
                         onClick={() => setApprovalRequired(!requiresApproval)}
-                        className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? "bg-accent-green" : "bg-obsidian-surface-container-high"}`}
+                        className={`relative inline-flex w-11 h-6  overflow-hidden transition-colors ${requiresApproval ? "bg-accent-green" : "bg-obsidian-surface-container-high"}`}
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${requiresApproval ? "translate-x-5" : "translate-x-0"}`}
+                          className={`absolute top-0.5 left-0.5 w-5 h-5  bg-white transition-transform ${requiresApproval ? "translate-x-5" : "translate-x-0"}`}
                         />
                       </button>
                     </div>
@@ -1108,10 +1105,10 @@ const RoomPage = () => {
                       setShowLeaveModal(false);
                       confirmLeave(p.userId);
                     }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#13131a] hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-white/5 shadow-lg transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3  bg-[#13131a] hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-white/5 shadow-lg transition-all text-left"
                   >
                     <div
-                      className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
+                      className="w-9 h-9  flex items-center justify-center text-sm font-bold text-white shrink-0"
                       style={{ backgroundColor: p.avatar || "#8b5cf6" }}
                     >
                       {p.username?.slice(0, 2)?.toUpperCase()}

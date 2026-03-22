@@ -20,7 +20,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
   const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes.length, 0);
 
   return (
-    <div className="bg-[#13131a]/95 backdrop-blur-3xl rounded-3xl p-5 border border-white/5 w-full max-w-[320px] shadow-[0_10px_30px_rgba(0,0,0,0.8)] animate-fade-in group/poll">
+    <div className="bg-[#13131a]/95 backdrop-blur-3xl  p-5 border border-white/5 w-full max-w-[320px] shadow-[0_10px_30px_rgba(0,0,0,0.8)] animate-fade-in group/poll">
       <div className="flex justify-between items-start mb-4">
         <div className="flex flex-col gap-1">
           <span className="text-[10px] font-black text-fuchsia-400 uppercase tracking-widest opacity-80">Active Poll</span>
@@ -29,7 +29,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
         {poll.active && canEnd && (
           <button 
             onClick={() => onEnd && onEnd(poll.id)}
-            className="text-[10px] font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5 rounded-xl hover:bg-rose-500/20 font-bold tracking-wide font-headline transition-all active:scale-95 uppercase tracking-tighter"
+            className="text-[10px] font-black text-rose-400 bg-rose-500/10 border border-rose-500/20 px-3 py-1.5  hover:bg-rose-500/20 font-bold tracking-wide font-headline transition-all active:scale-95 uppercase tracking-tighter"
           >
             End
           </button>
@@ -46,7 +46,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
               key={option.id}
               onClick={() => handleVote(option.id)}
               disabled={!poll.active}
-              className={`relative w-full text-left overflow-hidden rounded-xl p-3 transition-all active:scale-[0.98] border shadow-inner
+              className={`relative w-full text-left overflow-hidden  p-3 transition-all active:scale-[0.98] border shadow-inner
                 ${!poll.active ? 'cursor-default grayscale-[0.5] opacity-60' : 'hover:scale-[1.01] hover:shadow-lg cursor-pointer'}
                 ${hasVoted 
                   ? 'border-fuchsia-500 bg-fuchsia-500/15 shadow-[0_0_15px_rgba(217,70,239,0.15)]' 
@@ -71,7 +71,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
         <div className="flex items-center gap-1.5 text-zinc-500">
           <div className="flex -space-x-1.5">
             {[...Array(Math.min(3, totalVotes))].map((_, i) => (
-              <div key={i} className="w-3.5 h-3.5 rounded-full border border-black bg-white/10 shadow-sm" />
+              <div key={i} className="w-3.5 h-3.5  border border-black bg-white/10 shadow-sm" />
             ))}
           </div>
           <span className="font-bold">{totalVotes} vote{totalVotes !== 1 && 's'}</span>

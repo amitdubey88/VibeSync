@@ -56,12 +56,12 @@ export default function WatchQueue() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste video URL..."
-          className="flex-1 bg-black/50 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+          className="flex-1 bg-black/50 border border-white/10 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
         />
         <button
           type="submit"
           disabled={!url.trim()}
-          className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white px-4 py-2 rounded-lg text-sm font-bold transition-all shrink-0 hover:shadow-[0_0_15px_rgba(139,92,246,0.5)] font-headline"
+          className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white px-6 py-2.5 text-sm font-bold transition-all shrink-0 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] font-headline uppercase tracking-widest"
         >
           {isPrivileged ? 'Add' : 'Suggest'}
         </button>
@@ -78,7 +78,7 @@ export default function WatchQueue() {
                 ? 'text-fuchsia-500'
                 : 'text-emerald-500'
         }`}>
-          <span className="w-1.5 h-1.5 rounded-full bg-current inline-block" />
+          <span className="w-1.5 h-1.5 bg-current inline-block" />
           {urlValidationResult.type === 'youtube' && '▶ YouTube Video'}
           {urlValidationResult.type === 'direct' && '📁 Direct Video'}
           {urlValidationResult.type === 'hls' && '📡 HLS Stream'}
@@ -91,7 +91,7 @@ export default function WatchQueue() {
 
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {queue.length === 0 ? (
-          <div className="text-center text-zinc-500 text-sm mt-8 border border-dashed border-white/10 font-headline tracking-wide rounded-xl p-6">
+          <div className="text-center text-zinc-500 text-sm mt-8 border border-dashed border-white/10 font-headline tracking-wide p-6">
             <svg className="w-8 h-8 mx-auto text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
@@ -110,7 +110,7 @@ export default function WatchQueue() {
                   key={item.id}
                   value={item}
                   dragListener={isPrivileged}
-                  className={`bg-white/5 backdrop-blur-md border ${item.status === 'approved' ? 'border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]' : 'border-white/5'} rounded-lg p-3 flex flex-col relative overflow-hidden`}
+                  className={`bg-white/5 backdrop-blur-md border ${item.status === 'approved' ? 'border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]' : 'border-white/5'} p-3 flex flex-col relative overflow-hidden`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 pr-2">
@@ -126,7 +126,7 @@ export default function WatchQueue() {
                       {isPrivileged && item.status !== 'approved' && (
                         <button
                           onClick={() => approveItem(item.id)}
-                          className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 transition-colors duration-200 hover:text-white rounded transition-colors"
+                          className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 transition-colors duration-200 hover:text-white transition-colors"
                           title="Play Immediately"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -138,7 +138,7 @@ export default function WatchQueue() {
                       {(isPrivileged || item.suggestedById === user?.id) && (
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="p-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500 transition-colors duration-200 hover:text-white rounded transition-colors"
+                          className="p-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500 transition-colors duration-200 hover:text-white transition-colors"
                           title="Remove"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

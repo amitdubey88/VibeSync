@@ -379,7 +379,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20 transition-opacity duration-300">
           <div className="relative mb-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-violet-500 animate-pulse shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
+            <div className="w-2.5 h-2.5 bg-violet-500 animate-pulse shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
           </div>
           <div className="text-center">
             <p className="text-white/90 font-bold text-xs">Loading YouTube Video</p>
@@ -391,7 +391,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       {/* Error State */}
       {status === 'error' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20 p-6">
-          <div className="w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
+          <div className="w-16 h-16 bg-red-500/10 flex items-center justify-center">
             <AlertCircle className="w-8 h-8 text-red-400" />
           </div>
           <div className="text-center max-w-xs">
@@ -402,7 +402,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
           </div>
           <button
             onClick={handleRetry}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm font-medium transition-colors"
           >
             <RefreshCw className="w-3.5 h-3.5" />
             Retry

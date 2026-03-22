@@ -142,13 +142,13 @@ const ParticipantsList = () => {
                 <div className="relative shrink-0 ml-1" ref={openMenuId === p.userId ? menuRef : null}>
                   <button
                     onClick={() => setOpenMenuId(openMenuId === p.userId ? null : p.userId)}
-                    className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
+                    className="p-1.5 text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
 
                   {openMenuId === p.userId && (
-                    <div className="absolute right-0 top-8 z-50 w-48 rounded-xl bg-[#0e0e0f]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
+                    <div className="absolute right-0 top-8 z-50 w-48 bg-[#0e0e0f]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
                       <button
                         onClick={() => { setConfirm({ type: 'makeHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
                         className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-amber-400 transition-colors"

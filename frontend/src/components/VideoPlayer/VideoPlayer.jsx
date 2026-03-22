@@ -30,7 +30,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
       className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-black/75 backdrop-blur-sm p-0 sm:p-4"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="bg-[#0e0e0f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl w-full sm:max-w-md rounded-t-3xl sm: p-6 pb-8 sm:pb-6 animate-slide-up">
+      <div className="bg-[#0e0e0f]/90 backdrop-blur-2xl border border-white/10 shadow-2xl w-full sm:max-w-md sm: p-6 pb-8 sm:pb-6 animate-slide-up">
         <div className="flex items-center justify-between mb-5">
           <div>
             <h3 className="text-xl font-bold text-white">Change Video</h3>
@@ -78,7 +78,7 @@ const SourcePickerModal = ({ onClose, onUrlSubmit, onFileUpload, urlInput, setUr
               onChange={(e) => setUrlInput(e.target.value)}
               autoFocus
             />
-            <button type="submit" className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)]  py-2 font-bold px-5">Go</button>
+            <button type="submit" className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)]  py-2.5 font-bold px-8 uppercase tracking-widest text-sm">Go</button>
           </div>
           {/* Live type indicator */}
           {urlInput.trim() && urlValidationResult && (
@@ -920,7 +920,7 @@ const VideoPlayer = () => {
     >
       {/* LIVE Badge (Visible to everyone during live streaming) */}
       {(currentVideo?.type === 'live' || isDirectStreaming) && (
-        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1 rounded-md shadow-lg animate-fade-in border border-white/10 opacity-60">
+        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1  shadow-lg animate-fade-in border border-white/10 opacity-60">
           <span className="w-2 h-2  bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
             Direct Live
@@ -1043,10 +1043,10 @@ const VideoPlayer = () => {
             />
             {/* Start Streaming Overlay for Host */}
             {isDirectStreaming && !isLiveStreamingInitialized && (
-              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm  pointer-events-auto">
+              <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm pointer-events-auto">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
-                  <div className="w-12 h-12 sm:w-20 sm:h-20  bg-violet-500/20 flex items-center justify-center mb-4 sm:mb-6">
-                    <span className="w-5 h-5 sm:w-8 sm:h-8  bg-violet-500 animate-pulse shadow-[0_0_30px_rgba(139,92,246,0.3)]" />
+                  <div className="w-12 h-12 sm:w-20 sm:h-20 bg-violet-500/20 flex items-center justify-center mb-4 sm:mb-6">
+                    <span className="w-5 h-5 sm:w-8 sm:h-8 bg-violet-500 animate-pulse shadow-[0_0_30px_rgba(139,92,246,0.3)]" />
                   </div>
                   <h3 className="text-lg sm:text-2xl font-bold text-white mb-2">
                     {isPendingNextStream ? 'Ready to Stream Next Video' : 'Ready to Go Live'}
@@ -1054,7 +1054,7 @@ const VideoPlayer = () => {
                   <p className="text-gray-300 text-xs sm:text-sm mb-6 sm:mb-8 px-2 sm:px-4">
                     Your video is loaded locally. Click below when you're ready to start broadcasting to all participants.
                   </p>
-                   <button
+                  <button
                     disabled={!videoRef.current && !videoEl}
                     onClick={() => {
                       console.log('[DirectStream] User clicked Start Streaming.');
@@ -1068,14 +1068,13 @@ const VideoPlayer = () => {
                          return;
                       }
 
-                      // BUG4 FIX: startBroadcast is now a stable useCallback — no stale closure.
                       if (!el.paused) {
                         startBroadcast();
                       } else {
                         el.play().catch(err => console.error('[DirectStream] Play after init failed:', err));
                       }
                     }}
-                    className={`flex items-center justify-center gap-2 font-bold py-2 sm:py-3 px-6 sm:px-8 text-sm sm:text-base  shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all ${
+                    className={`flex items-center justify-center gap-2 font-bold py-3 sm:py-4 px-8 sm:px-12 text-sm sm:text-base shadow-[0_0_20px_rgba(139,92,246,0.4)] transition-all uppercase tracking-widest ${
                        (!videoRef.current && !videoEl) ? 'bg-gray-600 cursor-not-allowed opacity-50' : 'bg-violet-500 hover:bg-violet-500/90 text-white hover:scale-105'
                     }`}
                   >
@@ -1102,8 +1101,8 @@ const VideoPlayer = () => {
                 </p>
               </div>
               {(isHost || isCoHost) && (
-                <button className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)]  py-2 font-bold mt-1 sm:mt-3 text-sm" onClick={() => setShowSourcePicker(true)}>
-                  <Upload className="w-4 h-4" /> Load Video File / URL
+                <button className="bg-violet-500/20 text-violet-300 border border-violet-500/30 hover:bg-violet-500/30 transition-all shadow-[0_0_15px_rgba(139,92,246,0.15)] py-3 px-8 font-bold mt-1 sm:mt-3 text-sm uppercase tracking-widest" onClick={() => setShowSourcePicker(true)}>
+                  <Upload className="w-4 h-4 mr-2" /> Load Video File / URL
                 </button>
               )}
             </div>
@@ -1207,7 +1206,7 @@ const VideoPlayer = () => {
               background: '#13131f',
               color: '#f1f1f1',
               border: '1px solid #1e1e30',
-              borderRadius: '12px',
+              borderRadius: '0px',
               fontSize: '14px',
               backdropFilter: 'blur(8px)',
             },

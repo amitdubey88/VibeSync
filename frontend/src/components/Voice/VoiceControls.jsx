@@ -1,5 +1,5 @@
 import { useWebRTCContext } from '../../context/WebRTCContext';
-import { Mic, MicOff, AlertCircle } from 'lucide-react';
+import { Mic, MicOff } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 
 /**
@@ -8,54 +8,41 @@ import { useRoom } from '../../context/RoomContext';
  */
 const VoiceControls = () => {
   const {
-    isInVoice, isMuted, voiceError, toggleMute,
+    isMuted, toggleMute,
   } = useWebRTCContext();
   const { isHost, muteAllParticipants } = useRoom();
 
   return (
-    <div className="px-2 py-1.5 md:px-4 md:py-3 border-t border-white/5 shrink-0 bg-black/40 backdrop-blur-md">
-      <div className="hidden md:flex items-center justify-between mb-2.5">
-        <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest font-headline">
-          Voice Chat
-        </span>
-      </div>
-
-      {voiceError && (
-        <div className="flex items-center gap-2 text-xs text-red-400 bg-red-400/10  px-3 py-2 mb-3 border border-red-400/20">
-          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-          {voiceError}
-        </div>
-      )}
-
+    <div className="px-4 py-4 border-t border-white/5 shrink-0 bg-[#0a0a0b]">
       <div className="flex gap-2">
-        {/* Mute toggle — uses explicit cinematic tailwind classes */}
         <button
           onClick={toggleMute}
-          title={isMuted ? 'Unmute Mic' : 'Mute Mic'}
-          className={`flex-1 flex items-center justify-center gap-2 py-2 px-3  transition-all font-bold tracking-wide
-            ${isMuted 
-              ? 'bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 font-headline uppercase tracking-widest shadow-[0_0_10px_rgba(239,68,68,0.15)]' 
-              : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.15)]'}`}
+          className={`flex-1 flex items-center justify-center gap-3 py-4 transition-all font-black uppercase tracking-[0.2em] text-[11px] ${
+            isMuted 
+              ? "bg-[#1a1313] text-red-500 border border-red-500/30 hover:bg-[#251818]" 
+              : "bg-[#131a13] text-emerald-500 border border-emerald-500/30 hover:bg-[#182518]"
+          }`}
         >
-          {isMuted
-            ? <><MicOff className="w-4 h-4" /> Unmute</>
-            : <><Mic className="w-4 h-4" /> Mute</>}
+          {isMuted ? (
+            <>
+              <MicOff className="w-5 h-5" fill="currentColor" />
+              Unmute
+            </>
+          ) : (
+            <>
+              <Mic className="w-5 h-5" fill="currentColor" />
+              Mute
+            </>
+          )}
         </button>
 
-        {/* Host-only: Mute All */}
-        {isHost && isInVoice && (
+        {isHost && (
           <button
             onClick={muteAllParticipants}
-            title="Mute Everyone"
-            className="
-              flex items-center justify-center gap-1.5 px-3
-               text-xs font-bold font-headline tracking-wide
-              bg-fuchsia-500/10 text-fuchsia-400 border border-fuchsia-500/20
-              hover:bg-fuchsia-500/20 transition-all duration-150 shadow-[0_0_10px_rgba(217,70,239,0.15)] active:scale-[0.97]
-            "
+            className="flex items-center justify-center gap-2 px-4 bg-white/5 text-white/40 border border-white/10 hover:bg-white/10 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest h-auto"
           >
-            <MicOff className="w-3.5 h-3.5" />
-            Mute All
+            <MicOff className="w-4 h-4" fill="currentColor" />
+            <span className="hidden xl:inline">Mute All</span>
           </button>
         )}
       </div>

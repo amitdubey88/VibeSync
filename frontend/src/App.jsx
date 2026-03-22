@@ -13,7 +13,7 @@ const ProtectedRoom = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-rose-500 border-t-transparent animate-spin shadow-[0_0_15px_rgba(225,29,72,0.5)]" />
+        <div className="w-10 h-10  border-2 border-rose-500 border-t-transparent animate-spin shadow-[0_0_15px_rgba(225,29,72,0.5)]" />
       </div>
     );
   }
@@ -51,13 +51,14 @@ const App = () => (
             background: 'rgba(10, 10, 11, 0.95)',
             color: '#f4f4f5',
             border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '16px',
-            fontSize: '14px',
-            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8)',
-            backdropFilter: 'blur(24px)',
-            fontFamily: 'Outfit, Inter, sans-serif',
-            fontWeight: '600',
-            letterSpacing: '0.025em'
+            borderRadius: '0px',
+            fontSize: '13px',
+            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.9)',
+            backdropFilter: 'blur(30px)',
+            fontFamily: '"Space Grotesk", sans-serif',
+            fontWeight: '700',
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase'
           },
           success: { iconTheme: { primary: '#10b981', secondary: '#0a0a0b' } },
           error: { iconTheme: { primary: '#e11d48', secondary: '#f4f4f5' } },

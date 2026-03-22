@@ -26,7 +26,7 @@ const ActivityFeed = () => {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto scroll-area p-4 space-y-4">
+    <div className="flex-1 overflow-y-auto scroll-area p-4 space-y-4 min-h-0">
       {systemMessages.map((m) => (
         <div key={m.id} className="flex gap-3 animate-fade-in">
           <div className="mt-0.5 shrink-0">

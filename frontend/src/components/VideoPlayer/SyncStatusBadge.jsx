@@ -19,7 +19,7 @@ const SyncStatusBadge = ({ status }) => {
       textColor: 'text-amber-400'
     },
     buffering: {
-      icon: <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse shadow-[0_0_10px_rgba(167,139,250,0.8)]" />,
+      icon: <div className="w-2 h-2  bg-violet-400 animate-pulse shadow-[0_0_10px_rgba(167,139,250,0.8)]" />,
       text: 'Buffering',
       bg: 'bg-violet-500/10',
       border: 'border-violet-500/20',
@@ -30,7 +30,7 @@ const SyncStatusBadge = ({ status }) => {
   const { icon, text, bg, border, textColor } = config[status] || config.synced;
 
   return (
-    <div className={`flex items-center gap-1.5 px-2 py-1 rounded-md ${bg} ${border} border backdrop-blur-md shadow-lg transition-all duration-300 animate-slide-up`}>
+    <div className={`flex items-center gap-1.5 px-2 py-1  ${bg} ${border} border backdrop-blur-md shadow-lg transition-all duration-300 animate-slide-up`}>
       {icon}
       <span className={`text-[10px] font-bold uppercase tracking-wider ${textColor}`}>
         {text}

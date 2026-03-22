@@ -24,7 +24,7 @@ const ConfirmDialog = ({
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
       {/* Uses shadow-modal token defined in tailwind.config.js */}
-      <div className="bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 rounded-2xl p-6 w-full max-w-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-slide-up">
+      <div className="bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 p-6 w-full max-w-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-slide-up">
         <div className="flex items-start gap-4 mb-5">
           <div className={`p-2.5  shrink-0 ${danger ? 'bg-red-500/15' : 'bg-amber-500/15'}`}>
             <AlertTriangle className={`w-5 h-5 ${danger ? 'text-red-400' : 'text-amber-500'}`} />

@@ -50,7 +50,7 @@ const Tooltip = ({ text, children, position = 'top', delay = 400, className = ''
         <div
           role="tooltip"
           className={`absolute z-[9999] pointer-events-none whitespace-nowrap
-            px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-zinc-100
+            px-2.5 py-1.5  text-[11px] font-semibold text-zinc-100
             bg-[#0a0a0b]/95 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.6)] font-headline tracking-wide
             animate-fade-in
             ${positionClasses[position]}`}

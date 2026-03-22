@@ -16,14 +16,12 @@ const QUICK_REACTIONS = ['👍', '❤️', '😆', '😮', '😢', '🙏'];
 // ── Tick icon based on message status ─────────────────────────────────────────
 const StatusTick = ({ status, isOwn }) => {
   if (!isOwn) return null;
-  if (status === 'seen') {
-    return <CheckCheck className="w-3 h-3 text-blue-400 shrink-0" />;
-  }
-  if (status === 'delivered') {
-    return <CheckCheck className="w-3 h-3 text-white/50 shrink-0" />;
-  }
-  // sent (default)
-  return <Check className="w-3 h-3 text-white/40 shrink-0" />;
+  const statusText = status === 'seen' ? 'READ' : status.toUpperCase();
+  return (
+    <span className="text-[9px] font-black text-white/30 tracking-widest ml-1.5">
+      • {statusText}
+    </span>
+  );
 };
 
 const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, isCoHost }) => {
@@ -140,16 +138,15 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const bubbleRadius = '';
 
   const bubbleColors = isOwn
-    ? 'bg-gradient-to-br from-obsidian-primary-dim to-obsidian-secondary-container text-white shadow-[0_0_15px_rgba(0,0,0,0.3)] font-headline tracking-wide'
-    : 'bg-obsidian-surface-high border border-white/5 text-white font-headline tracking-wide';
+    ? 'bg-[#12121e]/80 border border-fuchsia-500/20 text-white font-body tracking-normal'
+    : 'bg-[#0e0e10]/80 border border-white/10 text-white font-body tracking-normal';
 
   return (
     <div
       id={`msg-${message.id}`}
       ref={rowRef}
-      className={`flex gap-2 items-end ${isOwn ? 'flex-row-reverse' : ''} ${isContinuation ? 'mt-0.5' : 'mt-3'} relative select-none`}
+      className={`flex flex-col ${isOwn ? 'items-end ml-auto' : 'items-start mr-auto'} ${isContinuation ? 'mt-0.5' : 'mt-4'} relative select-none w-fit max-w-[85%]`}
       style={{ touchAction: 'pan-y' }}
-      // Touch gestures for swipe-to-reply
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}
       onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
       onTouchEnd={endDrag}
@@ -158,45 +155,19 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
       onMouseMove={(e) => { if (e.buttons === 1) moveDrag(e.clientX); }}
       onMouseUp={endDrag}
     >
-      {/* Reply hint behind bubble */}
-      <div
-        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center  bg-accent-purple/20 border border-accent-purple/40 text-fuchsia-400 ${isOwn ? 'right-10' : 'left-10'} pointer-events-none`}
-        style={{
-          width: `${22 + swipeProgress * 12}px`,
-          height: `${22 + swipeProgress * 12}px`,
-          opacity: swipeProgress,
-        }}
-      >
-        <Reply className="w-3 h-3" style={{ transform: `scale(${0.7 + swipeProgress * 0.5})` }} />
-      </div>
-
-      {/* Avatar — only shown for first in group and non-own */}
-      {!isOwn ? (
-        <div
-          className={`avatar w-7 h-7 text-[9px] text-white shrink-0 shadow-md ${isContinuation ? 'opacity-0 pointer-events-none' : ''}`}
-          style={{ backgroundColor: avatarBg }}
-          title={message.username}
-        >
-          {getInitials(message.username)}
-        </div>
-      ) : (
-        // Spacer to keep own messages aligned right without avatar
-        <div className="w-7 shrink-0" />
-      )}
-
       {/* Bubble area */}
-      <div className={`max-w-[78%] flex flex-col ${isOwn ? 'items-end' : 'items-start'} relative`}>
+      <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} relative w-full`}>
         {/* Sender name (only for first in group, not own) */}
         {!isOwn && !isContinuation && (
-          <span className="text-[11px] font-semibold ml-1 mb-0.5" style={{ color: avatarBg }}>
+          <span className="text-[11px] font-black ml-1 mb-1.5 uppercase tracking-[0.2em]" style={{ color: avatarBg }}>
             {message.username}
           </span>
         )}
 
-        <div className="relative group/bubble">
+        <div className={`relative group/bubble ${isOwn ? 'ml-6' : 'mr-6'}`}>
           {/* Main bubble */}
           <div
-            className={`flex flex-col px-3 py-2 ${bubbleRadius} ${bubbleColors} text-[14px] leading-[1.45] break-words shadow-sm cursor-pointer min-w-[60px]`}
+            className={`flex flex-col px-4 py-2.5 ${bubbleColors} text-[15px] leading-relaxed break-words shadow-sm cursor-pointer min-w-[70px] border border-white/10`}
             style={{
               transform: `translateX(${dragX}px)`,
               transition: isSnapping ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
@@ -209,13 +180,13 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
             {message.replyTo && (
               <div
                 onClick={(e) => { e.stopPropagation(); scrollToOriginal(); }}
-                className={`mb-1.5 pl-2.5 pr-2 py-1  border-l-[3px] cursor-pointer transition-all hover:brightness-110 overflow-hidden text-[12px]
+                className={`mb-2 pl-3 pr-2 py-1.5 border-l-2 cursor-pointer transition-all hover:brightness-110 overflow-hidden text-[12px]
                   ${isOwn ? 'bg-black/20 border-white/20 text-white/90' : 'bg-white/5 border-fuchsia-500/30 text-zinc-400'}`}
               >
-                <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-fuchsia-400'}`}>
+                <div className={`text-[10px] font-bold uppercase tracking-widest mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-fuchsia-400'}`}>
                   {message.replyTo.username}
                 </div>
-                <div className="line-clamp-1 opacity-75 leading-tight">
+                <div className="line-clamp-1 opacity-60 leading-tight">
                   {message.replyTo.content}
                 </div>
               </div>
@@ -223,89 +194,82 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
 
             {/* Message text or GIF */}
             {message.type === 'gif' ? (
-              <div className="mt-1 mb-1 relative  overflow-hidden border border-white/10 group-hover/bubble:brightness-110 transition-all">
+              <div className="mt-1 mb-1 relative overflow-hidden border border-white/5 group-hover/bubble:brightness-110 transition-all">
                 <img src={message.content} alt={message.title || 'GIF'} className="max-w-full h-auto min-w-[150px] object-cover" loading="lazy" />
               </div>
             ) : (
-              <span className="whitespace-pre-wrap">{message.content}</span>
+              <span className="whitespace-pre-wrap font-body font-medium">{message.content}</span>
             )}
-
-            {/* Timestamp + E2EE + Ticks row (inside bubble, WhatsApp-style) */}
-            <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? 'justify-end' : 'justify-end'}`}>
-              {message.e2ee && (
-                <ShieldCheck className={`w-2.5 h-2.5 shrink-0 ${isOwn ? 'text-white/40' : 'text-zinc-500/40'}`} title="E2EE" />
-              )}
-              <span className={`text-[10px] select-none ${isOwn ? 'text-white/70' : 'text-zinc-500/80'}`}>
-                {formatMessageTime(message.createdAt)}
-              </span>
-              <StatusTick status={status} isOwn={isOwn} />
-            </div>
           </div>
 
-          {/* Reactions floating below bubble */}
+          {/* Reactions overlapping bottom corner of bubble */}
           {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div className={`flex flex-wrap gap-0.5 mt-0.5 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+            <div className={`absolute bottom-[-10px] ${isOwn ? 'left-[-10px]' : 'right-[-10px]'} flex flex-wrap gap-0.5 z-10`}>
               {Object.entries(message.reactions).map(([emoji, users]) => (
-                <button
+                <div
                   key={emoji}
-                  onClick={(e) => { e.stopPropagation(); reactToMessage(message.id, emoji); }}
                   title={users.join(', ')}
-                  className={`flex items-center gap-1 px-1.5 py-0.5  text-[11px] font-semibold border transition-all
-                    ${users.includes(user?.username)
-                      ? 'bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-400'
-                      : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'}`}
+                  className={`flex items-center gap-1.5 px-2 py-1 bg-[#1a1a24] border border-white/10 text-zinc-300  text-[11px] font-bold shadow-lg`}
                 >
-                  <span>{emoji}</span>
-                  {users.length > 1 && <span className="text-[10px]">{users.length}</span>}
-                </button>
+                  <span className="scale-110">{emoji}</span>
+                  {users.length > 1 && <span className="text-[10px] opacity-80">{users.length}</span>}
+                </div>
               ))}
-            </div>
-          )}
-
-          {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
-          {showActions && (
-            <div
-              className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5  bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
-                ${isOwn ? 'right-0' : 'left-0'}`}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Quick reactions */}
-              {QUICK_REACTIONS.map(emoji => (
-                <button
-                  key={emoji}
-                  onClick={() => { reactToMessage(message.id, emoji); setShowActions(false); }}
-                  className="text-lg hover:scale-125 transition-transform active:scale-150 p-0.5 "
-                >
-                  {emoji}
-                </button>
-              ))}
-
-              <div className="w-px h-4 bg-white/10 mx-1" />
- 
-              {/* Reply */}
-              {onReply && (
-                <button
-                  onClick={() => { onReply(message); setShowActions(false); }}
-                  className="p-1  text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
-                  title="Reply"
-                >
-                  <Reply className="w-3.5 h-3.5" />
-                </button>
-              )}
-
-              {/* Pin */}
-              {(isHost || isCoHost) && onPin && (
-                <button
-                  onClick={() => { onPin(message.id); setShowActions(false); }}
-                  className="p-1  text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
-                  title="Pin message"
-                >
-                  <Pin className="w-3.5 h-3.5" />
-                </button>
-              )}
             </div>
           )}
         </div>
+
+        {/* Timestamp row — OUTSIDE bubble as per image */}
+        <div className={`flex items-center mt-1.5 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] font-bold text-white/20 tracking-widest uppercase">
+            {formatMessageTime(message.createdAt)}
+          </span>
+          <StatusTick status={status} isOwn={isOwn} />
+        </div>
+
+        {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
+        {showActions && (
+          <div
+            className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
+              ${isOwn ? 'right-0' : 'left-0'}`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Quick reactions */}
+            {QUICK_REACTIONS.map(emoji => (
+              <button
+                key={emoji}
+                onClick={() => { reactToMessage(message.id, emoji); setShowActions(false); }}
+                className="text-lg hover:scale-125 transition-transform active:scale-150 p-0.5 "
+              >
+                {emoji}
+              </button>
+            ))}
+
+            <div className="w-px h-4 bg-white/10 mx-1" />
+
+            {/* Reply */}
+            {onReply && (
+              <button
+                onClick={() => { onReply(message); setShowActions(false); }}
+                className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 transition-all font-bold"
+                title="Reply"
+              >
+                <Reply className="w-3.5 h-3.5" />
+              </button>
+            )}
+
+            {/* Pin */}
+            {(isHost || isCoHost) && onPin && (
+              <button
+                onClick={() => { onPin(message.id); setShowActions(false); }}
+                className="p-1 text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
+                title="Pin message"
+              >
+                <Pin className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

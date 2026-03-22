@@ -99,7 +99,7 @@
   /* Clean scrollbar */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: rgb(var(--bg-secondary)); }
-  ::-webkit-scrollbar-thumb { background: rgb(var(--border-light)); border-radius: 2px; }
+  ::-webkit-scrollbar-thumb { background: rgb(var(--border-light)); border-radius: 0; }
   ::-webkit-scrollbar-thumb:hover { background: rgb(var(--accent-purple)); }
 }
 
@@ -126,9 +126,8 @@
     border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  /* Primary button (red) */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
            bg-accent-red text-white transition-all duration-200
            hover:bg-accent-redHover hover:-translate-y-[1px] active:scale-[0.98]
            focus:outline-none focus:ring-2 focus:ring-accent-red focus:ring-offset-2 focus:ring-offset-bg-primary
@@ -140,7 +139,7 @@
 
   /* Ghost button */
   .btn-ghost {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
            bg-transparent text-text-secondary border border-border-light transition-all duration-200
            hover:bg-bg-hover hover:text-text-primary hover:border-border-light hover:-translate-y-[1px]
            active:scale-[0.98] focus:outline-none disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none;
@@ -149,9 +148,8 @@
     box-shadow: 0 4px 15px rgba(139, 92, 246, 0.15);
   }
 
-  /* Purple secondary button */
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
            bg-accent-purple text-white transition-all duration-200
            hover:bg-accent-purpleHover hover:-translate-y-[1px] active:scale-[0.98]
            focus:outline-none focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-bg-primary
@@ -163,7 +161,7 @@
 
   /* Icon button */
   .btn-icon {
-    @apply inline-flex items-center justify-center w-9 h-9 rounded-lg
+    @apply inline-flex items-center justify-center w-9 h-9
            text-text-secondary transition-all duration-200
            hover:bg-bg-hover hover:text-text-primary hover:-translate-y-[1px] active:scale-90
            disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none;
@@ -172,9 +170,8 @@
     box-shadow: 0 4px 15px rgba(255, 255, 255, 0.05);
   }
 
-  /* Danger button (red) — for destructive actions */
   .btn-danger {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm
+    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
            bg-red-500 text-white transition-all duration-200
            hover:bg-red-600 hover:-translate-y-[1px] active:scale-[0.98]
            focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-bg-primary
@@ -187,14 +184,14 @@
   /* State-driven buttons for voice/mic controls */
   .btn-state-danger {
     @apply flex items-center justify-center gap-2
-           rounded-lg text-sm font-semibold
+           text-sm font-semibold
            transition-all duration-150 active:scale-[0.97]
            bg-red-500/10 text-red-400 border border-red-500/30
            hover:bg-red-500/20;
   }
   .btn-state-success {
     @apply flex items-center justify-center gap-2
-           rounded-lg text-sm font-semibold
+           text-sm font-semibold
            transition-all duration-150 active:scale-[0.97]
            bg-accent-green/10 text-accent-green border border-accent-green/30
            hover:bg-accent-green/20;
@@ -202,19 +199,19 @@
 
   /* Input field */
   .input {
-    @apply w-full px-4 py-3 rounded-lg bg-bg-hover border border-border-dark text-text-primary
+    @apply w-full px-4 py-3 bg-bg-hover border border-border-dark text-text-primary
            placeholder-text-muted text-sm transition-all duration-200
            focus:outline-none focus:border-accent-purple focus:ring-1 focus:ring-accent-purple/30;
   }
 
   /* Badge */
   .badge {
-    @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold;
+    @apply inline-flex items-center gap-1 px-2 py-0.5 text-xs font-semibold;
   }
 
   /* Room card */
   .card {
-    @apply glass rounded-2xl p-6 transition-all duration-300;
+    @apply glass p-6 transition-all duration-300;
   }
 
   /* Video overlay gradient */
@@ -252,17 +249,17 @@
 
   /* Avatar circle */
   .avatar {
-    @apply flex items-center justify-center rounded-full font-bold uppercase select-none shrink-0;
+    @apply flex items-center justify-center font-bold uppercase select-none shrink-0;
   }
 
   /* Participant row */
   .participant-row {
-    @apply flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-150 hover:bg-bg-hover;
+    @apply flex items-center gap-3 px-3 py-2 transition-all duration-150 hover:bg-bg-hover;
   }
 
   /* Status dot */
   .status-dot {
-    @apply w-2 h-2 rounded-full shrink-0;
+    @apply w-2 h-2 shrink-0;
   }
 
   /* Chat message bubble */
