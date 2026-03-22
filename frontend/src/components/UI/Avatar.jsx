@@ -22,10 +22,10 @@ const SIZE_MAP = {
 };
 
 const STATUS_COLOR = {
-  online:    'bg-accent-green',
-  buffering: 'bg-accent-yellow',
-  away:      'bg-accent-yellow',
-  offline:   'bg-text-muted',
+  online:    'bg-emerald-500',
+  buffering: 'bg-amber-500',
+  away:      'bg-amber-500',
+  offline:   'bg-zinc-500',
 };
 
 
@@ -38,7 +38,7 @@ const Avatar = ({
   className = '',
 }) => {
   const showDot = !!status;
-  const dotColor = STATUS_COLOR[status] || 'bg-text-muted';
+  const dotColor = STATUS_COLOR[status] || 'bg-zinc-500';
 
   return (
     <div className={`relative shrink-0 ${className}`}>
@@ -47,7 +47,7 @@ const Avatar = ({
           avatar font-bold text-white select-none
           ${SIZE_MAP[size] ?? SIZE_MAP.md}
           ${speaking
-            ? 'ring-2 ring-accent-green trigger-pulse-ring'
+            ? 'ring-2 ring-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] trigger-pulse-ring'
             : 'avatar-ring'}
         `}
         style={avatarBg ? { backgroundColor: avatarBg } : undefined}
@@ -58,7 +58,7 @@ const Avatar = ({
 
       {showDot && (
         <span
-          className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-bg-card ${dotColor}`}
+          className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-[#0a0a0b] ${dotColor}`}
           aria-hidden="true"
         />
       )}

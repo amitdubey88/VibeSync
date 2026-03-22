@@ -99,7 +99,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   if (message.type === 'system') {
     return (
       <div id={`msg-${message.id}`} className="flex justify-center my-1.5">
-        <span className="text-[11px] text-text-muted bg-bg-hover/60 px-3 py-1 rounded-full">
+        <span className="text-[11px] text-zinc-400 bg-white/5 border border-white/5 px-3 py-1 rounded-full">
           {message.content}
         </span>
       </div>
@@ -142,8 +142,8 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
     : isContinuation ? 'rounded-[18px]' : 'rounded-[18px] rounded-tl-[4px]';
 
   const bubbleColors = isOwn
-    ? 'bg-gradient-to-br from-[#7c3aed] to-[#6d28d9] text-white'
-    : 'bg-[#1e1e2d] text-text-primary border border-white/[0.06]';
+    ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white font-medium tracking-wide shadow-[0_2px_10px_rgba(139,92,246,0.3)]'
+    : 'bg-[#181825] text-zinc-100 border border-white/5 font-medium tracking-wide';
 
   return (
     <div
@@ -162,7 +162,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
     >
       {/* Reply hint behind bubble */}
       <div
-        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-accent-purple/20 border border-accent-purple/40 text-accent-purple ${isOwn ? 'right-10' : 'left-10'} pointer-events-none`}
+        className={`absolute top-1/2 -translate-y-1/2 flex items-center justify-center rounded-full bg-accent-purple/20 border border-accent-purple/40 text-fuchsia-400 ${isOwn ? 'right-10' : 'left-10'} pointer-events-none`}
         style={{
           width: `${22 + swipeProgress * 12}px`,
           height: `${22 + swipeProgress * 12}px`,
@@ -212,9 +212,9 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               <div
                 onClick={(e) => { e.stopPropagation(); scrollToOriginal(); }}
                 className={`mb-1.5 pl-2.5 pr-2 py-1 rounded-lg border-l-[3px] cursor-pointer transition-all hover:brightness-110 overflow-hidden text-[12px]
-                  ${isOwn ? 'bg-black/20 border-white/50 text-white/90' : 'bg-white/5 border-accent-purple/60 text-text-secondary'}`}
+                  ${isOwn ? 'bg-black/20 border-white/20 text-white/90' : 'bg-white/5 border-fuchsia-500/30 text-zinc-400'}`}
               >
-                <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-accent-purple'}`}>
+                <div className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 truncate ${isOwn ? 'text-white/70' : 'text-fuchsia-400'}`}>
                   {message.replyTo.username}
                 </div>
                 <div className="line-clamp-1 opacity-75 leading-tight">
@@ -235,9 +235,9 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
             {/* Timestamp + E2EE + Ticks row (inside bubble, WhatsApp-style) */}
             <div className={`flex items-center gap-1 mt-0.5 ${isOwn ? 'justify-end' : 'justify-end'}`}>
               {message.e2ee && (
-                <ShieldCheck className={`w-2.5 h-2.5 shrink-0 ${isOwn ? 'text-white/40' : 'text-text-muted/40'}`} title="E2EE" />
+                <ShieldCheck className={`w-2.5 h-2.5 shrink-0 ${isOwn ? 'text-white/40' : 'text-zinc-500/40'}`} title="E2EE" />
               )}
-              <span className={`text-[10px] select-none ${isOwn ? 'text-white/50' : 'text-text-muted/60'}`}>
+              <span className={`text-[10px] select-none ${isOwn ? 'text-white/50' : 'text-zinc-500/60'}`}>
                 {formatMessageTime(message.createdAt)}
               </span>
               <StatusTick status={status} isOwn={isOwn} />
@@ -254,8 +254,8 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
                   title={users.join(', ')}
                   className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-semibold border transition-all
                     ${users.includes(user?.username)
-                      ? 'bg-accent-purple/20 border-accent-purple/50 text-accent-purple'
-                      : 'bg-bg-hover border-white/10 text-text-muted hover:bg-white/10'}`}
+                      ? 'bg-fuchsia-500/20 border-fuchsia-500/30 text-fuchsia-400'
+                      : 'bg-white/5 border-white/10 text-zinc-400 hover:bg-white/10'}`}
                 >
                   <span>{emoji}</span>
                   {users.length > 1 && <span className="text-[10px]">{users.length}</span>}
@@ -267,7 +267,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
           {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
           {showActions && (
             <div
-              className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5 rounded-2xl bg-[#1a1a2e] border border-white/10 shadow-2xl z-40 animate-fade-in
+              className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5 rounded-2xl bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
                 ${isOwn ? 'right-0' : 'left-0'}`}
               onClick={(e) => e.stopPropagation()}
             >
@@ -288,7 +288,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               {onReply && (
                 <button
                   onClick={() => { onReply(message); setShowActions(false); }}
-                  className="p-1 rounded-lg text-text-muted hover:text-white hover:bg-white/5 transition-all"
+                  className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
                   title="Reply"
                 >
                   <Reply className="w-3.5 h-3.5" />
@@ -299,7 +299,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
               {(isHost || isCoHost) && onPin && (
                 <button
                   onClick={() => { onPin(message.id); setShowActions(false); }}
-                  className="p-1 rounded-lg text-text-muted hover:text-accent-yellow hover:bg-white/5 transition-all"
+                  className="p-1 rounded-lg text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
                   title="Pin message"
                 >
                   <Pin className="w-3.5 h-3.5" />

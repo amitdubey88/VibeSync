@@ -34,13 +34,13 @@ const ActiveSpeakersOverlay = () => {
       {speakers.map((username, idx) => (
         <div 
           key={username}
-          className="animate-slide-left flex items-center gap-2 bg-black/60 backdrop-blur-md border border-white/10 px-3 py-1.5 rounded-full shadow-lg"
+          className="animate-slide-left flex items-center gap-2 bg-surface-container-high/80 backdrop-blur-xl border border-white/5 px-3 py-1.5 rounded-full shadow-2xl"
           style={{ animationDelay: `${idx * 0.05}s` }}
         >
-          <div className="relative flex items-center justify-center w-5 h-5 rounded-full bg-accent-red/20 text-accent-red shadow-[0_0_8px_rgba(239,68,68,0.5)]">
+          <div className="relative flex items-center justify-center w-5 h-5 rounded-full bg-violet-500/20 text-violet-400 shadow-[0_0_15px_rgba(139,92,246,0.5)]">
             <Mic className="w-3 h-3 animate-pulse" />
           </div>
-          <span className="text-xs font-semibold text-white/90 font-mono tracking-wide">
+          <span className="text-xs font-semibold text-zinc-300 font-headline tracking-widest uppercase">
             {username}
           </span>
         </div>

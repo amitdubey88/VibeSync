@@ -379,7 +379,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
       {status === 'loading' && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 bg-black z-20 transition-opacity duration-300">
           <div className="relative mb-2">
-            <div className="w-2.5 h-2.5 rounded-full bg-accent-red animate-pulse shadow-[0_0_12px_rgba(239,68,68,0.8)]" />
+            <div className="w-2.5 h-2.5 rounded-full bg-violet-500 animate-pulse shadow-[0_0_12px_rgba(139,92,246,0.8)]" />
           </div>
           <div className="text-center">
             <p className="text-white/90 font-bold text-xs">Loading YouTube Video</p>

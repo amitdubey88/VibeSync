@@ -70,9 +70,9 @@ const ParticipantsList = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border-dark flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-bold text-text-primary">Participants</h3>
-        <span className="badge bg-accent-green/10 text-accent-green">{onlineCount} online</span>
+      <div className="px-4 py-3 border-b border-white/5 bg-black/40 backdrop-blur-sm flex items-center justify-between shrink-0">
+        <h3 className="text-sm font-bold text-white font-headline tracking-wide">Participants</h3>
+        <span className="badge bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">{onlineCount} online</span>
       </div>
 
       {/* List */}
@@ -100,16 +100,16 @@ const ParticipantsList = () => {
               {/* Name + badges */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`text-sm font-medium truncate ${isMe ? 'text-accent-purple' : 'text-text-primary'}`}>
+                  <span className={`text-sm font-medium truncate ${isMe ? 'text-fuchsia-400 font-bold' : 'text-zinc-200 font-medium'}`}>
                     {p.username}{isMe ? ' (you)' : ''}
                   </span>
-                  {isRoomHost && <Crown className="w-3.5 h-3.5 text-accent-yellow shrink-0" />}
-                  {coHosts.includes(p.userId) && !isRoomHost && <Star className="w-3.5 h-3.5 text-accent-purple shrink-0" />}
-                  {p.isGuest && <span className="badge bg-bg-hover text-text-muted text-[9px] px-1.5 py-0">Guest</span>}
+                  {isRoomHost && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                  {coHosts.includes(p.userId) && !isRoomHost && <Star className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />}
+                  {p.isGuest && <span className="badge bg-white/10 text-zinc-400 border border-white/10 text-[9px] px-1.5 py-0">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {p.status === 'away' ? (
-                    <span className="flex items-center gap-1 text-[10px] text-text-muted font-medium tracking-wide">
+                    <span className="flex items-center gap-1 text-[10px] text-zinc-500 font-medium tracking-wide">
                       💤 Away
                     </span>
                   ) : !isOnline ? (
@@ -117,11 +117,11 @@ const ParticipantsList = () => {
                       🔴 Offline
                     </span>
                   ) : p.isBuffering ? (
-                    <span className="flex items-center gap-1 text-[10px] text-accent-yellow font-medium tracking-wide animate-pulse">
+                    <span className="flex items-center gap-1 text-[10px] text-amber-400 font-medium tracking-wide animate-pulse">
                       🟡 Buffering
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] text-accent-green font-medium tracking-wide">
+                    <span className="flex items-center gap-1 text-[10px] text-emerald-400 font-medium tracking-wide">
                       🟢 Watching
                     </span>
                   )}
@@ -133,7 +133,7 @@ const ParticipantsList = () => {
                 <div className="shrink-0 mr-1">
                   {voiceData?.isMuted
                     ? <MicOff className="w-3.5 h-3.5 text-red-500" />
-                    : <Mic className="w-3.5 h-3.5 text-accent-green animate-pulse" />}
+                    : <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
                 </div>
               )}
 
@@ -142,45 +142,45 @@ const ParticipantsList = () => {
                 <div className="relative shrink-0 ml-1" ref={openMenuId === p.userId ? menuRef : null}>
                   <button
                     onClick={() => setOpenMenuId(openMenuId === p.userId ? null : p.userId)}
-                    className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-bg-hover transition-colors"
+                    className="p-1.5 rounded-md text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
                   >
                     <MoreVertical className="w-4 h-4" />
                   </button>
 
                   {openMenuId === p.userId && (
-                    <div className="absolute right-0 top-8 z-50 w-48 rounded-xl bg-bg-card border border-border-dark shadow-2xl overflow-hidden">
+                    <div className="absolute right-0 top-8 z-50 w-48 rounded-xl bg-[#0e0e0f]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
                       <button
                         onClick={() => { setConfirm({ type: 'makeHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-yellow transition-colors"
+                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-amber-400 transition-colors"
                       >
-                        <UserCheck className="w-4 h-4 text-accent-yellow" /> Make Host
+                        <UserCheck className="w-4 h-4 text-amber-400" /> Make Host
                       </button>
                       
                       {coHosts.includes(p.userId) ? (
                         <button
                           onClick={() => { setConfirm({ type: 'demoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-purple transition-colors"
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
                         >
-                          <Star className="w-4 h-4 text-accent-purple" /> Remove Co-host
+                          <Star className="w-4 h-4 text-fuchsia-400" /> Remove Co-host
                         </button>
                       ) : (
                         <button
                           onClick={() => { setConfirm({ type: 'promoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-purple transition-colors"
+                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
                         >
-                          <Star className="w-4 h-4 text-accent-purple" /> Make Co-host
+                          <Star className="w-4 h-4 text-fuchsia-400" /> Make Co-host
                         </button>
                       )}
                       <button
                         onClick={() => { setConfirm({ type: 'mute', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-accent-purple transition-colors"
+                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
                       >
-                        <VolumeX className="w-4 h-4 text-accent-purple" /> Mute
+                        <VolumeX className="w-4 h-4 text-fuchsia-400" /> Mute
                       </button>
-                      <div className="border-t border-border-dark" />
+                      <div className="border-t border-white/10" />
                       <button
                         onClick={() => { setConfirm({ type: 'kick', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 font-medium transition-all transition-colors duration-200"
                       >
                         <LogOut className="w-4 h-4" /> Remove from Room
                       </button>
@@ -193,7 +193,7 @@ const ParticipantsList = () => {
         })}
 
         {participants.length === 0 && (
-          <p className="text-center text-text-muted text-sm py-8">No participants yet</p>
+          <p className="text-center text-zinc-500 text-sm py-8 font-headline tracking-wide">No participants yet</p>
         )}
       </div>
 

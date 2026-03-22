@@ -10,7 +10,7 @@ const FloatingReaction = ({ emoji, x, onDone }) => {
 
   return (
     <div
-      className="absolute pointer-events-none select-none animate-reaction-rise"
+      className="absolute pointer-events-none select-none animate-reaction-rise filter drop-shadow-[0_0_20px_rgba(225,29,72,0.7)]"
       style={{ left: `${x}%`, bottom: '0%', fontSize: '2rem' }}
     >
       {emoji}

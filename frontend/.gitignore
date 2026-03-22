@@ -24,3 +24,7 @@ dist-ssr
 *.sw?
 *.txt
 *.txt?
+update_*.py
+update_*.pyc
+update_*cjs
+AUDIT_TARGETS.md

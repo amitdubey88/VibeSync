@@ -41,3 +41,17 @@ docker-compose.override.yml
 #linterrors
 *-errors.txt
 .txt
+
+#REDESIGN_INVENTORY.md 
+REDESIGN_INVENTORY.md
+
+#stitch-designs
+stitch-designs/
+
+#audit
+AUDIT_TARGETS.md
+AUDIT_COMPLETE.md
+
+*.py
+*.txt
+PUSH_READY.md

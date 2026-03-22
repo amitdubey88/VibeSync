@@ -12,8 +12,8 @@ const ProtectedRoom = () => {
   const { loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center">
-        <div className="w-10 h-10 rounded-full border-2 border-accent-red border-t-transparent animate-spin" />
+      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center">
+        <div className="w-10 h-10 rounded-full border-2 border-rose-500 border-t-transparent animate-spin shadow-[0_0_15px_rgba(225,29,72,0.5)]" />
       </div>
     );
   }
@@ -48,14 +48,19 @@ const App = () => (
         toastOptions={{
           duration: 3500,
           style: {
-            background: '#13131f',
-            color: '#f1f1f1',
-            border: '1px solid #1e1e30',
-            borderRadius: '12px',
+            background: 'rgba(10, 10, 11, 0.95)',
+            color: '#f4f4f5',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '16px',
             fontSize: '14px',
+            boxShadow: '0 10px 40px rgba(0, 0, 0, 0.8)',
+            backdropFilter: 'blur(24px)',
+            fontFamily: 'Outfit, Inter, sans-serif',
+            fontWeight: '600',
+            letterSpacing: '0.025em'
           },
-          success: { iconTheme: { primary: '#10b981', secondary: '#f1f1f1' } },
-          error: { iconTheme: { primary: '#e50914', secondary: '#f1f1f1' } },
+          success: { iconTheme: { primary: '#10b981', secondary: '#0a0a0b' } },
+          error: { iconTheme: { primary: '#e11d48', secondary: '#f4f4f5' } },
         }}
       />
     </AuthProvider>

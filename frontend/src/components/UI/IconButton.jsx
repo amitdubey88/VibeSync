@@ -28,11 +28,11 @@ const ICON_SIZE = {
 };
 
 const VARIANT_MAP = {
-  default: 'text-text-secondary hover:text-text-primary hover:bg-bg-hover',
+  default: 'text-zinc-500 hover:text-zinc-100 hover:bg-white/10',
   ghost:   'text-white/70 hover:text-white hover:bg-white/10',
-  primary: 'text-accent-purple hover:bg-accent-purple/15',
-  danger:  'text-red-400/80 hover:text-red-400 hover:bg-red-500/10',
-  success: 'text-accent-green/80 hover:text-accent-green hover:bg-accent-green/10',
+  primary: 'text-fuchsia-400 hover:bg-fuchsia-500/15',
+  danger:  'text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10',
+  success: 'text-emerald-500/80 hover:text-emerald-400 hover:bg-emerald-500/10',
 };
 
 const IconButton = ({
@@ -64,7 +64,7 @@ const IconButton = ({
         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0
         ${sizeClass}
         ${variantClass}
-        ${active ? 'ring-2 ring-current ring-offset-1 ring-offset-bg-card' : ''}
+        ${active ? 'ring-2 ring-current ring-offset-1 ring-offset-black' : ''}
         ${className}
       `}
     >

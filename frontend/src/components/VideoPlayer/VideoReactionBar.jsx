@@ -66,16 +66,16 @@ const VideoReactionBar = ({ visible: visibleProp }) => {
         ${isVisible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}
         portrait:hidden`}
     >
-      <div className="flex flex-wrap justify-center items-center gap-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-2xl sm:rounded-full px-3 py-2 shadow-2xl max-w-[90vw] sm:max-w-none">
+      <div className="flex flex-wrap justify-center items-center gap-1 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 rounded-[2rem] sm:rounded-full px-4 py-3 shadow-[0_20px_50px_rgba(0,0,0,0.9)] max-w-[90vw] sm:max-w-none">
         {REACTIONS.map(({ emoji, label }) => (
           <button
             key={label}
             type="button"
             onClick={() => handleReact(emoji)}
             title={label}
-            className="relative group w-9 h-9 flex items-center justify-center rounded-full hover:bg-white/15 transition-all duration-150 hover:scale-125 active:scale-100"
+            className="relative group w-12 h-12 flex items-center justify-center rounded-full hover:bg-white/10 transition-all duration-300 hover:-translate-y-2 hover:scale-125 active:scale-95 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)]"
           >
-            <span className="text-xl leading-none">{emoji}</span>
+            <span className="text-2xl leading-none">{emoji}</span>
           </button>
         ))}
       </div>

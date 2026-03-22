@@ -30,10 +30,10 @@ const Tooltip = ({ text, children, position = 'top', delay = 400, className = ''
   };
 
   const arrowClasses = {
-    top:    'top-full left-1/2 -translate-x-1/2 border-t-bg-card border-x-transparent border-b-transparent',
-    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-bg-card border-x-transparent border-t-transparent',
-    left:   'left-full top-1/2 -translate-y-1/2 border-l-bg-card border-y-transparent border-r-transparent',
-    right:  'right-full top-1/2 -translate-y-1/2 border-r-bg-card border-y-transparent border-l-transparent',
+    top:    'top-full left-1/2 -translate-x-1/2 border-t-[#0a0a0b] border-x-transparent border-b-transparent',
+    bottom: 'bottom-full left-1/2 -translate-x-1/2 border-b-[#0a0a0b] border-x-transparent border-t-transparent',
+    left:   'left-full top-1/2 -translate-y-1/2 border-l-[#0a0a0b] border-y-transparent border-r-transparent',
+    right:  'right-full top-1/2 -translate-y-1/2 border-r-[#0a0a0b] border-y-transparent border-l-transparent',
   };
 
   return (
@@ -50,8 +50,8 @@ const Tooltip = ({ text, children, position = 'top', delay = 400, className = ''
         <div
           role="tooltip"
           className={`absolute z-[9999] pointer-events-none whitespace-nowrap
-            px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-white
-            bg-bg-card border border-border-light shadow-xl
+            px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-zinc-100
+            bg-[#0a0a0b]/95 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.6)] font-headline tracking-wide
             animate-fade-in
             ${positionClasses[position]}`}
         >

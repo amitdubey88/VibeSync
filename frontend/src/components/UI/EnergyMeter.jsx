@@ -13,13 +13,13 @@ const EnergyMeter = () => {
         {flames.map((isLit, i) => (
           <span 
             key={i} 
-            className={`text-sm transition-all duration-500 transform ${isLit ? 'opacity-100 scale-110 drop-shadow-[0_0_8px_rgba(239,68,68,0.6)]' : 'opacity-20 grayscale scale-90'}`}
+            className={`text-sm transition-all duration-500 transform ${isLit ? 'opacity-100 scale-110 drop-shadow-[0_0_12px_rgba(225,29,72,0.8)]' : 'opacity-20 grayscale scale-90'}`}
           >
             🔥
           </span>
         ))}
       </div>
-      <span className="text-[8px] font-black uppercase text-text-muted tracking-widest">Room Energy</span>
+      <span className="text-[8px] font-black uppercase text-zinc-500 font-headline tracking-widest">Room Energy</span>
     </div>
   );
 };

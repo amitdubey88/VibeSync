@@ -185,7 +185,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
   const bufferedProgress = safeDuration > 0 ? (buffered / safeDuration) * 100 : 0;
 
   return (
-    <div className={`absolute inset-x-0 bottom-0 video-gradient-bottom pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
+    <div className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 pointer-events-none'}`}>
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
         className={`relative h-1 rounded-full bg-white/20 mb-3 ${isHost ? 'cursor-pointer hover:h-2' : 'cursor-default'} transition-all duration-150 group/progress`}
@@ -196,14 +196,14 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
           style={{ width: `${Math.min(bufferedProgress, 100)}%` }}
         />
         <div
-          className="relative h-full rounded-full bg-accent-red transition-all duration-150 shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+          className="relative h-full rounded-full bg-violet-500 transition-all duration-150 shadow-[0_0_15px_rgba(139,92,246,0.6)]"
           style={{ width: `${progress}%` }}
         />
         {/* Clip Markers */}
         {clips && clips.map(clip => (
           <div 
             key={clip.id}
-            className="absolute top-0 bottom-0 w-0.5 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)] z-10"
+            className="absolute top-0 bottom-0 w-0.5 bg-fuchsia-500 shadow-[0_0_15px_rgba(217,70,239,0.8)] z-10"
             style={{ left: `${safeDuration > 0 ? (clip.time / safeDuration) * 100 : 0}%` }}
             title={`Clip by ${clip.username}`}
           />
@@ -222,7 +222,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Play/pause */}
         <button
           onClick={togglePlay}
-          className={`btn-icon text-white ${(!isHost && !isCoHost) && 'opacity-40 cursor-not-allowed'}`}
+          className={`text-zinc-400 hover:text-white transition-colors ${(!isHost && !isCoHost) && 'opacity-40 cursor-not-allowed'}`}
           disabled={!isHost && !isCoHost}
           title={(isHost || isCoHost) ? (isPlaying ? 'Pause' : 'Play') : 'Only host/co-host can control'}
         >
@@ -230,18 +230,18 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         </button>
 
         {/* Volume */}
-        <button onClick={toggleMuteVideo} className="btn-icon text-white">
+        <button onClick={toggleMuteVideo} className="text-zinc-400 hover:text-white transition-colors">
           {isMutedLocal || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
         <input
           type="range" min="0" max="1" step="0.05"
           value={isMutedLocal ? 0 : volume}
           onChange={handleVolume}
-          className="w-20 accent-accent-red cursor-pointer"
+          className="w-20 accent-violet-500 cursor-pointer"
         />
 
         {/* Time */}
-        <span className="text-white/70 text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
+        <span className="text-zinc-400 font-headline tracking-wider text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
           {formatTime(safeTime)} / {formatTime(safeDuration)}
         </span>
 
@@ -267,7 +267,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
 
         {/* Load video button (host only) */}
         {(isHost || isCoHost) && onLoadClick && (
-          <button onClick={onLoadClick} className="btn-icon text-white" title="Change video">
+          <button onClick={onLoadClick} className="text-zinc-400 hover:text-white transition-colors" title="Change video">
             <Upload className="w-4 h-4" />
           </button>
         )}
@@ -275,20 +275,20 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Clip moment */}
         <button 
           onClick={() => sendClip(currentTime)} 
-          className="btn-icon text-white hover:text-accent-red transition-colors" 
+          className="text-zinc-400 hover:text-white transition-colors hover:text-violet-400 transition-colors" 
           title="Clip This Moment"
         >
           <Pin className="w-4 h-4" />
         </button>
 
         {/* Fullscreen */}
-        <button type="button" onClick={toggleFullscreen} className="btn-icon text-white" title="Fullscreen">
+        <button type="button" onClick={toggleFullscreen} className="text-zinc-400 hover:text-white transition-colors" title="Fullscreen">
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
 
       {!isHost && !isCoHost && (
-        <p className="text-center text-xs text-white/30 mt-1 select-none">
+        <p className="text-center text-xs text-zinc-600 font-headline tracking-widest mt-1 select-none">
           👑 Only the host and co-hosts can control playback
         </p>
       )}

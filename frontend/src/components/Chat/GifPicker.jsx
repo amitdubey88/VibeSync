@@ -58,15 +58,15 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
         initial={{ opacity: 0, y: 10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-        className="absolute bottom-14 right-2 w-72 h-80 bg-gray-900 border border-white/10 rounded-xl shadow-2xl flex flex-col overflow-hidden z-50"
+        className="absolute bottom-14 right-2 w-72 h-80 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.8)] flex flex-col overflow-hidden z-50"
       >
-        <div className="p-2 border-b border-white/5 bg-black/20">
+        <div className="p-2 border-b border-white/5 bg-transparent">
           <input
             type="text"
             placeholder="Search Tenor GIFs..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 text-sm text-white focus:outline-none focus:border-accent-purple transition-colors"
+            className="w-full bg-black/50 border border-white/5 rounded-lg px-3 py-2 text-sm text-zinc-100 focus:outline-none focus:border-fuchsia-500 font-headline transition-colors"
             autoFocus
           />
         </div>
@@ -74,7 +74,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
         <div className="flex-1 overflow-y-auto p-1 scrollbar-thin scrollbar-thumb-white/10 custom-scrollbar">
           {loading ? (
             <div className="w-full h-full flex justify-center items-center">
-              <div className="w-6 h-6 border-2 border-accent-purple border-t-transparent rounded-full animate-spin"></div>
+              <div className="w-6 h-6 border-2 border-violet-500 border-t-transparent rounded-full animate-spin"></div>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-1">
@@ -85,7 +85,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
                     const url = gif.media[0]?.gif?.url || gif.media[0]?.tinygif?.url;
                     if (url) onSelect(url, gif.title);
                   }}
-                  className="w-full h-24 bg-gray-800 rounded hover:opacity-80 transition-opacity overflow-hidden focus:outline-none focus:ring-2 focus:ring-accent-purple"
+                  className="w-full h-24 bg-white/5 rounded overflow-hidden hover:opacity-80 transition-opacity overflow-hidden focus:outline-none focus:ring-2 focus:ring-violet-500"
                 >
                   <img 
                     src={gif.media[0]?.tinygif?.url} 

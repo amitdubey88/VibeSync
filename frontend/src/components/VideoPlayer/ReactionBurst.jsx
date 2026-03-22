@@ -44,7 +44,7 @@ const ReactionBurst = () => {
       {localReactions.map((r) => (
         <div
           key={r.id}
-          className="absolute bottom-20 text-4xl animate-reaction-rise filter drop-shadow-[0_0_8px_rgba(0,0,0,0.8)]"
+          className="absolute bottom-20 text-4xl animate-reaction-rise filter drop-shadow-[0_0_20px_rgba(217,70,239,0.7)]"
           style={{
             left: `${r.left ?? 50}%`,
             animationDelay: `${r.delay ?? 0}s`,

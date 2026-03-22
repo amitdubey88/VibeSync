@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Core palette
+        // Core palette (legacy)
         bg: {
           primary: 'rgb(var(--bg-primary) / <alpha-value>)',
           secondary: 'rgb(var(--bg-secondary) / <alpha-value>)',
@@ -32,9 +32,39 @@ export default {
           dark: 'rgb(var(--border-dark) / <alpha-value>)',
           light: 'rgb(var(--border-light) / <alpha-value>)',
         },
+        // Cinematic Obsidian Palette (Stitch)
+        obsidian: {
+          background: '#0e0e0f',
+          surface: '#0e0e0f',
+          'surface-bright': '#2c2c2d',
+          'surface-dim': '#0e0e0f',
+          'surface-low': '#131314',
+          'surface-container': '#1a191b',
+          'surface-high': '#201f21',
+          'surface-highest': '#262627',
+          primary: '#bd9dff',
+          'primary-dim': '#8a4cfc',
+          'primary-container': '#b28cff',
+          secondary: '#c38bf5',
+          'secondary-dim': '#be86ef',
+          'secondary-container': '#612b8f',
+          tertiary: '#ff97b2',
+          'tertiary-dim': '#f17799',
+          'tertiary-container': '#fe81a4',
+          error: '#ff6e84',
+          'error-dim': '#d73357',
+          'error-container': '#a70138',
+          outline: '#767576',
+          'outline-variant': '#484849',
+          'on-surface': '#ffffff',
+          'on-surface-variant': '#adaaab',
+          'on-primary': '#3c0089',
+        }
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        headline: ['"Space Grotesk"', 'sans-serif'],
+        body: ['Manrope', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.3s ease-out',

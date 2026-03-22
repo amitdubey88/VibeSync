@@ -5,25 +5,25 @@ const SyncStatusBadge = ({ status }) => {
 
   const config = {
     synced: {
-      icon: <CheckCircle2 className="w-3 h-3 text-accent-green" />,
+      icon: <CheckCircle2 className="w-3 h-3 text-emerald-400" />,
       text: 'Synced',
-      bg: 'bg-accent-green/10',
-      border: 'border-accent-green/20',
-      textColor: 'text-accent-green'
+      bg: 'bg-emerald-500/10',
+      border: 'border-emerald-500/20',
+      textColor: 'text-emerald-400'
     },
     'catching-up': {
-      icon: <Zap className="w-3 h-3 text-accent-yellow animate-pulse" />,
+      icon: <Zap className="w-3 h-3 text-amber-400 animate-pulse" />,
       text: 'Catching up...',
-      bg: 'bg-accent-yellow/10',
-      border: 'border-accent-yellow/20',
-      textColor: 'text-accent-yellow'
+      bg: 'bg-amber-500/10',
+      border: 'border-amber-500/20',
+      textColor: 'text-amber-400'
     },
     buffering: {
-      icon: <div className="w-2 h-2 rounded-full bg-accent-red animate-pulse" />,
+      icon: <div className="w-2 h-2 rounded-full bg-violet-400 animate-pulse shadow-[0_0_10px_rgba(167,139,250,0.8)]" />,
       text: 'Buffering',
-      bg: 'bg-accent-red/10',
-      border: 'border-accent-red/20',
-      textColor: 'text-accent-red'
+      bg: 'bg-violet-500/10',
+      border: 'border-violet-500/20',
+      textColor: 'text-violet-400'
     }
   };
 

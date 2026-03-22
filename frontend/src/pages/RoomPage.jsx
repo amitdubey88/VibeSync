@@ -59,7 +59,7 @@ const LiveTimeTracker = ({ videoState, currentVideo }) => {
   }, [videoState, currentVideo]);
 
   if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
-    return <span className="text-accent-red font-bold animate-pulse">LIVE</span>;
+    return <span className="text-obsidian-primary font-bold animate-pulse">LIVE</span>;
   }
   return <span>⏱ {formatTime(displayTime)}</span>;
 };
@@ -380,7 +380,7 @@ const RoomPage = () => {
     
     navigator.clipboard.writeText(inviteUrl).then(() => {
       toast.success('Invite link (with preview) copied!', {
-        icon: <Link className="w-5 h-5 text-accent-red" />,
+        icon: <Link className="w-5 h-5 text-obsidian-primary" />,
         duration: 3000
       });
     });
@@ -471,8 +471,8 @@ const RoomPage = () => {
           <div className="w-20 h-20 rounded-full bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
             <Clock className="w-9 h-9 text-accent-purple" />
           </div>
-          <h2 className="text-xl font-bold text-text-primary mb-2">Waiting for Approval</h2>
-          <p className="text-text-secondary text-sm mb-4">
+          <h2 className="text-xl font-bold text-white mb-2">Waiting for Approval</h2>
+          <p className="text-obsidian-on-surface-variant text-sm mb-4">
             The host needs to approve your request to join <strong>{code}</strong>.
           </p>
           <div className="flex gap-1.5 justify-center mb-6">
@@ -506,7 +506,7 @@ const RoomPage = () => {
     return (
       <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-500 min-h-screen overflow-y-auto">
         <div className="absolute top-12 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-accent-purple to-accent-red flex items-center justify-center shadow-lg shadow-accent-purple/20">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim flex items-center justify-center shadow-lg shadow-obsidian-primary/20">
             <Tv2 className="w-6 h-6 text-white" />
           </div>
           <h1 className="text-xl font-black text-white tracking-tight">VibeSync</h1>
@@ -514,8 +514,8 @@ const RoomPage = () => {
         
         <div className="w-full max-w-md bg-[#16161D]/50 border border-white/10 p-8 rounded-[32px] backdrop-blur-lg shadow-2xl relative overflow-hidden my-auto">
           {/* Background Glow */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-accent-purple/20 rounded-full blur-[80px]" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-accent-red/20 rounded-full blur-[80px]" />
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-obsidian-primary/20 rounded-full blur-[80px]" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-obsidian-primary/80/20 rounded-full blur-[80px]" />
 
           <div className="relative z-10 text-center">
             <h2 className="text-2xl font-bold text-white mb-2">Welcome to the Party!</h2>
@@ -563,8 +563,8 @@ const RoomPage = () => {
       <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
         <div className="card text-center max-w-sm">
           <div className="text-5xl mb-4">😕</div>
-          <h2 className="text-xl font-bold text-text-primary mb-2">Can't Join Room</h2>
-          <p className="text-text-secondary text-sm mb-6">{error}</p>
+          <h2 className="text-xl font-bold text-white mb-2">Can't Join Room</h2>
+          <p className="text-obsidian-on-surface-variant text-sm mb-6">{error}</p>
           <button 
             className="btn-primary w-full" 
             onClick={() => {
@@ -581,185 +581,163 @@ const RoomPage = () => {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-cinematic overflow-hidden">
+    <div className="h-screen flex flex-col bg-obsidian-background text-obsidian-on-surface font-body overflow-hidden">
       <CountdownLobby />
       <OfflineShell />
 
       {/* ── Top bar ── */}
-      <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2 relative z-[100]">
-        <div className="flex items-center gap-2 min-w-0">
+      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 dark:border-white/5 bg-obsidian-surface/70 backdrop-blur-xl shadow-[0_20px_40px_rgba(0,0,0,0.5)] shrink-0 gap-2 relative z-[100]">
+        <div className="flex items-center gap-3 min-w-0">
           <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0 group">
-            <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-8 h-8 rounded-lg shadow-[0_0_15px_rgba(139,92,246,0.5)] group-hover:scale-110 transition-transform duration-500" />
-            <span className="text-sm font-black text-white font-manrope uppercase tracking-tighter hidden sm:block">VibeSync<span className="text-violet-500">.</span></span>
+            <span className="material-symbols-outlined text-obsidian-primary text-3xl group-hover:scale-110 transition-transform duration-500">movie_filter</span>
+            <span className="text-xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase hidden sm:block">VIBESYNC</span>
           </button>
-          <div className="w-px h-5 bg-border-dark" />
-          <h1 className="text-sm font-bold text-text-primary truncate max-w-[100px] xs:max-w-[120px] sm:max-w-xs text-left">{room?.name || code}</h1>
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-accent-yellow/10 text-accent-yellow border border-accent-yellow/20 text-[10px] font-bold uppercase tracking-wider hidden xs:flex sm:flex shrink-0">
-            <ShieldCheck className="w-3 h-3" />
-            E2EE
+          
+          <div className="w-px h-5 bg-white/10 mx-1 md:mx-2 hidden sm:block" />
+          
+          <h1 className="text-sm font-headline font-bold text-white truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">{room?.name || code}</h1>
+          
+          <div className="hidden lg:flex flex-col border-l border-white/10 pl-4 mx-2 animate-fade-in max-w-[200px]">
+            <span className="text-[9px] text-obsidian-on-surface-variant font-bold font-headline uppercase tracking-[0.2em]">Now Watching</span>
+            <span className="text-[11px] font-bold text-white truncate">
+              {currentVideo?.title || 'Untitled Video'}
+            </span>
           </div>
-          
-          {/* Now Watching Banner */}
-          {currentVideo && (
-            <div className="hidden lg:flex flex-col border-l border-border-dark pl-4 ml-2 animate-fade-in max-w-[200px]">
-              <span className="text-[10px] text-text-muted font-black uppercase tracking-widest">Now Watching</span>
-              <span className="text-xs font-bold text-text-primary truncate">
-                {currentVideo.title || 'Untitled Video'}
-              </span>
-            </div>
-          )}
 
-          <div className="w-px h-5 bg-border-dark hidden md:block" />
-          
-          {/* Energy Meter */}
-          <div className="hidden md:flex items-center px-1 sm:px-3 border-r border-border-dark mr-1 sm:mr-2">
+          <div className="hidden xs:flex items-center gap-1.5 bg-obsidian-surface-container-high px-2 py-1 rounded-sm border border-white/5 ml-2">
+            <ShieldCheck className="w-3.5 h-3.5 text-accent-green" />
+            <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">E2EE</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+          <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold font-headline tracking-widest uppercase shrink-0">
+            {isConnected
+              ? <><Wifi className="w-3.5 h-3.5 text-accent-green" /> <span className="hidden xs:inline text-accent-green">Live</span></>
+              : <><WifiOff className="w-3.5 h-3.5 text-red-400 animate-pulse" /> <span className="hidden sm:inline text-red-400">Wait</span></>}
+          </div>
+
+          <div className="hidden md:block w-px h-5 bg-white/10 mx-1" />
+
+          <div className="hidden xl:flex items-center px-3 border-r border-white/10 mr-1">
             <EnergyMeter />
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-3 text-[10px] sm:text-[11px] text-text-muted font-medium bg-white/5 px-2 py-1 sm:px-2.5 rounded-full border border-white/10 backdrop-blur-md shadow-inner overflow-hidden shrink min-w-0">
-            <span className="flex items-center gap-1 sm:gap-1.5 shrink-0">
-              <Users className="w-3 h-3 text-accent-purple" /> 
+          <div className="hidden md:flex items-center gap-2 bg-obsidian-surface-container-high px-3 py-1.5 rounded-full border border-white/5 shrink min-w-0">
+            <span className="flex items-center gap-1.5 shrink-0 text-obsidian-on-surface-variant text-[10px] font-bold font-headline uppercase tracking-widest">
+              <span className="w-2 h-2 rounded-full bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
               {participants.filter(p => p.isOnline !== false).length}
             </span>
-            {isLocked && <Lock className="w-2.5 h-2.5 text-red-400 shrink-0" />}
-            <span className="truncate shrink"><LiveTimeTracker videoState={videoState} currentVideo={currentVideo} /></span>
+            {isLocked && <Lock className="w-3 h-3 text-red-400 shrink-0 ml-1" />}
+            <span className="truncate shrink text-[10px] font-bold font-headline tracking-widest text-obsidian-primary/80 ml-2 border-l border-white/10 pl-2">
+              <LiveTimeTracker videoState={videoState} currentVideo={currentVideo} />
+            </span>
           </div>
 
           {isHost && (
-            <div className="hidden xl:flex items-center gap-2 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30 rounded-full animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
+            <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30 rounded-sm animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
               <Crown className="w-3.5 h-3.5 text-accent-yellow drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
-              <span className="text-[10px] font-bold text-accent-yellow uppercase tracking-widest">Host</span>
+              <span className="text-[9px] font-bold font-headline text-accent-yellow uppercase tracking-widest">Host</span>
             </div>
           )}
-        </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <div className={`flex items-center gap-1 sm:gap-1.5 text-xs shrink-0
-            ${isConnected ? 'text-accent-green' : 'text-red-400'}`}>
-            {isConnected
-              ? <><Wifi className="w-3.5 h-3.5" /> <span className="hidden xs:inline">Live</span></>
-              : <><WifiOff className="w-3.5 h-3.5 animate-pulse" /> <span className="hidden sm:inline">Reconnecting…</span></>}
-          </div>
+          <div className="w-px h-5 bg-white/10 mx-1 hidden md:block" />
+
           <Tooltip text="Copy room code" position="bottom">
             <button
               onClick={copyRoomCode}
-              className="flex items-center gap-1 bg-bg-hover hover:bg-bg-card border border-border-dark
-                         rounded-lg px-1.5 xs:px-2 py-1.5 text-[10px] xs:text-xs font-mono font-bold text-text-primary transition-all active:scale-95"
+              className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/10 rounded px-2 py-1.5 text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
             >
-              <span className="text-text-muted hidden sm:inline">CODE</span>
-              <span className="text-accent-purple tracking-wider xs:tracking-widest">{code}</span>
-              <Copy className="w-3 h-3 text-text-muted" />
+              <span className="text-obsidian-on-surface-variant group-hover:text-white hidden sm:inline">CODE</span>
+              <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">{code}</span>
+              <Copy className="w-3.5 h-3.5 text-obsidian-on-surface-variant group-hover:text-white" />
             </button>
           </Tooltip>
+
           <Tooltip text="Copy invite link" position="bottom">
-            <button onClick={copyRoomLink} className="btn-ghost text-xs py-1.5 px-3 hidden sm:flex">
-              Share
+            <button onClick={copyRoomLink} className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 rounded text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[14px]">link</span>
+              Invite
             </button>
           </Tooltip>
 
-          {/* Toggle Sidebar */}
-          <Tooltip text={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'} position="bottom">
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="btn-ghost text-xs py-1.5 px-2.5 hidden md:flex items-center gap-1.5 text-text-muted hover:text-white"
-            >
-              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
-            </button>
-          </Tooltip>
-
-          {/* More Menu Dropdown - Hidden on Mobile */}
           <div className="hidden md:block relative z-[100]">
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`btn-ghost text-xs p-1.5 transition-colors ${isMoreMenuOpen ? 'text-white bg-white/10' : 'text-text-muted hover:text-white'}`}
-                onBlur={() => {
-                  // Small delay to allow clicking on menu items
-                  setTimeout(() => setIsMoreMenuOpen(false), 250);
-                }}
+                className={`text-obsidian-on-surface-variant hover:text-white transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? 'bg-white/10 text-white' : ''}`}
+                onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 250)}
               >
                 <MoreVertical className="w-4 h-4" />
               </button>
             </Tooltip>
-            
             {isMoreMenuOpen && (
-              <div className="absolute top-full right-0 mt-2 w-48 bg-bg-card border border-border-dark rounded-xl shadow-modal overflow-hidden z-[100] animate-fade-in origin-top-right">
-                <div className="flex flex-col py-1">
+              <div className="absolute top-full right-0 mt-3 w-56 bg-obsidian-surface-container-high border border-white/10 rounded shadow-2xl overflow-hidden z-[100] animate-fade-in origin-top-right">
+                <div className="flex flex-col py-2">
                   <button
                     onClick={() => setShowShortcutsHelp(true)}
-                    className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                    className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-obsidian-on-surface-variant hover:text-white hover:bg-white/5 transition-colors text-left"
                   >
                     <Clock className="w-3.5 h-3.5" />
-                    Keyboard Shortcuts
+                    Shortcuts
                   </button>
-
                   {isHost && (
                     <button
                       onClick={() => setShowThemePicker(true)}
-                      className="hidden md:flex items-center gap-2.5 px-4 py-2.5 text-xs text-text-secondary hover:text-white hover:bg-bg-hover transition-colors text-left"
+                      className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-obsidian-on-surface-variant hover:text-white hover:bg-white/5 transition-colors text-left"
                     >
                       <Palette className="w-3.5 h-3.5" />
                       Theater Theme
                     </button>
                   )}
-                  
                   {isHost && (
                     <>
-                      <div className="h-px bg-border-dark my-1 mx-2" />
+                      <div className="h-px bg-white/5 my-1 mx-2" />
                       <button
                         onClick={handleDeleteRoom}
-                        className="flex items-center gap-2.5 px-4 py-2.5 text-xs text-red-400 hover:text-white hover:bg-red-500/80 transition-colors text-left font-bold"
+                        className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors text-left font-bold"
                       >
                         <Trash className="w-3.5 h-3.5" />
-                        End Session (Delete)
+                        End Session
                       </button>
                     </>
                   )}
                 </div>
               </div>
             )}
-            
-            {/* Note: render ThemePicker OUTSIDE the menu so it overlaps correctly, and independently of isMoreMenuOpen */}
-            <ThemePicker 
-              isOpen={showThemePicker} 
-              onClose={() => setShowThemePicker(false)} 
-            />
+            <ThemePicker isOpen={showThemePicker} onClose={() => setShowThemePicker(false)} />
           </div>
 
-          {/* Direct End Room for host on Mobile */}
-          {isHost && (
-            <Tooltip text="End Session" position="bottom">
-              <button
-                onClick={handleDeleteRoom}
-                className="flex md:hidden items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-red-500 hover:bg-red-500/10 transition-colors"
-              >
-                <Trash className="w-3.5 h-3.5" />
-                <span className="xs:inline">End</span>
-              </button>
-            </Tooltip>
-          )}
+          <div className="w-px h-5 bg-white/10 mx-1 hidden sm:block" />
+
           <Tooltip text="Leave Room (Shift+Click to skip)" position="bottom">
             <button
               onClick={(e) => handleLeave(e)}
-              className="flex items-center gap-1.5 btn-ghost text-xs py-1.5 px-2.5 text-text-muted hover:text-red-400 transition-colors"
+              className="flex items-center gap-1.5 py-1.5 px-3 rounded border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-obsidian-outline hover:text-red-400 transition-all font-headline text-[10px] font-bold uppercase tracking-widest"
             >
               <LogOut className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">Leave</span>
+              <span className="hidden xl:inline">Leave</span>
+            </button>
+          </Tooltip>
+          
+          <Tooltip text={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'} position="bottom">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="text-obsidian-on-surface-variant hover:text-white transition-colors hidden md:flex items-center justify-center p-1.5 rounded-sm hover:bg-white/5 ml-2"
+            >
+              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
             </button>
           </Tooltip>
         </div>
       </header>
       
-      {/* Animated gradient accent line */}
-      <div className="gradient-line shrink-0" />
-
-      {/* ── Main content ── */}
+            {/* ── Main content ── */}
       {/* Mobile: video on top, sidebar below   |   Desktop: side-by-side */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
 
         {/* Video area ── */}
         {/* Mobile: aspect ratio 16:9 | Desktop: fills remaining width */}
-        <div className="aspect-video md:aspect-auto md:flex-1 bg-black relative overflow-hidden shrink-0">
+        <div className="aspect-video md:aspect-auto md:flex-1 bg-black md:bg-obsidian-surface-container-lowest relative group overflow-hidden shrink-0 border-r border-white/5 shadow-2xl">
           <VideoPlayer />
           
           {/* Reconnection Banner */}
@@ -785,13 +763,13 @@ const RoomPage = () => {
         </div>
 
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
-        <div className="md:hidden flex flex-col bg-bg-secondary/90 backdrop-blur-md border-t border-border-dark shadow-[0_-4px_12px_rgba(0,0,0,0.5)] shrink-0 z-40 relative">
+        <div className="md:hidden flex flex-col bg-obsidian-surface-container-high/90 backdrop-blur-md border-t border-white/10 shadow-[0_-10px_30px_rgba(0,0,0,0.8)] shrink-0 z-40 relative">
           
 
           <div className="flex w-full overflow-x-auto scrollbar-hide">
             <button 
               onClick={() => setActiveMobileTab('chat')}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
             >
             <MessageSquare className="w-4.5 h-4.5 mb-1" />
             <span>CHAT</span>
@@ -799,22 +777,22 @@ const RoomPage = () => {
           </button>
           <button 
             onClick={() => setActiveMobileTab('people')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
           >
             <Users className="w-4.5 h-4.5 mb-1" />
             <span>PEOPLE ({onlineCount})</span>
-            {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-accent-red rounded-full" />}
+            {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80 rounded-full" />}
           </button>
           <button 
             onClick={() => setActiveMobileTab('queue')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
           >
             <ListVideo className="w-4.5 h-4.5 mb-1" />
             <span>QUEUE</span>
           </button>
           <button 
             onClick={() => setActiveMobileTab('activity')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-accent-red' : 'text-text-muted opacity-60'}`}
+            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
           >
             <Activity className="w-4.5 h-4.5 mb-1" />
             <span>ACTIVITY</span>
@@ -829,12 +807,12 @@ const RoomPage = () => {
             // Wake up sidebar if user hovers over it
             window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
           }}
-          className={`flex flex-col glass-panel md:border-l border-t md:border-t-0 border-border-dark overflow-hidden transition-all duration-500 ease-in-out shrink-0
-          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-96 xl:w-[420px]' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
+          className={`flex flex-col bg-obsidian-background border-l border-t md:border-t-0 border-white/5 overflow-hidden transition-all duration-500 ease-in-out shrink-0
+          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-[380px]' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
           ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-border-dark shrink-0">
+          <div className="hidden md:flex border-b border-white/5 shrink-0 px-6 pt-4 gap-6">
             {[
               { id: 'chat', icon: MessageSquare, label: 'Chat' },
               { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
@@ -846,13 +824,11 @@ const RoomPage = () => {
                 <button
                   key={id}
                   onClick={() => handleTabChange(id)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-semibold border-b-2 transition-all duration-200
-                    ${sidebarTab === id
-                      ? 'border-accent-red text-text-primary bg-white/5'
-                      : 'border-transparent text-text-muted hover:text-text-secondary'}`}
+                  className={`font-headline uppercase text-xs tracking-widest font-bold pb-2 transition-colors relative flex items-center gap-2 ${sidebarTab === id ? 'text-obsidian-primary' : 'text-obsidian-on-surface-variant hover:text-white'}`}
                 >
                   <TabIcon className="w-4 h-4" />
                   <span className="hidden xl:inline">{label}</span>
+                  {sidebarTab === id && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_10px_rgba(189,157,255,0.5)]"></div>}
                   {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
                     <span
                       key={unreadChatCount}
@@ -878,13 +854,13 @@ const RoomPage = () => {
               <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
                 {/* Host: controls sidebar block */}
                 {isHost && (
-                  <div className="flex flex-col gap-3 px-4 py-3 border-b border-border-dark bg-bg-primary/50 shrink-0">
+                  <div className="flex flex-col gap-3 px-4 py-3 border-b border-white/10 bg-bg-primary/50 shrink-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {requiresApproval ? <ShieldCheck className="w-4 h-4 text-accent-green" /> : <ShieldOff className="w-4 h-4 text-text-muted" />}
-                        <span className="text-xs font-semibold text-text-secondary">{requiresApproval ? 'Approval ON' : 'Approval OFF'}</span>
+                        {requiresApproval ? <ShieldCheck className="w-4 h-4 text-accent-green" /> : <ShieldOff className="w-4 h-4 text-obsidian-outline" />}
+                        <span className="text-xs font-semibold text-obsidian-on-surface-variant">{requiresApproval ? 'Approval ON' : 'Approval OFF'}</span>
                       </div>
-                      <button onClick={() => setApprovalRequired(!requiresApproval)} className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? 'bg-accent-green' : 'bg-bg-hover'}`}>
+                      <button onClick={() => setApprovalRequired(!requiresApproval)} className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? 'bg-accent-green' : 'bg-obsidian-surface-container-high'}`}>
                         <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${requiresApproval ? 'translate-x-5' : 'translate-x-0'}`} />
                       </button>
                     </div>
@@ -930,28 +906,28 @@ const RoomPage = () => {
         message={
           <div className="flex flex-col gap-4 text-left py-2">
             <div>
-              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Room Name</label>
-              <div className="text-sm font-semibold text-text-primary">{room?.name || 'VibeSync Party'}</div>
+              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Room Name</label>
+              <div className="text-sm font-semibold text-white">{room?.name || 'VibeSync Party'}</div>
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Room ID</label>
+                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Room ID</label>
                 <div className="text-sm font-mono font-bold text-accent-purple">{code}</div>
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Security</label>
+                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Security</label>
                 <div className="text-sm font-semibold text-accent-green flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> End-to-End Encrypted
                 </div>
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider">Invite Link</label>
+              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Invite Link</label>
               <div className="flex items-center gap-2 mt-1">
                 <input 
                   readOnly 
                   value={window.location.href}
-                  className="flex-1 bg-black/30 border border-white/10 rounded px-2 py-1.5 text-xs text-text-secondary outline-none focus:border-accent-purple/50"
+                  className="flex-1 bg-black/30 border border-white/10 rounded px-2 py-1.5 text-xs text-obsidian-on-surface-variant outline-none focus:border-accent-purple/50"
                 />
                 <button onClick={copyRoomLink} className="btn-ghost p-1.5 h-auto">
                   <Copy className="w-3.5 h-3.5" />
@@ -1012,8 +988,8 @@ const RoomPage = () => {
                 <Crown className="w-5 h-5 text-accent-yellow" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-text-primary">Transfer Host Before Leaving</h2>
-                <p className="text-xs text-text-muted mt-0.5">Pick a new host to continue the session.</p>
+                <h2 className="text-base font-bold text-white">Transfer Host Before Leaving</h2>
+                <p className="text-xs text-obsidian-outline mt-0.5">Pick a new host to continue the session.</p>
               </div>
             </div>
 
@@ -1025,7 +1001,7 @@ const RoomPage = () => {
                     key={p.userId}
                     type="button"
                     onClick={() => { setShowLeaveModal(false); confirmLeave(p.userId); }}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-bg-hover hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-transparent transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-obsidian-surface-container-high hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-transparent transition-all text-left"
                   >
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
@@ -1034,8 +1010,8 @@ const RoomPage = () => {
                       {p.username?.slice(0, 2)?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-text-primary truncate">{p.username}</p>
-                      <p className="text-xs text-text-muted">{p.isGuest ? 'Guest' : 'Member'}</p>
+                      <p className="text-sm font-semibold text-white truncate">{p.username}</p>
+                      <p className="text-xs text-obsidian-outline">{p.isGuest ? 'Guest' : 'Member'}</p>
                     </div>
                     <Crown className="w-4 h-4 text-accent-yellow opacity-60" />
                   </button>

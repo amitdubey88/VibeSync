@@ -16,7 +16,7 @@ export default function SubtitleOverlay() {
         >
           {/* Subtitle text formatting mimicking standard CC */}
           <span 
-            className="inline-block px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white font-sans md:text-2xl sm:text-lg text-base leading-tight tracking-wide"
+            className="inline-block px-4 py-2 bg-black/70 backdrop-blur-sm rounded-lg text-white font-headline font-bold md:text-2xl sm:text-lg text-base leading-tight tracking-wide"
             style={{ 
               textShadow: '0px 2px 4px rgba(0,0,0,0.8), 0px 0px 2px rgba(0,0,0,0.8)',
               whiteSpace: 'pre-line' 
