@@ -1,8 +1,11 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime, formatRelativeTime } from '../../utils/helpers';
-import { 
-  ReplyIcon, ShieldIcon, CheckIcon, PinIcon 
-} from '../UI/SharpIcons';
+import {
+  ReplyIcon,
+  ShieldIcon,
+  CheckIcon,
+  PinIcon,
+} from "../UI/SharpIcons";
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePolls } from '../../hooks/usePolls';

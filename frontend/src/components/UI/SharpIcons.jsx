@@ -422,3 +422,9 @@ export const ClockIcon = (props) => (
     <path d="M12 6V12L16 14" />
   </BaseIcon>
 );
+
+export const ReplyIcon = (props) => (
+  <BaseIcon {...props}>
+    <path d="M10 18L3 11L10 4V8C15 8 19 9 21 14C18 12 15 11 10 11V18Z" />
+  </BaseIcon>
+);
