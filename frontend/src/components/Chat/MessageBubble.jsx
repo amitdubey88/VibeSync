@@ -136,14 +136,12 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const avatarBg = message.avatar || getAvatarColor(message.username);
   const swipeProgress = Math.min(dragX / SWIPE_THRESHOLD, 1);
 
-  //  bubble radius: own messages have sharp top-right, others have sharp top-left
-  const bubbleRadius = isOwn
-    ? isContinuation ? 'rounded-[18px]' : 'rounded-[18px] rounded-tr-[4px]'
-    : isContinuation ? 'rounded-[18px]' : 'rounded-[18px] rounded-tl-[4px]';
+  //  bubble radius: completely brutalist and sharp
+  const bubbleRadius = '';
 
   const bubbleColors = isOwn
-    ? 'bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white font-medium tracking-wide shadow-[0_2px_10px_rgba(139,92,246,0.3)]'
-    : 'bg-[#181825] text-zinc-100 border border-white/5 font-medium tracking-wide';
+    ? 'bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim text-obsidian-on-primary-fixed shadow-[0_0_15px_rgba(139,92,246,0.2)] font-headline tracking-wide'
+    : 'bg-obsidian-surface-high border border-white/5 text-white font-headline tracking-wide';
 
   return (
     <div

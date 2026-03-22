@@ -57,7 +57,7 @@ export default function CountdownLobby() {
 
         <div className="flex items-center gap-2 md:gap-4 text-center">
           <div className="flex flex-col items-center">
-            <div className="text-3xl md:text-7xl font-mono font-bold text-rose-500 bg-rose-500/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-rose-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(225,29,72,0.3)] font-headline">
+            <div className="text-3xl md:text-7xl font-mono font-bold text-rose-500 bg-rose-500/10 px-2 py-4 md:px-4 md:py-6  md:rounded-2xl border border-rose-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(225,29,72,0.3)] font-headline">
               {String(hours).padStart(2, '0')}
             </div>
             <span className="text-zinc-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4 font-headline">Hours</span>
@@ -66,7 +66,7 @@ export default function CountdownLobby() {
           <span className="text-2xl md:text-4xl text-zinc-800 font-bold -mt-6 md:-mt-8">:</span>
 
           <div className="flex flex-col items-center">
-            <div className="text-3xl md:text-7xl font-mono font-bold text-rose-500 bg-rose-500/10 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-rose-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(225,29,72,0.3)] font-headline">
+            <div className="text-3xl md:text-7xl font-mono font-bold text-rose-500 bg-rose-500/10 px-2 py-4 md:px-4 md:py-6  md:rounded-2xl border border-rose-500/20 w-24 md:w-32 shadow-[0_0_30px_rgba(225,29,72,0.3)] font-headline">
               {String(minutes).padStart(2, '0')}
             </div>
             <span className="text-zinc-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4 font-headline">Minutes</span>
@@ -75,7 +75,7 @@ export default function CountdownLobby() {
           <span className="text-2xl md:text-4xl text-zinc-800 font-bold -mt-6 md:-mt-8">:</span>
 
           <div className="flex flex-col items-center">
-            <div className="text-3xl md:text-7xl font-mono font-bold text-white bg-black/40 px-2 py-4 md:px-4 md:py-6 rounded-xl md:rounded-2xl border border-white/5 w-24 md:w-32 shadow-[0_10px_40px_rgba(0,0,0,0.8)] font-headline">
+            <div className="text-3xl md:text-7xl font-mono font-bold text-white bg-black/40 px-2 py-4 md:px-4 md:py-6  md:rounded-2xl border border-white/5 w-24 md:w-32 shadow-[0_10px_40px_rgba(0,0,0,0.8)] font-headline">
               {String(seconds).padStart(2, '0')}
             </div>
             <span className="text-zinc-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4 font-headline">Seconds</span>

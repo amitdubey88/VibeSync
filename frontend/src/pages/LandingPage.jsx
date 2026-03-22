@@ -167,7 +167,7 @@ const LandingPage = () => {
       {/* ── Room Ended by Host Modal ── */}
       {location.state?.roomEnded && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
-          <div className="glass-panel p-10 max-w-sm w-full border border-obsidian-outline-variant rounded-lg text-center shadow-[0_0_50px_rgba(220,38,38,0.2)]">
+          <div className="glass-panel p-10 max-w-sm w-full border border-obsidian-outline-variant text-center shadow-[0_0_50px_rgba(220,38,38,0.2)]">
             <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
               <span className="material-symbols-outlined text-red-500 text-3xl">dangerous</span>
             </div>

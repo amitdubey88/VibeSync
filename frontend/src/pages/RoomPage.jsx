@@ -678,13 +678,13 @@ const RoomPage = () => {
               onClick={copyRoomCode}
               className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/5 px-3 py-1.5 shadow-lg text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
             >
-              <span className="text-obsidian-on-surface-variant group-hover:text-white hidden sm:inline">
+              <span className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary hidden sm:inline">
                 CODE
               </span>
               <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">
                 {code}
               </span>
-              <Copy className="w-3.5 h-3.5 text-obsidian-on-surface-variant group-hover:text-white" />
+              <Copy className="w-3.5 h-3.5 text-obsidian-on-surface-variant group-hover:text-obsidian-primary" />
             </button>
           </Tooltip>
 
@@ -704,7 +704,7 @@ const RoomPage = () => {
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`text-obsidian-on-surface-variant hover:text-white transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? "bg-white/10 text-white" : ""}`}
+                className={`text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? "bg-obsidian-primary/10 text-obsidian-primary" : ""}`}
                 onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 250)}
               >
                 <MoreVertical className="w-4 h-4" />
@@ -768,7 +768,7 @@ const RoomPage = () => {
           >
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="text-obsidian-on-surface-variant hover:text-white transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-white/5 ml-2"
+              className="text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-obsidian-primary/10 ml-2"
             >
               {isSidebarOpen ? (
                 <PanelRightClose className="w-4 h-4" />

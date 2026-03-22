@@ -196,7 +196,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
           style={{ width: `${Math.min(bufferedProgress, 100)}%` }}
         />
         <div
-          className="relative h-full rounded-full bg-violet-500 transition-all duration-150 shadow-[0_0_15px_rgba(139,92,246,0.6)]"
+          className="relative h-full rounded-full bg-obsidian-primary transition-all duration-150 shadow-[0_0_15px_rgba(139,92,246,0.6)]"
           style={{ width: `${progress}%` }}
         />
         {/* Clip Markers */}
@@ -222,7 +222,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Play/pause */}
         <button
           onClick={togglePlay}
-          className={`text-zinc-400 hover:text-white transition-colors ${(!isHost && !isCoHost) && 'opacity-40 cursor-not-allowed'}`}
+          className={`text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors ${(!isHost && !isCoHost) && 'opacity-40 cursor-not-allowed'}`}
           disabled={!isHost && !isCoHost}
           title={(isHost || isCoHost) ? (isPlaying ? 'Pause' : 'Play') : 'Only host/co-host can control'}
         >
@@ -230,14 +230,14 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         </button>
 
         {/* Volume */}
-        <button onClick={toggleMuteVideo} className="text-zinc-400 hover:text-white transition-colors">
+        <button onClick={toggleMuteVideo} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors">
           {isMutedLocal || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
         <input
           type="range" min="0" max="1" step="0.05"
           value={isMutedLocal ? 0 : volume}
           onChange={handleVolume}
-          className="w-20 accent-violet-500 cursor-pointer"
+          className="w-20 accent-obsidian-primary cursor-pointer"
         />
 
         {/* Time */}
@@ -267,7 +267,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
 
         {/* Load video button (host only) */}
         {(isHost || isCoHost) && onLoadClick && (
-          <button onClick={onLoadClick} className="text-zinc-400 hover:text-white transition-colors" title="Change video">
+          <button onClick={onLoadClick} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors" title="Change video">
             <Upload className="w-4 h-4" />
           </button>
         )}
@@ -275,14 +275,14 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
         {/* Clip moment */}
         <button 
           onClick={() => sendClip(currentTime)} 
-          className="text-zinc-400 hover:text-white transition-colors hover:text-violet-400 transition-colors" 
+          className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors  transition-colors" 
           title="Clip This Moment"
         >
           <Pin className="w-4 h-4" />
         </button>
 
         {/* Fullscreen */}
-        <button type="button" onClick={toggleFullscreen} className="text-zinc-400 hover:text-white transition-colors" title="Fullscreen">
+        <button type="button" onClick={toggleFullscreen} className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors" title="Fullscreen">
           {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
         </button>
       </div>
