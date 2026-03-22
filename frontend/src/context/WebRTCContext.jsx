@@ -622,7 +622,6 @@ export const WebRTCProvider = ({ children }) => {
 
         // Auto-sync active stream to participants who join late or rejoin with a new socket ID
         const onParticipantUpdate = ({ participants }) => {
-            if (!isHostRef.current) return;
             if (!premierStreamRef.current) return;
 
             // Build the set of currently-connected socketIds so we can garbage-collect
@@ -646,7 +645,7 @@ export const WebRTCProvider = ({ children }) => {
 
         // Fallback: a late-joining participant explicitly asks for the stream
         const onRequestAnnounce = ({ fromSocketId }) => {
-            if (!isHostRef.current || !premierStreamRef.current) return;
+            if (!premierStreamRef.current) return;
             console.log(`[VideoStream] Participant ${fromSocketId} requested stream announce`);
             socket.emit('video-stream:announce', { roomCode, targetSocketId: fromSocketId });
             videoPeersRef.current[fromSocketId] = 'pending';

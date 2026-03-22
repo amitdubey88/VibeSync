@@ -951,7 +951,7 @@ const VideoPlayer = () => {
           </div>
         )}
 
-        {!(isHost || isCoHost) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
+        {!(isDirectStreaming) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
             <div className="relative w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/10 flex items-center justify-center">
@@ -959,7 +959,7 @@ const VideoPlayer = () => {
               <span className="w-5 h-5 sm:w-8 sm:h-8 rounded-full bg-accent-red/70" />
             </div>
             <div>
-              <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Host/Co-host is Preparing to Stream</h3>
+              <h3 className="text-sm sm:text-lg font-bold text-text-primary mb-1">Broadcaster is Preparing to Stream</h3>
               <p className="text-text-secondary text-xs sm:text-sm">
                 {currentVideo?.title?.replace(/^\(LIVE\)\s*/i, '') || 'Getting the stream ready…'}
               </p>
@@ -968,8 +968,8 @@ const VideoPlayer = () => {
               </p>
             </div>
           </div>
-        ) : !(isHost || isCoHost) && (remotePremierStream || isStreamAnnounced) ? (
-          /* Participant: Show Direct/Premier Feed — only visible once host presses play */
+        ) : !(isDirectStreaming) && currentVideo?.type === 'live' && (remotePremierStream || isStreamAnnounced) ? (
+          /* Participant: Show Direct/Premier Feed — only visible once broadcaster presses play */
           remotePremierStream ? (
             <div className="relative w-full h-full">
               <video
@@ -1042,7 +1042,7 @@ const VideoPlayer = () => {
               onError={handleVideoError}
             />
             {/* Start Streaming Overlay for Host */}
-            {(isHost || isCoHost) && isWebRTCStream && !isLiveStreamingInitialized && (
+            {isDirectStreaming && !isLiveStreamingInitialized && (
               <div className="absolute inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm rounded-2xl pointer-events-auto">
                 <div className="flex flex-col items-center max-w-[90%] sm:max-w-sm text-center animate-fade-in fade-in-up">
                   <div className="w-12 h-12 sm:w-20 sm:h-20 rounded-full bg-accent-red/20 flex items-center justify-center mb-4 sm:mb-6">
