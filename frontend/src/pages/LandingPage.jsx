@@ -92,6 +92,11 @@ const LandingPage = () => {
       const ok = await ensureAuth();
       if (!ok) return;
       const { room } = await getRoomInfo(roomCode.toUpperCase().trim());
+      sessionStorage.setItem("vibesync_session", JSON.stringify({
+        roomCode: room.code,
+        username: username.trim(),
+        joinedAt: Date.now()
+      }));
       navigate(`/room/${room.code}`, { state: { password } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Room not found');
@@ -114,6 +119,11 @@ const LandingPage = () => {
         scheduledAt: scheduleToggle && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
       });
       toast.success('Room created!');
+      sessionStorage.setItem("vibesync_session", JSON.stringify({
+        roomCode: room.code,
+        username: username.trim(),
+        joinedAt: Date.now()
+      }));
       navigate(`/room/${room.code}`, { state: { password } });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Failed to create room');

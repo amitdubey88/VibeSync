@@ -99,6 +99,14 @@ const RoomPage = () => {
   const [isGuestPromptVisible, setIsGuestPromptVisible] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [isNameConfirmed, setIsNameConfirmed] = useState(() => {
+    const saved = sessionStorage.getItem("vibesync_session");
+    if (!saved) return false;
+    try {
+      const session = JSON.parse(saved);
+      return session.roomCode === code;
+    } catch { return false; }
+  });
   const hasJoinedRef = useRef(false);
 
   // Initialize features
@@ -200,11 +208,12 @@ const RoomPage = () => {
   }, [socket, isConnected, code]);
 
   useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isNameConfirmed) {
       setIsGuestPromptVisible(true);
+      if (user?.username && !guestName) setGuestName(user.username);
       return;
     }
-    setIsGuestPromptVisible(false); // Hide prompt if they somehow become authenticated
+    setIsGuestPromptVisible(false);
     if (!socket || !isConnected) return;
     if (hasJoinedRef.current) return;
     hasJoinedRef.current = true;
@@ -254,6 +263,7 @@ const RoomPage = () => {
     refreshParticipants,
     navigate,
     user?.username,
+    isNameConfirmed,
   ]);
 
   // Leave room on component unmount (page navigation away).
@@ -376,13 +386,24 @@ const RoomPage = () => {
     if (!guestName.trim()) return;
     setIsLoggingIn(true);
     try {
-      await guestLogin(guestName.trim());
-      // isAuthenticated will change, triggering the join effect naturally
+      // Re-login only if name changed or not authenticated
+      if (!isAuthenticated || user?.username !== guestName.trim()) {
+        await guestLogin(guestName.trim());
+      }
+      
+      // Save session to bypass prompt on refresh/redirect
+      sessionStorage.setItem("vibesync_session", JSON.stringify({
+        roomCode: code,
+        username: guestName.trim(),
+        joinedAt: Date.now()
+      }));
+      
+      setIsNameConfirmed(true);
       toast.success(`Welcome, ${guestName}!`, { 
         icon: <User className="w-5 h-5 text-accent-purple" /> 
       });
     } catch (err) {
-      toast.error('Failed to join as guest. Please try again.');
+      toast.error('Failed to join. Please try again.');
     } finally {
       setIsLoggingIn(false);
     }
