@@ -13,7 +13,9 @@ let Room, Message;
 try {
     Room = require('../models/Room');
     Message = require('../models/Message');
-} catch (_) { }
+} catch {
+    // Graceful fallback for missing DB models
+}
 
 const isDbReady = () => mongoose.connection.readyState === 1;
 
@@ -145,6 +147,7 @@ router.get('/:code', async (req, res) => {
     }
 
     // Strip sensitive data
+    // eslint-disable-next-line no-unused-vars
     const { password, messages, ...safeRoom } = room;
     return res.json({
         success: true,
@@ -243,7 +246,7 @@ router.get('/video/metadata', async (req, res) => {
     try {
         const title = await getVideoMetadata(url, type);
         return res.json({ success: true, title });
-    } catch (err) {
+    } catch {
         return res.status(500).json({ success: false, message: 'Source resolution failed' });
     }
 });

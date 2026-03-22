@@ -2,7 +2,7 @@
  * Room Actions Socket Handler
  * Handles host-only controls: delete room, transfer host, kick, mute
  */
-const { cloudinary, isConfigured } = require('../config/cloudinary');
+const { cloudinary } = require('../config/cloudinary');
 
 const fs = require('fs');
 const path = require('path');
@@ -14,7 +14,7 @@ let Room, Message;
 try {
     Room = require('../models/Room');
     Message = require('../models/Message');
-} catch (_) { }
+} catch { /* Fallback */ }
 
 const { endedRooms } = require('./sharedState');
 

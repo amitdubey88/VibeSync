@@ -9,9 +9,6 @@
 
 const { hashRoomCode } = require('../utils/hash');
 
-let Message;
-try { Message = require('../models/Message'); } catch (_) { }
-
 module.exports = (io, socket, roomStore) => {
     const getRoomAndValidateHost = (roomCode) => {
         const code = roomCode?.toUpperCase?.();
@@ -287,7 +284,7 @@ module.exports = (io, socket, roomStore) => {
     // Host broadcasts the agreed-upon playback rate to all participants.
     // Clients listen for 'video:speed-changed' and apply it to their video element.
     socket.on('video:set-speed', ({ roomCode, speed }) => {
-        const { room, code, error } = getRoomAndValidateHost(roomCode);
+        const { code, error } = getRoomAndValidateHost(roomCode);
         if (error) return socket.emit('error', { message: error });
 
         const VALID_SPEEDS = [0.75, 1, 1.25, 1.5, 2];

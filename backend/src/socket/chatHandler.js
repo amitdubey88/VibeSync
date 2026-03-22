@@ -6,7 +6,7 @@
 const { hashRoomCode } = require('../utils/hash');
 
 let Message;
-try { Message = require('../models/Message'); } catch (_) { }
+try { Message = require('../models/Message'); } catch { /* Fallback */ }
 
 module.exports = (io, socket, roomStore) => {
     // ── chat:send ─────────────────────────────────────────────────────────────

@@ -23,7 +23,7 @@ async function getVideoMetadata(url, type) {
                     try {
                         const json = JSON.parse(data);
                         resolve(json.title || null);
-                    } catch (e) { resolve(null); }
+                    } catch { resolve(null); }
                 });
             });
             req.on('error', () => resolve(null));
@@ -39,7 +39,7 @@ async function getVideoMetadata(url, type) {
                 const name = decodeURIComponent(parts).replace(/\.[a-z0-9]+$/i, '');
                 return name || null;
             }
-        } catch (e) { return null; }
+        } catch { return null; }
     }
     
     return null;

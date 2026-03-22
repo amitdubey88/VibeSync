@@ -2,12 +2,11 @@ require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
-const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
-const { cloudinary, uploadToCloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
+const { cloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
@@ -208,6 +207,7 @@ app.get('/api/health', (_req, res) => {
 app.use((_req, res) => res.status(404).json({ success: false, message: 'Not found' }));
 
 // Global error handler
+// eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
     console.error('[error]', err.message);
     res.status(500).json({ success: false, message: err.message || 'Internal server error' });

@@ -7,7 +7,9 @@ const router = express.Router();
 let User;
 try {
     User = require('../models/User');
-} catch (_) { }
+} catch {
+    // Graceful fallback if mapping model fails
+}
 
 /** Returns true only if MongoDB connection is ready. */
 const isDbReady = () => mongoose.connection.readyState === 1;
@@ -131,7 +133,7 @@ router.get('/me', (req, res) => {
     try {
         const user = jwt.verify(authHeader.split(' ')[1], process.env.JWT_SECRET);
         return res.json({ success: true, user });
-    } catch (_) {
+    } catch {
         return res.status(401).json({ success: false, message: 'Invalid token' });
     }
 });

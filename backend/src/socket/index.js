@@ -22,7 +22,7 @@ module.exports = (io, roomStore) => {
         try {
             socket.user = jwt.verify(token, process.env.JWT_SECRET);
             next();
-        } catch (err) {
+        } catch {
             next(new Error('Invalid token'));
         }
     });
