@@ -344,6 +344,34 @@ export const RoomProvider = ({ children }) => {
       }
       setCurrentVideo(displayVideo);
       setVideoState(vs);
+
+      // ── Playback Notification Logic ──
+      // Use decrypted title if available, fallback to video.title or 'Untitled'
+      const title = displayVideo.title || video.title || 'Untitled Video';
+      
+      // Personalized toast based on suggestion metadata
+      if (displayVideo.suggestedById) {
+        if (displayVideo.suggestedById === user?.id) {
+          toast(`Your suggested video "${title}" is now playing!`, {
+            icon: <Play className="w-5 h-5 text-accent-red" />,
+            duration: 5000,
+            id: `play-suggest-${displayVideo.url}`
+          });
+        } else {
+          toast(`${displayVideo.suggestedBy}'s suggested video "${title}" is now playing!`, {
+            icon: <Play className="w-5 h-5 text-accent-red" />,
+            duration: 4000,
+            id: `play-suggest-${displayVideo.url}`
+          });
+        }
+      } else if (displayVideo.type !== 'uploading' && displayVideo.url !== 'live-stream') {
+        // Standard host load notification
+        toast(`Host is now playing: ${title}`, {
+          icon: <Play className="w-5 h-5 text-accent-red" />,
+          duration: 3500,
+          id: `play-host-${displayVideo.url}`
+        });
+      }
     };
 
     // ── host started background upload ──────────────────────────────────────
@@ -581,6 +609,8 @@ export const RoomProvider = ({ children }) => {
         url: video.url,
         title: video.title || 'Queue Video',
         type: video.type || 'direct',
+        suggestedBy: video.suggestedBy,
+        suggestedById: video.suggestedById
       });
     };
 
@@ -751,7 +781,12 @@ export const RoomProvider = ({ children }) => {
 
     socket.emit('video:set-source', {
       roomCode: room.code,
-      video: encryptedVideo,
+      video: {
+        ...encryptedVideo,
+        // Metadata intended for UI overlay/notifications (not content) doesn't need E2EE encryption
+        suggestedBy: video.suggestedBy,
+        suggestedById: video.suggestedById
+      },
       currentTime: opts.currentTime,
       duration: opts.duration,
       isPlaying: opts.isPlaying,

@@ -98,7 +98,13 @@ module.exports = (io, socket, roomStore) => {
         const hostParticipant = room.participants.find(p => p.userId === room.hostId && p.isOnline !== false);
         if (hostParticipant) {
             io.to(hostParticipant.socketId).emit('queue:load-video', {
-                video: { title: item.title, url: item.url, type: item.type }
+                video: { 
+                    title: item.title, 
+                    url: item.url, 
+                    type: item.type,
+                    suggestedBy: item.suggestedBy,
+                    suggestedById: item.suggestedById
+                }
             });
         }
 
