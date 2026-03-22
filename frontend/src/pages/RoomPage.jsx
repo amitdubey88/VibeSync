@@ -18,7 +18,7 @@ import {
   ExitIcon, DeleteIcon, ThemeIcon, QueueIcon, InviteIcon, 
   MoreIcon, ShieldIcon, UserIcon, SettingsIcon, RefreshIcon,
   ChevronDownIcon, WifiIcon, CrownIcon, ActivityIcon, InfoIcon,
-  CheckIcon, XIcon, PlusIcon, MinusIcon, LockIcon, ClockIcon
+  CheckIcon, XIcon, PlusIcon, MinusIcon, LockIcon, ClockIcon, LinkIcon
 } from '../components/UI/SharpIcons';
 // Material Symbols is still used for some simple utility icons
 import { Loader2 } from 'lucide-react';
