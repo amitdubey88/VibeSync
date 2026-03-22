@@ -588,9 +588,9 @@ const RoomPage = () => {
       {/* ── Top bar ── */}
       <header className="flex items-center justify-between px-3 py-2 border-b border-border-dark glass-panel shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-2 min-w-0">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0">
-            <img src="/favicon.svg" alt="VibeSync Logo" className="w-7 h-7 rounded-md shadow-[0_0_10px_rgba(229,9,20,0.4)]" />
-            <span className="text-sm font-black text-gradient-red hidden sm:block">VibeSync</span>
+          <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0 group">
+            <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-8 h-8 rounded-lg shadow-[0_0_15px_rgba(139,92,246,0.5)] group-hover:scale-110 transition-transform duration-500" />
+            <span className="text-sm font-black text-white font-manrope uppercase tracking-tighter hidden sm:block">VibeSync<span className="text-violet-500">.</span></span>
           </button>
           <div className="w-px h-5 bg-border-dark" />
           <h1 className="text-sm font-bold text-text-primary truncate max-w-[100px] xs:max-w-[120px] sm:max-w-xs text-left">{room?.name || code}</h1>

@@ -136,9 +136,12 @@ const LandingPage = () => {
     <div className="min-h-screen bg-cinematic flex flex-col">
       {/* Header */}
       <header className="px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <img src="/favicon.svg" alt="VibeSync Logo" className="w-8 h-8 rounded-lg shadow-[0_0_15px_rgba(229,9,20,0.4)]" />
-          <span className="text-xl font-black tracking-tight text-gradient-red">VibeSync</span>
+        <div className="flex items-center">
+          <img 
+            src="/logo-cinematic.png" 
+            alt="VibeSync Logo" 
+            className="h-10 md:h-12 w-auto object-contain hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_20px_rgba(139,92,246,0.3)]" 
+          />
         </div>
         <div className="hidden sm:flex items-center gap-4 text-text-muted text-sm">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-accent-green/10 text-accent-green border border-accent-green/20">
