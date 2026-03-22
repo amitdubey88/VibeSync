@@ -56,9 +56,9 @@ export default {
           'error-container': 'rgb(var(--obsidian-error-container) / <alpha-value>)',
           outline: 'rgb(var(--obsidian-outline) / <alpha-value>)',
           'outline-variant': 'rgb(var(--obsidian-outline-variant) / <alpha-value>)',
-          'on-surface': 'rgb(var(--obsidian-surface) / <alpha-value>)',
+          'on-surface': 'rgb(var(--obsidian-on-surface) / <alpha-value>)',
           'on-surface-variant': 'rgb(var(--obsidian-on-surface-variant) / <alpha-value>)',
-          'on-primary': 'rgb(var(--obsidian-primary) / <alpha-value>)',
+          'on-primary': 'rgb(var(--obsidian-on-primary) / <alpha-value>)',
         }
       },
       fontFamily: {
