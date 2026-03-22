@@ -152,8 +152,8 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
   const bubbleRadius = '';
 
   const bubbleColors = isOwn
-    ? 'bg-[#181825] border border-[#2a2a3c] text-white'
-    : 'bg-[#12121e] border border-white/5 text-white';
+    ? 'bg-[#2d2d35]/60 border-white/10 text-white'
+    : 'bg-[#1a1b1e]/90 border-white/10 text-white';
 
   const senderNameColor = '#8b5cf6'; // julian.x purple
 
@@ -189,7 +189,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
               transition: isSnapping ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
               wordBreak: 'break-word',
               overflowWrap: 'anywhere',
-              borderRadius: '0',
+              borderRadius: '12px',
             }}
             onClick={() => setShowActions(prev => !prev)}
           >
@@ -226,10 +226,10 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
                 <div
                   key={emoji}
                   title={users.join(', ')}
-                  className="flex items-center gap-1 bg-obsidian-surface-highest border-2 border-white/10 px-2 py-0.5 shadow-2xl scale-110"
+                  className="flex items-center gap-1 bg-[#1a1a1d] border border-white/10 px-2 py-0.5 shadow-2xl scale-110 rounded-full"
                 >
-                  <span className="text-obsidian-primary text-[10px]">{emoji}</span>
-                  {users.length > 1 && <span className="text-[10px] text-obsidian-on-surface font-black uppercase tracking-widest">{users.length}</span>}
+                  <span className="text-[#a78bfa] text-[10px]">{emoji}</span>
+                  {users.length > 1 && <span className="text-[10px] text-zinc-400 font-black uppercase tracking-widest">{users.length}</span>}
                 </div>
               ))}
             </div>
