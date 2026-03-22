@@ -31,19 +31,19 @@ const QuickReactionBar = ({ visible, className, isOverlay }) => {
   // 2. Otherwise: w-fit mx-auto (Chat Panel inline)
   let positionClasses = '';
   if (isFullscreen || isOverlay) {
-    positionClasses = 'absolute bottom-24 left-1/2 -translate-x-1/2 z-[60]';
+    positionClasses = 'absolute bottom-24 left-1/2 -translate-x-1/2 z-[60] w-fit max-w-[90%]';
   } else {
-    positionClasses = 'w-fit mx-auto py-2';
+    positionClasses = 'w-full py-1.5';
   }
 
   return (
     <div className={`transition-all duration-300 animate-slide-up ${positionClasses} ${className || ''}`}>
-      <div className="flex gap-2 p-1.5 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] px-2 py-2">
+      <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 p-1.5 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] px-2 py-1.5">
         {emojis.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="w-12 h-12 flex items-center justify-center text-2xl hover:bg-white/5 hover:shadow-[0_0_20px_rgba(255,255,255,0.1)] transition-all duration-300 hover:-translate-y-2 hover:scale-110 active:scale-95"
+            className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-xl md:text-2xl hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:scale-110 active:scale-95"
             title={`React with ${emoji}`}
           >
             {emoji}

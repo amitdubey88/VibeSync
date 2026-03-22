@@ -66,7 +66,21 @@ export const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
  */
 export const formatMessageTime = (isoStr) => {
     const d = new Date(isoStr);
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
+};
+
+/**
+ * Format date to relative time (e.g., "5m ago", "Just now").
+ */
+export const formatRelativeTime = (isoStr) => {
+    const now = new Date();
+    const past = new Date(isoStr);
+    const diffInSeconds = Math.floor((now - past) / 1000);
+
+    if (diffInSeconds < 60) return 'just now';
+    if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+    if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+    return past.toLocaleDateString();
 };
 
 /**

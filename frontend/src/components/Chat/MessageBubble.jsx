@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { getInitials, getAvatarColor, formatMessageTime } from '../../utils/helpers';
+import { getInitials, getAvatarColor, formatMessageTime, formatRelativeTime } from '../../utils/helpers';
 import { Reply, ShieldCheck, Check, CheckCheck, Pin } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
@@ -18,7 +18,7 @@ const StatusTick = ({ status, isOwn }) => {
   if (!isOwn) return null;
   const statusText = status === 'seen' ? 'READ' : status.toUpperCase();
   return (
-    <span className="text-[9px] font-black text-white/30 tracking-widest ml-1.5">
+    <span className="text-[10px] font-bold text-[#52525b] tracking-widest ml-1.5 uppercase">
       • {statusText}
     </span>
   );
@@ -35,6 +35,15 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const isDraggingRef = useRef(false);
   const hasTriggeredRef = useRef(false);
   const rowRef = useRef(null);
+  const [displayTime, setDisplayTime] = useState(() => formatRelativeTime(message.createdAt));
+
+  // Update display time every 5 minutes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDisplayTime(formatRelativeTime(message.createdAt));
+    }, 5 * 60 * 1000); // 5 mins
+    return () => clearInterval(interval);
+  }, [message.createdAt]);
 
   const status = messageStatuses?.[message.id] || 'sent';
 
@@ -138,14 +147,16 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
   const bubbleRadius = '';
 
   const bubbleColors = isOwn
-    ? 'bg-[#12121e]/80 border border-fuchsia-500/20 text-white font-body tracking-normal'
-    : 'bg-[#0e0e10]/80 border border-white/10 text-white font-body tracking-normal';
+    ? 'bg-[#181825] border border-[#2a2a3c] text-white'
+    : 'bg-[#12121e] border border-white/5 text-white';
+
+  const senderNameColor = '#8b5cf6'; // julian.x purple
 
   return (
     <div
       id={`msg-${message.id}`}
       ref={rowRef}
-      className={`flex flex-col ${isOwn ? 'items-end ml-auto' : 'items-start mr-auto'} ${isContinuation ? 'mt-0.5' : 'mt-4'} relative select-none w-fit max-w-[85%]`}
+      className={`flex flex-col ${isOwn ? 'items-end ml-auto' : 'items-start mr-auto'} ${isContinuation ? 'mt-0.5' : 'mt-3'} relative select-none w-fit max-w-[85%]`}
       style={{ touchAction: 'pan-y' }}
       onTouchStart={(e) => startDrag(e.touches[0].clientX)}
       onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
@@ -159,7 +170,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
       <div className={`flex flex-col ${isOwn ? 'items-end' : 'items-start'} relative w-full`}>
         {/* Sender name (only for first in group, not own) */}
         {!isOwn && !isContinuation && (
-          <span className="text-[11px] font-black ml-1 mb-1.5 uppercase tracking-[0.2em]" style={{ color: avatarBg }}>
+          <span className="text-[11px] font-bold mb-1.5 uppercase tracking-widest" style={{ color: senderNameColor }}>
             {message.username}
           </span>
         )}
@@ -167,7 +178,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
         <div className={`relative group/bubble ${isOwn ? 'ml-6' : 'mr-6'}`}>
           {/* Main bubble */}
           <div
-            className={`flex flex-col px-4 py-2.5 ${bubbleColors} text-[15px] leading-relaxed break-words shadow-sm cursor-pointer min-w-[70px] border border-white/10`}
+            className={`flex flex-col px-3 py-2 md:px-4 md:py-3 ${bubbleColors} text-[14px] leading-relaxed break-words shadow-lg cursor-pointer min-w-[70px] rounded-[6px] relative`}
             style={{
               transform: `translateX(${dragX}px)`,
               transition: isSnapping ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
@@ -204,15 +215,15 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
 
           {/* Reactions overlapping bottom corner of bubble */}
           {message.reactions && Object.keys(message.reactions).length > 0 && (
-            <div className={`absolute bottom-[-10px] ${isOwn ? 'left-[-10px]' : 'right-[-10px]'} flex flex-wrap gap-0.5 z-10`}>
+            <div className={`absolute bottom-[-14px] ${isOwn ? 'left-[-4px]' : 'right-[-4px]'} flex flex-wrap gap-1 z-20`}>
               {Object.entries(message.reactions).map(([emoji, users]) => (
                 <div
                   key={emoji}
                   title={users.join(', ')}
-                  className={`flex items-center gap-1.5 px-2 py-1 bg-[#1a1a24] border border-white/10 text-zinc-300  text-[11px] font-bold shadow-lg`}
+                  className="flex items-center gap-1 bg-[#1a1a24] border border-[#3f3f46] rounded-full px-2 py-0.5 shadow-2xl scale-110"
                 >
-                  <span className="scale-110">{emoji}</span>
-                  {users.length > 1 && <span className="text-[10px] opacity-80">{users.length}</span>}
+                  <span className="text-violet-400 text-[10px]">{emoji}</span>
+                  {users.length > 1 && <span className="text-[10px] text-zinc-300 font-bold">{users.length}</span>}
                 </div>
               ))}
             </div>
@@ -220,9 +231,9 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
         </div>
 
         {/* Timestamp row — OUTSIDE bubble as per image */}
-        <div className={`flex items-center mt-1.5 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
-          <span className="text-[10px] font-bold text-white/20 tracking-widest uppercase">
-            {formatMessageTime(message.createdAt)}
+        <div className={`flex items-center mt-2 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] font-bold text-[#52525b] tracking-widest">
+            {displayTime}
           </span>
           <StatusTick status={status} isOwn={isOwn} />
         </div>
@@ -230,8 +241,8 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isHost, is
         {/* Hover action bar — appears on hover (desktop) or tap (mobile) */}
         {showActions && (
           <div
-            className={`absolute -top-10 flex items-center gap-0.5 px-2 py-1.5 bg-[#0a0a0f]/95 backdrop-blur-2xl border border-white/10 shadow-[0_8px_30px_rgba(0,0,0,0.8)] shadow-2xl z-40 animate-fade-in
-              ${isOwn ? 'right-0' : 'left-0'}`}
+            className={`absolute -top-12 flex flex-wrap items-center gap-0.5 px-2 py-1.5 bg-[#0a0a0f]/95 backdrop-blur-3xl border border-white/10 shadow-[0_8px_40px_rgba(0,0,0,0.8)] z-40 animate-fade-in
+              ${isOwn ? 'right-0' : 'left-0'} max-w-[calc(100vw-3rem)] md:max-w-none`}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Quick reactions */}
