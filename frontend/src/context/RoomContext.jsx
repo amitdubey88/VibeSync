@@ -394,11 +394,13 @@ export const RoomProvider = ({ children }) => {
     const onRoomDeleted = ({ message }) => {
       playUISound('end');
       
-      // Feature 17: Capture Snapshot
+      // Only count actual chat message bubbles (exclude system notifications and polls)
+      const chatMessagesCount = (messagesRef.current || []).filter(m => m.type !== 'system' && m.type !== 'poll').length;
+
       const summary = {
         name: roomRef.current?.name || 'VibeSync Room',
         participantsCount: participantsRef.current?.length || 0,
-        messagesCount: messagesRef.current?.length || 0
+        messagesCount: chatMessagesCount
       };
       
       // Use the ref so we always read the CURRENT value, not a stale closure (BUG-7)
