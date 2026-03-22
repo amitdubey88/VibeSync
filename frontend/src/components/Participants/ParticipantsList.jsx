@@ -3,7 +3,10 @@ import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import { useCoHost } from '../../hooks/useCoHost';
 import { getAvatarColor } from '../../utils/helpers';
-import { Crown, Mic, MicOff, MoreVertical, UserCheck, VolumeX, LogOut, Star } from 'lucide-react';
+import { 
+  CrownIcon, MicIcon, MicOffIcon, MoreIcon, 
+  CheckIcon, VolumeMutedIcon, ExitIcon, StarIcon 
+} from '../UI/SharpIcons';
 import ConfirmDialog from '../UI/ConfirmDialog';
 import Avatar from '../UI/Avatar';
 
@@ -103,8 +106,8 @@ const ParticipantsList = () => {
                   <span className={`text-sm tracking-widest uppercase font-headline truncate ${isMe ? 'text-obsidian-primary font-bold' : 'text-zinc-200 font-bold'}`}>
                     {p.username}{isMe ? ' (you)' : ''}
                   </span>
-                  {isRoomHost && <Crown className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
-                  {coHosts.includes(p.userId) && !isRoomHost && <Star className="w-3.5 h-3.5 text-fuchsia-400 shrink-0" />}
+                  {isRoomHost && <CrownIcon size={14} className="text-amber-400 shrink-0" />}
+                  {coHosts.includes(p.userId) && !isRoomHost && <StarIcon size={14} className="text-fuchsia-400 shrink-0" />}
                   {p.isGuest && <span className="badge bg-white/10 text-zinc-400 border border-white/10 text-[9px] px-1.5 py-0">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
@@ -132,8 +135,8 @@ const ParticipantsList = () => {
               {isInVoice && (
                 <div className="shrink-0 mr-1">
                   {voiceData?.isMuted
-                    ? <MicOff className="w-3.5 h-3.5 text-red-500" />
-                    : <Mic className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />}
+                    ? <MicOffIcon size={14} className="text-red-500" />
+                    : <MicIcon size={14} className="text-emerald-400 animate-pulse" />}
                 </div>
               )}
 
@@ -144,45 +147,45 @@ const ParticipantsList = () => {
                     onClick={() => setOpenMenuId(openMenuId === p.userId ? null : p.userId)}
                     className="p-1.5 text-zinc-500 hover:text-white hover:bg-white/10 transition-colors"
                   >
-                    <MoreVertical className="w-4 h-4" />
+                    <MoreIcon size={16} />
                   </button>
 
                   {openMenuId === p.userId && (
                     <div className="absolute right-0 top-8 z-50 w-48 bg-[#0e0e0f]/95 backdrop-blur-xl border border-white/10 shadow-2xl overflow-hidden">
                       <button
                         onClick={() => { setConfirm({ type: 'makeHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-amber-400 transition-colors"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-headline uppercase tracking-widest text-zinc-400 hover:bg-white/5 hover:text-amber-400 transition-colors"
                       >
-                        <UserCheck className="w-4 h-4 text-amber-400" /> Make Host
+                        <CheckIcon size={14} className="text-amber-400" /> Make Host
                       </button>
                       
                       {coHosts.includes(p.userId) ? (
                         <button
                           onClick={() => { setConfirm({ type: 'demoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
+                          className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-headline uppercase tracking-widest text-zinc-400 hover:bg-white/5 hover:text-fuchsia-400 transition-colors"
                         >
-                          <Star className="w-4 h-4 text-fuchsia-400" /> Remove Co-host
+                          <StarIcon size={14} className="text-fuchsia-400" /> Remove Co-host
                         </button>
                       ) : (
                         <button
                           onClick={() => { setConfirm({ type: 'promoteCoHost', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                          className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
+                          className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-headline uppercase tracking-widest text-zinc-400 hover:bg-white/5 hover:text-fuchsia-400 transition-colors"
                         >
-                          <Star className="w-4 h-4 text-fuchsia-400" /> Make Co-host
+                          <StarIcon size={14} className="text-fuchsia-400" /> Make Co-host
                         </button>
                       )}
                       <button
                         onClick={() => { setConfirm({ type: 'mute', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-text-secondary hover:bg-bg-hover hover:text-fuchsia-400 transition-colors"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-headline uppercase tracking-widest text-zinc-400 hover:bg-white/5 hover:text-fuchsia-400 transition-colors"
                       >
-                        <VolumeX className="w-4 h-4 text-fuchsia-400" /> Mute
+                        <VolumeMutedIcon size={14} className="text-fuchsia-400" /> Mute
                       </button>
                       <div className="border-t border-white/10" />
                       <button
                         onClick={() => { setConfirm({ type: 'kick', userId: p.userId, username: p.username }); setOpenMenuId(null); }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2.5 text-sm text-red-400 hover:bg-red-500/10 font-medium transition-all transition-colors duration-200"
+                        className="flex items-center gap-3 w-full px-4 py-3 text-[11px] font-headline uppercase tracking-widest text-red-500 hover:bg-red-500/10 font-bold transition-all transition-colors duration-200"
                       >
-                        <LogOut className="w-4 h-4" /> Remove from Room
+                        <ExitIcon size={14} /> Remove from Room
                       </button>
                     </div>
                   )}

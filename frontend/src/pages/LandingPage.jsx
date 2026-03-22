@@ -3,6 +3,10 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createRoom, getRoomInfo } from '../services/api';
 import toast from 'react-hot-toast';
+import { 
+  PlayIcon, AddIcon, EastIcon, StarIcon, PublicIcon, LockIcon, 
+  LanguageIcon, ShareIcon, SyncIcon, EncryptionIcon, ForumIcon
+} from '../components/UI/SharpIcons';
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
@@ -146,7 +150,7 @@ const LandingPage = () => {
               REAL-TIME SYNC
             </span>
             <span className="text-obsidian-outline font-headline text-sm tracking-widest flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">enhanced_encryption</span>
+              <EncryptionIcon size={14} className="text-obsidian-outline" />
               E2EE SECURE
             </span>
           </nav>
@@ -169,7 +173,7 @@ const LandingPage = () => {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl animate-fade-in">
           <div className="glass-panel p-10 max-w-sm w-full border border-obsidian-outline-variant text-center shadow-[0_0_50px_rgba(220,38,38,0.2)]">
             <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-red-500 text-3xl">dangerous</span>
+              <span className="material-symbols-outlined text-red-500 text-3xl font-black">X</span>
             </div>
             <h2 className="text-xl font-headline font-bold tracking-widest uppercase text-white mb-2">SESSION TERMINATED</h2>
             <p className="text-obsidian-on-surface-variant text-sm mb-8 tracking-wide">{location.state.roomEnded}</p>
@@ -305,7 +309,7 @@ const LandingPage = () => {
                   
                   <button type="submit" disabled={loading} className="w-full py-5 bg-obsidian-surface-high border border-obsidian-outline-variant text-white font-headline font-bold tracking-widest uppercase hover:border-obsidian-primary/50 hover:bg-obsidian-surface-highest transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed">
                     {loading ? 'SYNCING...' : 'ENTER DIMENSION'}
-                    {!loading && <span className="material-symbols-outlined text-obsidian-primary text-xl">east</span>}
+                    {!loading && <EastIcon size={20} className="text-obsidian-primary" />}
                   </button>
                 </form>
               )}
@@ -336,7 +340,9 @@ const LandingPage = () => {
                             ? 'border-obsidian-primary text-obsidian-primary bg-obsidian-primary/10 shadow-[inset_0_0_15px_rgba(189,157,255,0.1)]' 
                             : 'border-obsidian-outline-variant text-obsidian-outline hover:border-white/30 hover:text-white bg-obsidian-surface-container-high'}`}
                       >
-                        <span className="material-symbols-outlined text-base">{type === 'public' ? 'public' : 'lock'}</span>
+                        <span className="w-4 h-4 flex items-center justify-center">
+                          {type === 'public' ? <PublicIcon size={16} /> : <LockIcon size={16} />}
+                        </span>
                         {type}
                       </button>
                     ))}
@@ -392,7 +398,7 @@ const LandingPage = () => {
 
                   <button type="submit" disabled={loading} className="w-full py-5 bg-gradient-to-r from-obsidian-primary to-obsidian-primary-dim text-obsidian-on-primary-fixed shadow-[0_0_20px_rgba(138,76,252,0.2)] font-headline font-bold tracking-widest uppercase hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(138,76,252,0.4)] transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none disabled:shadow-none">
                     {loading ? 'INITIALIZING...' : 'INITIALIZE ROOM'}
-                    {!loading && <span className="material-symbols-outlined text-obsidian-on-primary-fixed text-xl">add</span>}
+                    {!loading && <AddIcon size={20} className="text-obsidian-on-primary-fixed" />}
                   </button>
                 </form>
               )}
@@ -417,7 +423,7 @@ const LandingPage = () => {
             <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
                 <div className="w-14 h-14 bg-obsidian-primary/10 flex items-center justify-center border border-obsidian-primary/20">
-                   <span className="material-symbols-outlined text-obsidian-primary text-3xl">sync</span>
+                   <SyncIcon size={32} className="text-obsidian-primary" />
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">01</span>
               </div>
@@ -432,7 +438,7 @@ const LandingPage = () => {
             <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
                 <div className="w-14 h-14 bg-red-500/10 flex items-center justify-center border border-red-500/20">
-                   <span className="material-symbols-outlined text-red-500 text-3xl">enhanced_encryption</span>
+                   <EncryptionIcon size={32} className="text-red-500" />
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">02</span>
               </div>
@@ -447,7 +453,7 @@ const LandingPage = () => {
             <div className="glass-panel p-8 flex flex-col group hover:bg-obsidian-surface-high transition-colors duration-500 relative border border-white/5">
               <div className="mb-12 flex justify-between items-start">
                 <div className="w-14 h-14 bg-cyan-500/10 flex items-center justify-center border border-cyan-500/20">
-                   <span className="material-symbols-outlined text-cyan-500 text-3xl">forum</span>
+                   <ForumIcon size={32} className="text-cyan-500" />
                 </div>
                 <span className="text-neutral-700 font-headline font-bold">03</span>
               </div>
@@ -473,7 +479,7 @@ const LandingPage = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian-background via-transparent to-transparent"></div>
                 <div className="absolute bottom-8 left-8 flex items-center gap-4">
                   <div className="w-12 h-12 bg-obsidian-primary/20 flex items-center justify-center backdrop-blur-md border border-obsidian-primary/30">
-                    <span className="material-symbols-outlined text-obsidian-primary">play_arrow</span>
+                    <PlayIcon size={24} className="text-obsidian-primary" />
                   </div>
                   <div className="font-headline text-sm font-bold tracking-widest uppercase text-white shadow-sm">LIVE PREVIEW</div>
                 </div>
@@ -511,10 +517,10 @@ const LandingPage = () => {
           </div>
           <div className="flex gap-4">
             <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
-              <span className="material-symbols-outlined text-neutral-500 group-hover:text-obsidian-primary transition-colors text-xl">language</span>
+              <LanguageIcon size={20} className="text-neutral-500 group-hover:text-obsidian-primary transition-colors" />
             </div>
             <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
-              <span className="material-symbols-outlined text-neutral-500 group-hover:text-obsidian-primary transition-colors text-xl">share</span>
+              <ShareIcon size={20} className="text-neutral-500 group-hover:text-obsidian-primary transition-colors" />
             </div>
           </div>
         </div>

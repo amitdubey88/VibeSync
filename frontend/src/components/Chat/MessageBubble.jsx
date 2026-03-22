@@ -1,6 +1,8 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import { getInitials, getAvatarColor, formatMessageTime, formatRelativeTime } from '../../utils/helpers';
-import { Reply, ShieldCheck, Check, CheckCheck, Pin } from 'lucide-react';
+import { 
+  ReplyIcon, ShieldIcon, CheckIcon, PinIcon 
+} from '../UI/SharpIcons';
 import { useRoom } from '../../context/RoomContext';
 import { useAuth } from '../../context/AuthContext';
 import { usePolls } from '../../hooks/usePolls';
@@ -178,12 +180,13 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
         <div className={`relative group/bubble ${isOwn ? 'ml-6' : 'mr-6'}`}>
           {/* Main bubble */}
           <div
-            className={`flex flex-col px-3 py-2 md:px-4 md:py-3 ${bubbleColors} text-[14px] leading-relaxed break-words shadow-lg cursor-pointer min-w-[70px] rounded-[6px] relative`}
+            className={`flex flex-col px-3 py-2 md:px-4 md:py-3 ${bubbleColors} text-[14px] leading-relaxed break-words shadow-lg cursor-pointer min-w-[70px] border-2 relative`}
             style={{
               transform: `translateX(${dragX}px)`,
               transition: isSnapping ? 'transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' : 'none',
               wordBreak: 'break-word',
               overflowWrap: 'anywhere',
+              borderRadius: '0',
             }}
             onClick={() => setShowActions(prev => !prev)}
           >
@@ -220,10 +223,10 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
                 <div
                   key={emoji}
                   title={users.join(', ')}
-                  className="flex items-center gap-1 bg-[#1a1a24] border border-[#3f3f46] rounded-full px-2 py-0.5 shadow-2xl scale-110"
+                  className="flex items-center gap-1 bg-obsidian-surface-highest border-2 border-white/10 px-2 py-0.5 shadow-2xl scale-110"
                 >
-                  <span className="text-violet-400 text-[10px]">{emoji}</span>
-                  {users.length > 1 && <span className="text-[10px] text-zinc-300 font-bold">{users.length}</span>}
+                  <span className="text-obsidian-primary text-[10px]">{emoji}</span>
+                  {users.length > 1 && <span className="text-[10px] text-obsidian-on-surface font-black uppercase tracking-widest">{users.length}</span>}
                 </div>
               ))}
             </div>
@@ -264,10 +267,10 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
             {onReply && (
               <button
                 onClick={() => { onReply(message); setShowActions(false); }}
-                className="p-1 text-zinc-500 hover:text-white hover:bg-white/10 transition-all font-bold"
+                className="p-1.5 text-obsidian-on-surface-variant hover:text-white hover:bg-white/10 transition-all font-black"
                 title="Reply"
               >
-                <Reply className="w-3.5 h-3.5" />
+                <ReplyIcon size={14} />
               </button>
             )}
 
@@ -275,10 +278,10 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
             {(isHost || isCoHost) && onPin && (
               <button
                 onClick={() => { onPin(message.id); setShowActions(false); }}
-                className="p-1 text-zinc-500 hover:text-amber-400 hover:bg-white/10 transition-all"
+                className="p-1.5 text-obsidian-on-surface-variant hover:text-obsidian-primary hover:bg-white/10 transition-all"
                 title="Pin message"
               >
-                <Pin className="w-3.5 h-3.5" />
+                <PinIcon size={14} />
               </button>
             )}
           </div>

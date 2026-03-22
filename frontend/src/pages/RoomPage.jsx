@@ -13,7 +13,15 @@ import ConfirmDialog from '../components/UI/ConfirmDialog';
 import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
 import Tooltip from '../components/UI/Tooltip';
-import { Tv2, Copy, Users, MessageSquare, ChevronLeft, Crown, Wifi, WifiOff, LogOut, Clock, ShieldCheck, ShieldOff, CheckCircle, XCircle, Lock, Unlock, PanelRightClose, PanelRightOpen, Loader2, Info, Activity, MoreVertical, Trash, Palette, ListVideo, ShieldAlert, Link, Radio, User } from 'lucide-react';
+import { 
+  RoomIcon, CopyIcon, ParticipantsIcon, ChatIcon, BackIcon, 
+  ExitIcon, DeleteIcon, ThemeIcon, QueueIcon, InviteIcon, 
+  MoreIcon, ShieldIcon, UserIcon, SettingsIcon, RefreshIcon,
+  ChevronDownIcon, WifiIcon, CrownIcon, ActivityIcon, InfoIcon,
+  CheckIcon, XIcon, PlusIcon, MinusIcon, LockIcon, ClockIcon
+} from '../components/UI/SharpIcons';
+// Material Symbols is still used for some simple utility icons
+import { Loader2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
@@ -59,9 +67,9 @@ const LiveTimeTracker = ({ videoState, currentVideo }) => {
   }, [videoState, currentVideo]);
 
   if (currentVideo?.type === 'live' || currentVideo?.type === 'uploading') {
-    return <span className="text-obsidian-primary font-bold animate-pulse">LIVE</span>;
+    return <span className="text-obsidian-primary font-black tracking-widest animate-pulse">LIVE</span>;
   }
-  return <span>⏱ {formatTime(displayTime)}</span>;
+  return <span className="font-mono flex items-center gap-1.5"><Clock size={12} /> {formatTime(displayTime)}</span>;
 };
 
 const RoomPage = () => {
@@ -560,20 +568,21 @@ const RoomPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
-        <div className="card text-center max-w-sm">
-          <div className="text-5xl mb-4">😕</div>
-          <h2 className="text-xl font-bold text-white mb-2">Can't Join Room</h2>
-          <p className="text-obsidian-on-surface-variant text-sm mb-6">{error}</p>
+      <div className="min-h-screen bg-obsidian-background flex items-center justify-center p-6">
+        <div className="glass-panel text-center max-w-sm p-8 border border-white/5">
+          <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
+            <span className="material-symbols-outlined text-red-500 text-3xl font-black">X</span>
+          </div>
+          <h2 className="text-xl font-headline font-bold text-white mb-2 tracking-widest uppercase">Can't Join Room</h2>
+          <p className="text-obsidian-on-surface-variant text-sm mb-8 tracking-wide">{error}</p>
           <button 
-            className="btn-primary w-full" 
+            className="w-full py-4 bg-white/5 border border-white/10 text-white font-headline font-bold tracking-widest uppercase hover:bg-white/10 transition-all flex items-center justify-center gap-3" 
             onClick={() => {
-              console.log('[RoomPage] Join error, clearing session and returning home.');
               sessionStorage.removeItem("vibesync_session");
               navigate('/', { replace: true });
             }}
           >
-            <ChevronLeft className="w-4 h-4" /> Back to Home
+            <BackIcon size={16} /> Back to Home
           </button>
         </div>
       </div>
@@ -618,7 +627,7 @@ const RoomPage = () => {
           </div>
 
           <div className="hidden xs:flex items-center gap-1.5 bg-obsidian-surface-container px-3 py-1 border border-white/5 shadow-inner ml-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-accent-green" />
+            <ShieldIcon size={14} className="text-green-500" />
             <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">
               E2EE
             </span>
@@ -629,12 +638,12 @@ const RoomPage = () => {
           <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold font-headline tracking-widest uppercase shrink-0">
             {isConnected ? (
               <>
-                <Wifi className="w-3.5 h-3.5 text-accent-green" />{" "}
-                <span className="hidden xs:inline text-accent-green">Live</span>
+                <WifiIcon size={14} className="text-green-500" />{" "}
+                <span className="hidden xs:inline text-green-500">Live</span>
               </>
             ) : (
               <>
-                <WifiOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />{" "}
+                <WifiIcon size={14} className="text-red-400 animate-pulse" />{" "}
                 <span className="hidden sm:inline text-red-400">Wait</span>
               </>
             )}
@@ -663,9 +672,9 @@ const RoomPage = () => {
           </div>
 
           {isHost && (
-            <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30  animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
-              <Crown className="w-3.5 h-3.5 text-accent-yellow drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
-              <span className="text-[9px] font-bold font-headline text-accent-yellow uppercase tracking-widest">
+            <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-obsidian-primary/10 border border-obsidian-primary/30 animate-fade-in shadow-[0_0_15px_rgba(189,157,255,0.1)]">
+              <CrownIcon size={14} className="text-obsidian-primary" />
+              <span className="text-[9px] font-black font-headline text-obsidian-primary uppercase tracking-widest">
                 Host
               </span>
             </div>
@@ -684,18 +693,16 @@ const RoomPage = () => {
               <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">
                 {code}
               </span>
-              <Copy className="w-3.5 h-3.5 text-obsidian-on-surface-variant group-hover:text-obsidian-primary" />
+              <CopyIcon size={14} className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary" />
             </button>
           </Tooltip>
 
           <Tooltip text="Copy invite link" position="bottom">
             <button
               onClick={copyRoomLink}
-              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
+              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 text-[10px] font-black font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-[14px]">
-                link
-              </span>
+              <LinkIcon size={14} />
               Invite
             </button>
           </Tooltip>
@@ -707,7 +714,7 @@ const RoomPage = () => {
                 className={`text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors p-1.5 bg-transparent ${isMoreMenuOpen ? "bg-obsidian-primary/10 text-obsidian-primary" : ""}`}
                 onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 250)}
               >
-                <MoreVertical className="w-4 h-4" />
+                <MoreIcon size={16} />
               </button>
             </Tooltip>
             {isMoreMenuOpen && (
@@ -717,7 +724,7 @@ const RoomPage = () => {
                     onClick={() => setShowShortcutsHelp(true)}
                     className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-obsidian-on-surface-variant hover:text-white hover:bg-white/5 transition-colors text-left"
                   >
-                    <Clock className="w-3.5 h-3.5" />
+                    <ClockIcon size={14} />
                     Shortcuts
                   </button>
                   {isHost && (
@@ -725,7 +732,7 @@ const RoomPage = () => {
                       onClick={() => setShowThemePicker(true)}
                       className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-obsidian-on-surface-variant hover:text-white hover:bg-white/5 transition-colors text-left"
                     >
-                      <Palette className="w-3.5 h-3.5" />
+                      <ThemeIcon size={14} />
                       Theater Theme
                     </button>
                   )}
@@ -736,7 +743,7 @@ const RoomPage = () => {
                         onClick={handleDeleteRoom}
                         className="flex items-center gap-3 px-4 py-2.5 text-[11px] font-headline tracking-wider uppercase text-red-500 hover:text-red-400 hover:bg-red-500/10 transition-colors text-left font-bold"
                       >
-                        <Trash className="w-3.5 h-3.5" />
+                        <DeleteIcon size={14} />
                         End Session
                       </button>
                     </>
@@ -757,7 +764,7 @@ const RoomPage = () => {
               onClick={(e) => handleLeave(e)}
               className="flex items-center gap-1.5 py-1.5 px-3 border border-transparent hover:border-red-500/30 hover:bg-red-500/10 text-obsidian-outline hover:text-red-400 transition-all font-headline text-[10px] font-bold uppercase tracking-widest"
             >
-              <LogOut className="w-3.5 h-3.5" />
+              <ExitIcon size={14} />
               <span className="hidden xl:inline">Leave</span>
             </button>
           </Tooltip>
@@ -770,11 +777,7 @@ const RoomPage = () => {
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-obsidian-primary/10 ml-2"
             >
-              {isSidebarOpen ? (
-                <PanelRightClose className="w-4 h-4" />
-              ) : (
-                <PanelRightOpen className="w-4 h-4" />
-              )}
+              <MoreIcon size={16} className={isSidebarOpen ? "" : "rotate-180 transition-transform"} />
             </button>
           </Tooltip>
         </div>
@@ -820,17 +823,17 @@ const RoomPage = () => {
               onClick={() => setActiveMobileTab("chat")}
               className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <MessageSquare className="w-5 h-5 mb-1" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
+              <ChatIcon size={20} className="mb-1" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
               <span>CHAT</span>
               {unreadChatCount > 0 && (
-                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
+                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-obsidian-primary shadow-[0_0_8px_rgba(189,157,255,0.8)]" />
               )}
             </button>
             <button
               onClick={() => setActiveMobileTab("people")}
               className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <Users className="w-5 h-5 mb-1" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
+              <ParticipantsIcon size={20} className="mb-1" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
               <span>PEOPLE ({onlineCount})</span>
               {joinRequests.length > 0 && (
                 <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80" />
@@ -840,14 +843,14 @@ const RoomPage = () => {
               onClick={() => setActiveMobileTab("queue")}
               className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <ListVideo className="w-5 h-5 mb-1" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
+              <QueueIcon size={20} className="mb-1" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
               <span>QUEUE</span>
             </button>
             <button
               onClick={() => setActiveMobileTab("activity")}
               className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <Activity className="w-5 h-5 mb-1" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
+              <ActivityIcon size={20} className="mb-1" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
               <span>ACTIVITY</span>
             </button>
           </div>
@@ -869,25 +872,24 @@ const RoomPage = () => {
           {/* Desktop Sidebar tabs (hidden on mobile) */}
           <div className="hidden md:flex border-b border-white/5 shrink-0 px-2 pt-5 pb-2 justify-between bg-[#0a0a0b] relative z-10">
             {[
-              { id: "chat", icon: MessageSquare, label: "Chat" },
+              { id: "chat", icon: ChatIcon, label: "Chat" },
               {
                 id: "participants",
-                icon: Users,
+                icon: ParticipantsIcon,
                 label: `People (${participants?.length || 0})`,
               },
-              { id: "queue", icon: ListVideo, label: "Queue" },
-              { id: "activity", icon: Activity, label: "Activity" },
+              { id: "queue", icon: QueueIcon, label: "Queue" },
             ].map(({ id, icon: Icon, label }) => {
               const TabIcon = Icon;
               return (
                 <button
                   key={id}
-                  onClick={() => handleTabChange(id)}
+                  onClick={() => { setSidebarTab(id); if (id === 'chat') setActiveMobileTab('chat'); else if (id === 'participants') setActiveMobileTab('people'); }}
                   className={`flex-1 flex flex-col items-center justify-center gap-2 group relative transition-all duration-300 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant opacity-40 hover:opacity-100"}`}
                 >
-                  <TabIcon className="w-6 h-6 mb-1" fill={sidebarTab === id ? "currentColor" : "none"} />
+                  <TabIcon size={24} className="mb-1" />
                   <span className="text-[9px] font-black uppercase tracking-[0.15em]">
-                    {id === "participants" ? `People (${participants?.length || 0})` : id}
+                    {label}
                   </span>
                   
                   {sidebarTab === id && (
@@ -895,7 +897,7 @@ const RoomPage = () => {
                   )}
                   
                   {id === "chat" && unreadChatCount > 0 && sidebarTab !== "chat" && (
-                    <span className="absolute top-0 right-1/4 w-3 h-3 bg-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.8)] animate-badge-bounce" />
+                    <span className="absolute top-0 right-1/4 w-3 h-3 bg-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.8)]" />
                   )}
                 </button>
               );
@@ -924,20 +926,20 @@ const RoomPage = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {requiresApproval ? (
-                          <ShieldCheck className="w-4 h-4 text-accent-green" />
+                          <ShieldIcon size={16} className="text-green-500" />
                         ) : (
-                          <ShieldOff className="w-4 h-4 text-obsidian-outline" />
+                          <ShieldIcon size={16} className="text-obsidian-outline opacity-40" />
                         )}
-                        <span className="text-xs font-semibold text-obsidian-on-surface-variant">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-obsidian-on-surface-variant">
                           {requiresApproval ? "Approval ON" : "Approval OFF"}
                         </span>
                       </div>
                       <button
                         onClick={() => setApprovalRequired(!requiresApproval)}
-                        className={`relative inline-flex w-11 h-6  overflow-hidden transition-colors ${requiresApproval ? "bg-accent-green" : "bg-obsidian-surface-container-high"}`}
+                        className={`relative inline-flex w-10 h-5 overflow-hidden transition-colors ${requiresApproval ? "bg-green-500" : "bg-obsidian-surface-container-high"}`}
                       >
                         <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5  bg-white transition-transform ${requiresApproval ? "translate-x-5" : "translate-x-0"}`}
+                          className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white transition-transform ${requiresApproval ? "translate-x-5" : "translate-x-0"}`}
                         />
                       </button>
                     </div>
@@ -982,26 +984,25 @@ const RoomPage = () => {
         onCancel={() => setShowConfirmLeave(false)}
       />
 
-      {/* Room Info Modal */}
       <ConfirmDialog
         open={showRoomInfo}
         title="Room Information"
         message={
-          <div className="flex flex-col gap-4 text-left py-2">
+          <div className="space-y-4 text-left py-2">
             <div>
               <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
                 Room Name
               </label>
-              <div className="text-sm font-semibold text-white">
-                {room?.name || "VibeSync Party"}
+              <div className="text-sm font-semibold text-white uppercase tracking-widest">
+                {room?.name || "VibeSync Dimension"}
               </div>
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
-                  Room ID
+                  Room Code
                 </label>
-                <div className="text-sm font-mono font-bold text-accent-purple">
+                <div className="text-sm font-mono font-bold text-obsidian-primary">
                   {code}
                 </div>
               </div>
@@ -1009,8 +1010,8 @@ const RoomPage = () => {
                 <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
                   Security
                 </label>
-                <div className="text-sm font-semibold text-accent-green flex items-center gap-1">
-                  <ShieldCheck className="w-3.5 h-3.5" /> End-to-End Encrypted
+                <div className="text-[10px] font-bold text-green-500 flex items-center gap-1 uppercase tracking-widest">
+                  <ShieldIcon size={12} /> E2EE SECURE
                 </div>
               </div>
             </div>
@@ -1022,13 +1023,13 @@ const RoomPage = () => {
                 <input
                   readOnly
                   value={window.location.href}
-                  className="flex-1 bg-black/30 border border-white/5 px-3 py-1.5 shadow-lg text-xs text-obsidian-on-surface-variant outline-none focus:border-accent-purple/50"
+                  className="flex-1 bg-black/30 border border-white/5 px-3 py-1.5 text-[10px] text-obsidian-on-surface-variant outline-none focus:border-obsidian-primary/50"
                 />
                 <button
-                  onClick={copyRoomLink}
-                  className="btn-ghost p-1.5 h-auto"
+                  onClick={copyInviteLink}
+                  className="bg-white/5 hover:bg-white/10 p-2 border border-white/10 transition-colors"
                 >
-                  <Copy className="w-3.5 h-3.5" />
+                  <CopyIcon size={14} />
                 </button>
               </div>
             </div>
@@ -1076,25 +1077,24 @@ const RoomPage = () => {
         onCancel={() => setShowRefreshConfirm(false)}
       />
 
-      {/* ── Room Ended by Host modal moved to LandingPage ── */}
       {showLeaveModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-2xl animate-fade-in">
-          <div className="bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 p-8 shadow-[0_30px_60px_rgba(0,0,0,0.9)] w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 bg-accent-yellow/10 flex items-center justify-center shrink-0">
-                <Crown className="w-5 h-5 text-accent-yellow" />
+          <div className="bg-[#0a0a0b] border border-white/5 p-8 shadow-[0_30px_60px_rgba(0,0,0,0.9)] w-full max-w-sm">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-10 h-10 bg-obsidian-primary/20 border border-obsidian-primary/30 flex items-center justify-center shrink-0">
+                <Crown className="w-5 h-5 text-obsidian-primary" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">
-                  Transfer Host Before Leaving
+                <h2 className="text-sm font-headline font-bold text-white tracking-widest uppercase">
+                  TRANSFER HOST
                 </h2>
-                <p className="text-xs text-obsidian-outline mt-0.5">
-                  Pick a new host to continue the session.
+                <p className="text-[10px] text-obsidian-on-surface-variant uppercase tracking-widest mt-0.5">
+                  Pick a successor to continue
                 </p>
               </div>
             </div>
 
-            <div className="space-y-2 max-h-56 overflow-y-auto scroll-area mb-4">
+            <div className="space-y-2 max-h-56 overflow-y-auto scroll-area mb-6 px-1">
               {participants
                 .filter((p) => p.userId !== user?.id && p.isOnline !== false)
                 .map((p) => (
@@ -1103,25 +1103,25 @@ const RoomPage = () => {
                     type="button"
                     onClick={() => {
                       setShowLeaveModal(false);
-                      confirmLeave(p.userId);
+                      transferHost(p.userId);
+                      navigate('/');
                     }}
-                    className="w-full flex items-center gap-3 p-3  bg-[#13131a] hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-white/5 shadow-lg transition-all text-left"
+                    className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-obsidian-primary/10 border border-white/5 hover:border-obsidian-primary/30 transition-all text-left group"
                   >
                     <div
-                      className="w-9 h-9  flex items-center justify-center text-sm font-bold text-white shrink-0"
+                      className="w-9 h-9 flex items-center justify-center text-sm font-bold text-white shrink-0 border border-white/10"
                       style={{ backgroundColor: p.avatar || "#8b5cf6" }}
                     >
-                      {p.username?.slice(0, 2)?.toUpperCase()}
+                      {p.username?.slice(0, 1)?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">
+                      <p className="text-sm font-headline font-bold text-white tracking-wide truncate group-hover:text-obsidian-primary">
                         {p.username}
                       </p>
-                      <p className="text-xs text-obsidian-outline">
+                      <p className="text-[10px] text-obsidian-on-surface-variant uppercase tracking-widest mt-0.5">
                         {p.isGuest ? "Guest" : "Member"}
                       </p>
                     </div>
-                    <Crown className="w-4 h-4 text-accent-yellow opacity-60" />
                   </button>
                 ))}
             </div>
@@ -1130,7 +1130,7 @@ const RoomPage = () => {
               <button
                 type="button"
                 onClick={() => setShowLeaveModal(false)}
-                className="btn-ghost flex-1 text-sm"
+                className="flex-1 py-3 border border-white/10 text-[10px] font-black tracking-[0.2em] uppercase hover:bg-white/5 transition-colors"
               >
                 Cancel
               </button>

@@ -212,6 +212,7 @@
   /* Room card */
   .card {
     @apply glass p-6 transition-all duration-300;
+    border-radius: 0;
   }
 
   /* Video overlay gradient */
@@ -250,6 +251,7 @@
   /* Avatar circle */
   .avatar {
     @apply flex items-center justify-center font-bold uppercase select-none shrink-0;
+    border-radius: 0;
   }
 
   /* Participant row */
@@ -309,6 +311,7 @@
   .avatar-ring {
     border: 2px solid rgba(139, 92, 246, 0.5);
     box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+    border-radius: 0;
   }
 
   .no-select { user-select: none; -webkit-user-select: none; }

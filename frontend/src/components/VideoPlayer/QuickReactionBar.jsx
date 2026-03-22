@@ -43,7 +43,7 @@ const QuickReactionBar = ({ visible, className, isOverlay }) => {
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className="w-10 h-10 md:w-12 md:h-12 flex items-center justify-center text-xl md:text-2xl hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:scale-110 active:scale-95"
+            className={`${isFullscreen ? 'w-8 h-8 text-lg' : 'w-10 h-10 md:w-12 md:h-12 text-xl md:text-2xl'} flex items-center justify-center hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:scale-110 active:scale-95`}
             title={`React with ${emoji}`}
           >
             {emoji}
