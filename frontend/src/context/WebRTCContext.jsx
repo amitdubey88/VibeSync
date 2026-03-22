@@ -282,7 +282,7 @@ export const WebRTCProvider = ({ children }) => {
         // already completed and the connection later fails mid-session).
         pc.onnegotiationneeded = async () => {
             if (pc._suppressNegotiation) return; // explicit offer in progress — skip
-            if (isHostRef.current || !socket || !roomKey) return;
+            if (premierStreamRef.current || !socket || !roomKey) return;
             if (pc.signalingState !== 'stable') return;
             try {
                 const offer = await pc.createOffer();
@@ -623,8 +623,6 @@ export const WebRTCProvider = ({ children }) => {
         // Auto-sync active stream to participants who join late or rejoin with a new socket ID
         const onParticipantUpdate = ({ participants }) => {
             if (!premierStreamRef.current) return;
-
-            // Build the set of currently-connected socketIds so we can garbage-collect
             // stale 'pending' entries whose participant has since disconnected/rejoined.
             // A rejoined participant gets a NEW socketId — the old entry blocks re-announce.
             const liveSocketIds = new Set(participants.map(p => p.socketId));
@@ -829,7 +827,7 @@ export const WebRTCProvider = ({ children }) => {
     // completes — onVideoStreamAnnounced buffers the hostSocketId and this effect
     // completes the WebRTC handshake as soon as RoomContext provides the key.
     useEffect(() => {
-        if (!roomKey || !socket || isHostRef.current) return;
+        if (!roomKey || !socket || premierStreamRef.current) return;
         const hostSocketId = pendingStreamHostRef.current;
         if (!hostSocketId) return;
         pendingStreamHostRef.current = null; // consume
@@ -858,7 +856,7 @@ export const WebRTCProvider = ({ children }) => {
     // WebRTC handshake first. If we fire immediately, both paths run in parallel and
     // negotiatingRef blocks the second one — leaving no active connection attempt.
     useEffect(() => {
-        if (!socket || !roomCode || isHostRef.current) return;
+        if (!socket || !roomCode || premierStreamRef.current) return;
         if (currentVideo?.type !== 'live') return;
         if (remotePremierStream) return; // already receiving stream, nothing to do
 
@@ -908,7 +906,7 @@ export const WebRTCProvider = ({ children }) => {
     // unnecessary reconnect loops.
     const watchdogVideoRef = useRef(null); // registered by VideoPlayer when live <video> mounts
     useEffect(() => {
-        if (!socket || !roomCode || isHostRef.current) return;
+        if (!socket || !roomCode || premierStreamRef.current) return;
         if (!remotePremierStream) return;
 
         let staleTicks = 0;
