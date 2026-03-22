@@ -4,6 +4,7 @@ import { useRoom } from '../../context/RoomContext';
 import useVideoSync from '../../hooks/useVideoSync';
 import useClockSync from '../../hooks/useClockSync';
 import useBufferSync from '../../hooks/useBufferSync';
+import { fetchVideoMetadata } from '../../services/api';
 import VideoControls from './VideoControls';
 import VideoPresenceOverlay from './VideoPresenceOverlay';
 import YouTubePlayer from './YouTubePlayer';
@@ -835,7 +836,7 @@ const VideoPlayer = () => {
   };
 
   // ── URL / YouTube submit ──────────────────────────────────────────────────
-  const handleUrlSubmit = (e) => {
+  const handleUrlSubmit = async (e) => {
     e.preventDefault();
     const url = urlInput.trim();
     if (!url) return;
@@ -864,14 +865,23 @@ const VideoPlayer = () => {
     isStreamingActiveRef.current = false;
     setPremierStream(null);
 
+    // 🔥 PRE-FETCH REAL METADATA
+    let finalTitle = resolved.title;
+    try {
+      const meta = await fetchVideoMetadata(resolved.url, resolved.type);
+      if (meta && meta.title) finalTitle = meta.title;
+    } catch (err) {
+      console.warn('[VideoPlayer] Metadata fetch failed, using fallback:', finalTitle);
+    }
+
     setVideoSource(
-      { url: resolved.url, type: resolved.type, title: resolved.title }, 
+      { url: resolved.url, type: resolved.type, title: finalTitle }, 
       { isPlaying: false, currentTime: 0 }
     );
     
     setShowSourcePicker(false);
     setUrlInput('');
-    toast.success(`${resolved.title} loaded!`);
+    toast.success(`${finalTitle} loaded!`);
   };
 
 

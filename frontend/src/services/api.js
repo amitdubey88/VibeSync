@@ -44,6 +44,9 @@ export const joinRoom = (code, password) =>
 export const getRoomMessages = (code) =>
     api.get(`/rooms/${code}/messages`).then((r) => r.data);
 
+export const fetchVideoMetadata = (url, type) =>
+    api.get('/rooms/video/metadata', { params: { url, type } }).then((r) => r.data);
+
 // ── Video Upload ──────────────────────────────────────────────────────────────
 
 /**

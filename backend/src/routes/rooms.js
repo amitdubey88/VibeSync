@@ -5,6 +5,7 @@ const router = express.Router();
 const { authenticate } = require('../middleware/auth');
 const { ROOM_TYPE } = require('../config/constants');
 const { hashRoomCode } = require('../utils/hash');
+const { getVideoMetadata } = require('../utils/videoMetadata');
 const { endedRooms } = require('../socket/sharedState');
 
 // Try to use MongoDB models; fall back gracefully
@@ -229,6 +230,20 @@ router.get('/:code/messages', authenticate, async (req, res) => {
     } catch (err) {
         console.error('[rooms/messages]', err);
         return res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// ─── GET /api/rooms/video/metadata ──────────────────────────────────────────
+// Resolves video title for YouTube, Direct, or HLS links.
+router.get('/video/metadata', async (req, res) => {
+    const { url, type } = req.query;
+    if (!url) return res.status(400).json({ success: false, message: 'URL required' });
+
+    try {
+        const title = await getVideoMetadata(url, type);
+        return res.json({ success: true, title });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: 'Source resolution failed' });
     }
 });
 
