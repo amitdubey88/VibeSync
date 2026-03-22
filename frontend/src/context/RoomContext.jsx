@@ -609,20 +609,13 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onRemotePlay = () => {
-      if (!isHost) {
-        addSystemMessage(`Host resumed the video`);
-      }
+      // Notification removed as per user request
     };
     const onRemotePause = () => {
-      if (!isHost) {
-        addSystemMessage(`Host paused the video`);
-      }
+      // Notification removed as per user request
     };
     const onRemoteSeek = ({ currentTime }) => {
-      if (!isHost) {
-        const time = new Date(currentTime * 1000).toISOString().substr(11, 8).replace(/^00:/, '');
-        addSystemMessage(`Host jumped to ${time}`);
-      }
+      // Notification removed as per user request (decluttering playback noise)
     };
 
     socket.on('room:state', onRoomState);
