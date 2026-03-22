@@ -879,6 +879,7 @@ const RoomPage = () => {
                 label: `People (${participants?.length || 0})`,
               },
               { id: "queue", icon: QueueIcon, label: "Queue" },
+              { id: "activity", icon: ActivityIcon, label: "Activity" },
             ].map(({ id, icon: Icon, label }) => {
               const TabIcon = Icon;
               return (
