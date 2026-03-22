@@ -588,33 +588,56 @@ const RoomPage = () => {
       {/* ── Top bar ── */}
       <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 dark:border-white/5 bg-[#0a0a0b]/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-b border-white/5 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/')} className="flex items-center gap-2 shrink-0 group">
-            <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_10px_rgba(189,157,255,0.4)]" />
-            <span className="text-xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase hidden sm:block">VIBESYNC</span>
+          <button
+            onClick={() => navigate("/")}
+            className="flex items-center gap-2 shrink-0 group"
+          >
+            <img
+              src="/favicon-192.png"
+              alt="VibeSync Logo"
+              className="w-8 h-8 object-contain group-hover:scale-110 transition-transform duration-500 drop-shadow-[0_0_10px_rgba(189,157,255,0.4)]"
+            />
+            <span className="text-xl font-bold tracking-tighter text-obsidian-primary font-headline uppercase hidden sm:block">
+              VIBESYNC
+            </span>
           </button>
-          
+
           <div className="w-px h-5 bg-white/10 mx-1 md:mx-2 hidden sm:block" />
-          
-          <h1 className="text-sm font-headline font-bold uppercase tracking-widest text-obsidian-primary truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">{room?.name || code}</h1>
-          
+
+          <h1 className="text-sm font-headline font-bold uppercase tracking-widest text-obsidian-primary truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">
+            {room?.name || code}
+          </h1>
+
           <div className="hidden lg:flex flex-col border-l border-white/10 pl-4 mx-2 animate-fade-in max-w-[200px]">
-            <span className="text-[9px] text-obsidian-on-surface-variant font-bold font-headline uppercase tracking-[0.2em]">Now Watching</span>
+            <span className="text-[9px] text-obsidian-on-surface-variant font-bold font-headline uppercase tracking-[0.2em]">
+              Now Watching
+            </span>
             <span className="text-[11px] font-bold text-white truncate">
-              {currentVideo?.title || 'Untitled Video'}
+              {currentVideo?.title || "Untitled Video"}
             </span>
           </div>
 
           <div className="hidden xs:flex items-center gap-1.5 bg-[#13131a] px-3 py-1 border border-white/5 shadow-inner ml-2">
             <ShieldCheck className="w-3.5 h-3.5 text-accent-green" />
-            <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">E2EE</span>
+            <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">
+              E2EE
+            </span>
           </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="flex items-center gap-1 sm:gap-1.5 text-[10px] font-bold font-headline tracking-widest uppercase shrink-0">
-            {isConnected
-              ? <><Wifi className="w-3.5 h-3.5 text-accent-green" /> <span className="hidden xs:inline text-accent-green">Live</span></>
-              : <><WifiOff className="w-3.5 h-3.5 text-red-400 animate-pulse" /> <span className="hidden sm:inline text-red-400">Wait</span></>}
+            {isConnected ? (
+              <>
+                <Wifi className="w-3.5 h-3.5 text-accent-green" />{" "}
+                <span className="hidden xs:inline text-accent-green">Live</span>
+              </>
+            ) : (
+              <>
+                <WifiOff className="w-3.5 h-3.5 text-red-400 animate-pulse" />{" "}
+                <span className="hidden sm:inline text-red-400">Wait</span>
+              </>
+            )}
           </div>
 
           <div className="hidden md:block w-px h-5 bg-white/10 mx-1" />
@@ -626,18 +649,25 @@ const RoomPage = () => {
           <div className="hidden md:flex items-center gap-2 bg-[#13131a] px-4 py-1.5 border border-white/5 shadow-inner shrink min-w-0">
             <span className="flex items-center gap-1.5 shrink-0 text-obsidian-on-surface-variant text-[10px] font-bold font-headline uppercase tracking-widest">
               <span className="w-2 h-2 rounded-full bg-obsidian-primary animate-pulse shadow-[0_0_8px_rgba(189,157,255,0.8)]"></span>
-              {participants.filter(p => p.isOnline !== false).length}
+              {participants.filter((p) => p.isOnline !== false).length}
             </span>
-            {isLocked && <Lock className="w-3 h-3 text-red-400 shrink-0 ml-1" />}
+            {isLocked && (
+              <Lock className="w-3 h-3 text-red-400 shrink-0 ml-1" />
+            )}
             <span className="truncate shrink text-[10px] font-bold font-headline tracking-widest text-obsidian-primary/80 ml-2 border-l border-white/10 pl-2">
-              <LiveTimeTracker videoState={videoState} currentVideo={currentVideo} />
+              <LiveTimeTracker
+                videoState={videoState}
+                currentVideo={currentVideo}
+              />
             </span>
           </div>
 
           {isHost && (
             <div className="hidden 2xl:flex items-center gap-1.5 px-3 py-1 bg-accent-yellow/10 border border-accent-yellow/30 rounded-sm animate-fade-in shadow-[0_0_15px_rgba(234,179,8,0.1)]">
               <Crown className="w-3.5 h-3.5 text-accent-yellow drop-shadow-[0_0_5px_rgba(234,179,8,0.5)]" />
-              <span className="text-[9px] font-bold font-headline text-accent-yellow uppercase tracking-widest">Host</span>
+              <span className="text-[9px] font-bold font-headline text-accent-yellow uppercase tracking-widest">
+                Host
+              </span>
             </div>
           )}
 
@@ -648,15 +678,24 @@ const RoomPage = () => {
               onClick={copyRoomCode}
               className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/5 px-3 py-1.5 shadow-lg text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
             >
-              <span className="text-obsidian-on-surface-variant group-hover:text-white hidden sm:inline">CODE</span>
-              <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">{code}</span>
+              <span className="text-obsidian-on-surface-variant group-hover:text-white hidden sm:inline">
+                CODE
+              </span>
+              <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">
+                {code}
+              </span>
               <Copy className="w-3.5 h-3.5 text-obsidian-on-surface-variant group-hover:text-white" />
             </button>
           </Tooltip>
 
           <Tooltip text="Copy invite link" position="bottom">
-            <button onClick={copyRoomLink} className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 rounded text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-[14px]">link</span>
+            <button
+              onClick={copyRoomLink}
+              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 rounded text-[10px] font-bold font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-[14px]">
+                link
+              </span>
               Invite
             </button>
           </Tooltip>
@@ -665,7 +704,7 @@ const RoomPage = () => {
             <Tooltip text="More Options" position="bottom">
               <button
                 onClick={() => setIsMoreMenuOpen(!isMoreMenuOpen)}
-                className={`text-obsidian-on-surface-variant hover:text-white transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? 'bg-white/10 text-white' : ''}`}
+                className={`text-obsidian-on-surface-variant hover:text-white transition-colors p-1.5 rounded bg-transparent ${isMoreMenuOpen ? "bg-white/10 text-white" : ""}`}
                 onBlur={() => setTimeout(() => setIsMoreMenuOpen(false), 250)}
               >
                 <MoreVertical className="w-4 h-4" />
@@ -705,7 +744,10 @@ const RoomPage = () => {
                 </div>
               </div>
             )}
-            <ThemePicker isOpen={showThemePicker} onClose={() => setShowThemePicker(false)} />
+            <ThemePicker
+              isOpen={showThemePicker}
+              onClose={() => setShowThemePicker(false)}
+            />
           </div>
 
           <div className="w-px h-5 bg-white/10 mx-1 hidden sm:block" />
@@ -719,33 +761,41 @@ const RoomPage = () => {
               <span className="hidden xl:inline">Leave</span>
             </button>
           </Tooltip>
-          
-          <Tooltip text={isSidebarOpen ? 'Hide Sidebar' : 'Show Sidebar'} position="bottom">
+
+          <Tooltip
+            text={isSidebarOpen ? "Hide Sidebar" : "Show Sidebar"}
+            position="bottom"
+          >
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="text-obsidian-on-surface-variant hover:text-white transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-white/5 ml-2"
             >
-              {isSidebarOpen ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+              {isSidebarOpen ? (
+                <PanelRightClose className="w-4 h-4" />
+              ) : (
+                <PanelRightOpen className="w-4 h-4" />
+              )}
             </button>
           </Tooltip>
         </div>
       </header>
-      
-            {/* ── Main content ── */}
+
+      {/* ── Main content ── */}
       {/* Mobile: video on top, sidebar below   |   Desktop: side-by-side */}
       <div className="flex-1 flex flex-col md:flex-row overflow-hidden">
-
         {/* Video area ── */}
         {/* Mobile: aspect ratio 16:9 | Desktop: fills remaining width */}
         <div className="aspect-video md:aspect-auto md:flex-1 bg-black md:bg-obsidian-surface-container-lowest relative group overflow-hidden shrink-0 border-r border-white/5 shadow-2xl">
           <VideoPlayer />
-          
+
           {/* Reconnection Banner */}
           {!isConnected && (
             <div className="absolute top-0 left-0 right-0 z-50 animate-slide-up">
               <div className="bg-red-600/80 backdrop-blur-2xl border-b border-red-500/30 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <WifiOff className="w-4 h-4 animate-pulse" />
-                <span className="text-xs font-bold tracking-wide uppercase">Connection lost. Attempting to reconnect...</span>
+                <span className="text-xs font-bold tracking-wide uppercase">
+                  Connection lost. Attempting to reconnect...
+                </span>
               </div>
             </div>
           )}
@@ -755,88 +805,101 @@ const RoomPage = () => {
             <div className="absolute top-0 left-0 right-0 z-40 animate-slide-up">
               <div className="bg-amber-600/80 backdrop-blur-2xl border-b border-amber-500/30 text-white px-4 py-2 flex items-center justify-center gap-3 shadow-lg">
                 <span className="text-base">⚠️</span>
-                <span className="text-xs font-bold tracking-wide uppercase">Host disconnected — Waiting for them to return…</span>
+                <span className="text-xs font-bold tracking-wide uppercase">
+                  Host disconnected — Waiting for them to return…
+                </span>
               </div>
             </div>
           )}
-          
         </div>
 
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
         <div className="md:hidden flex flex-col bg-[#0a0a0b]/90 backdrop-blur-3xl border-t border-white/5 shadow-[0_-20px_50px_rgba(0,0,0,0.9)] shrink-0 z-40 relative">
-          
-
           <div className="flex w-full overflow-x-auto scrollbar-hide">
-            <button 
-              onClick={() => setActiveMobileTab('chat')}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'chat' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
+            <button
+              onClick={() => setActiveMobileTab("chat")}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
             >
-            <MessageSquare className="w-4.5 h-4.5 mb-1" />
-            <span>CHAT</span>
-            {unreadChatCount > 0 && <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />}
-          </button>
-          <button 
-            onClick={() => setActiveMobileTab('people')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'people' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
-          >
-            <Users className="w-4.5 h-4.5 mb-1" />
-            <span>PEOPLE ({onlineCount})</span>
-            {joinRequests.length > 0 && <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80 rounded-full" />}
-          </button>
-          <button 
-            onClick={() => setActiveMobileTab('queue')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'queue' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
-          >
-            <ListVideo className="w-4.5 h-4.5 mb-1" />
-            <span>QUEUE</span>
-          </button>
-          <button 
-            onClick={() => setActiveMobileTab('activity')}
-            className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === 'activity' ? 'text-obsidian-primary' : 'text-obsidian-outline opacity-60'}`}
-          >
-            <Activity className="w-4.5 h-4.5 mb-1" />
-            <span>ACTIVITY</span>
-          </button>
+              <MessageSquare className="w-4.5 h-4.5 mb-1" />
+              <span>CHAT</span>
+              {unreadChatCount > 0 && (
+                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(139,92,246,0.8)]" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveMobileTab("people")}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+            >
+              <Users className="w-4.5 h-4.5 mb-1" />
+              <span>PEOPLE ({onlineCount})</span>
+              {joinRequests.length > 0 && (
+                <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80 rounded-full" />
+              )}
+            </button>
+            <button
+              onClick={() => setActiveMobileTab("queue")}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+            >
+              <ListVideo className="w-4.5 h-4.5 mb-1" />
+              <span>QUEUE</span>
+            </button>
+            <button
+              onClick={() => setActiveMobileTab("activity")}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-bold transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-60"}`}
+            >
+              <Activity className="w-4.5 h-4.5 mb-1" />
+              <span>ACTIVITY</span>
+            </button>
+          </div>
         </div>
-      </div>
 
         {/* ── Sidebar ── */}
         {/* Mobile: flex-1 height but only shows one tab at a time | Desktop: animated width */}
-        <aside 
+        <aside
           onMouseMove={() => {
             // Wake up sidebar if user hovers over it
-            window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
+            window.dispatchEvent(
+              new CustomEvent("video:controls-visibility", { detail: true }),
+            );
           }}
           className={`flex flex-col bg-[#0a0a0b]/95 border-l border-t md:border-t-0 border-white/5 shadow-[-20px_0_50px_rgba(0,0,0,0.5)] overflow-hidden transition-all duration-500 ease-in-out shrink-0
-          ${isSidebarOpen ? 'flex-1 md:flex-none md:w-80 xl:w-[380px]' : 'h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden'}
-          ${isSidebarDimmed && isSidebarOpen ? 'md:opacity-30 hover:opacity-100' : 'opacity-100'}`}
+          ${isSidebarOpen ? "flex-1 md:flex-none md:w-80 xl:w-[380px]" : "h-0 md:w-0 md:border-l-0 opacity-0 overflow-hidden"}
+          ${isSidebarDimmed && isSidebarOpen ? "md:opacity-30 hover:opacity-100" : "opacity-100"}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
           <div className="hidden md:flex border-b border-white/5 shrink-0 px-4 pt-4 justify-between bg-[#0a0a0b]">
             {[
-              { id: 'chat', icon: MessageSquare, label: 'Chat' },
-              { id: 'participants', icon: Users, label: `People (${participants?.length || 0})` },
-              { id: 'queue', icon: ListVideo, label: 'Queue' },
-              { id: 'activity', icon: Activity, label: 'Activity' }
+              { id: "chat", icon: MessageSquare, label: "Chat" },
+              {
+                id: "participants",
+                icon: Users,
+                label: `People (${participants?.length || 0})`,
+              },
+              { id: "queue", icon: ListVideo, label: "Queue" },
+              { id: "activity", icon: Activity, label: "Activity" },
             ].map(({ id, icon: Icon, label }) => {
               const TabIcon = Icon;
               return (
                 <button
                   key={id}
                   onClick={() => handleTabChange(id)}
-                  className={`font-headline uppercase text-xs tracking-widest font-bold pb-2 transition-colors relative flex items-center gap-2 ${sidebarTab === id ? 'text-obsidian-primary' : 'text-obsidian-on-surface-variant hover:text-white'}`}
+                  className={`font-headline uppercase text-xs tracking-widest font-bold pb-2 transition-colors relative flex items-center gap-2 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant hover:text-white"}`}
                 >
                   <TabIcon className="w-4 h-4" />
                   <span className="hidden xl:inline">{label}</span>
-                  {sidebarTab === id && <div className="absolute bottom-0 left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_10px_rgba(189,157,255,0.5)]"></div>}
-                  {id === 'chat' && unreadChatCount > 0 && sidebarTab !== 'chat' && (
-                    <span
-                      key={unreadChatCount}
-                      className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
-                    >
-                      {unreadChatCount > 9 ? '9+' : unreadChatCount}
-                    </span>
+                  {sidebarTab === id && (
+                    <div className="absolute bottom-0 left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_10px_rgba(189,157,255,0.5)]"></div>
                   )}
+                  {id === "chat" &&
+                    unreadChatCount > 0 &&
+                    sidebarTab !== "chat" && (
+                      <span
+                        key={unreadChatCount}
+                        className="w-4 h-4 rounded-full bg-accent-purple text-white text-[10px] font-bold flex items-center justify-center shadow-[0_0_8px_rgba(139,92,246,0.6)] animate-badge-bounce"
+                      >
+                        {unreadChatCount > 9 ? "9+" : unreadChatCount}
+                      </span>
+                    )}
                 </button>
               );
             })}
@@ -844,24 +907,43 @@ const RoomPage = () => {
 
           <div className="flex-1 overflow-hidden flex flex-col">
             {/* Tab Logic: Hybrid Mobile/Desktop */}
-            {(sidebarTab === 'chat' || (activeMobileTab === 'chat' && isMobile)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'chat') ? 'hidden' : 'flex'}`}>
+            {sidebarTab === "chat" ||
+            (activeMobileTab === "chat" && isMobile) ? (
+              <div
+                key={sidebarTab}
+                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "chat" ? "hidden" : "flex"}`}
+              >
                 <ChatPanel chatMuted={chatMuted} setChatMuted={setChatMuted} />
               </div>
             ) : null}
-            
-            {(sidebarTab === 'participants' || (activeMobileTab === 'people' && isMobile)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'people') ? 'hidden' : 'flex'}`}>
+
+            {sidebarTab === "participants" ||
+            (activeMobileTab === "people" && isMobile) ? (
+              <div
+                key={sidebarTab}
+                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "people" ? "hidden" : "flex"}`}
+              >
                 {/* Host: controls sidebar block */}
                 {isHost && (
                   <div className="flex flex-col gap-3 px-4 py-3 border-b border-white/10 bg-bg-primary/50 shrink-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {requiresApproval ? <ShieldCheck className="w-4 h-4 text-accent-green" /> : <ShieldOff className="w-4 h-4 text-obsidian-outline" />}
-                        <span className="text-xs font-semibold text-obsidian-on-surface-variant">{requiresApproval ? 'Approval ON' : 'Approval OFF'}</span>
+                        {requiresApproval ? (
+                          <ShieldCheck className="w-4 h-4 text-accent-green" />
+                        ) : (
+                          <ShieldOff className="w-4 h-4 text-obsidian-outline" />
+                        )}
+                        <span className="text-xs font-semibold text-obsidian-on-surface-variant">
+                          {requiresApproval ? "Approval ON" : "Approval OFF"}
+                        </span>
                       </div>
-                      <button onClick={() => setApprovalRequired(!requiresApproval)} className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? 'bg-accent-green' : 'bg-obsidian-surface-container-high'}`}>
-                        <span className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${requiresApproval ? 'translate-x-5' : 'translate-x-0'}`} />
+                      <button
+                        onClick={() => setApprovalRequired(!requiresApproval)}
+                        className={`relative inline-flex w-11 h-6 rounded-full overflow-hidden transition-colors ${requiresApproval ? "bg-accent-green" : "bg-obsidian-surface-container-high"}`}
+                      >
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white transition-transform ${requiresApproval ? "translate-x-5" : "translate-x-0"}`}
+                        />
                       </button>
                     </div>
                   </div>
@@ -870,14 +952,22 @@ const RoomPage = () => {
               </div>
             ) : null}
 
-            {(sidebarTab === 'activity' || (activeMobileTab === 'activity' && isMobile)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'activity') ? 'hidden' : 'flex'}`}>
+            {sidebarTab === "activity" ||
+            (activeMobileTab === "activity" && isMobile) ? (
+              <div
+                key={sidebarTab}
+                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "activity" ? "hidden" : "flex"}`}
+              >
                 <ActivityFeed />
               </div>
             ) : null}
 
-            {(sidebarTab === 'queue' || (activeMobileTab === 'queue' && isMobile)) ? (
-              <div key={sidebarTab} className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${(isMobile && activeMobileTab !== 'queue') ? 'hidden' : 'flex'}`}>
+            {sidebarTab === "queue" ||
+            (activeMobileTab === "queue" && isMobile) ? (
+              <div
+                key={sidebarTab}
+                className={`flex-1 flex flex-col overflow-hidden animate-tab-fade ${isMobile && activeMobileTab !== "queue" ? "hidden" : "flex"}`}
+              >
                 <WatchQueue />
               </div>
             ) : null}
@@ -906,30 +996,45 @@ const RoomPage = () => {
         message={
           <div className="flex flex-col gap-4 text-left py-2">
             <div>
-              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Room Name</label>
-              <div className="text-sm font-semibold text-white">{room?.name || 'VibeSync Party'}</div>
+              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
+                Room Name
+              </label>
+              <div className="text-sm font-semibold text-white">
+                {room?.name || "VibeSync Party"}
+              </div>
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Room ID</label>
-                <div className="text-sm font-mono font-bold text-accent-purple">{code}</div>
+                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
+                  Room ID
+                </label>
+                <div className="text-sm font-mono font-bold text-accent-purple">
+                  {code}
+                </div>
               </div>
               <div className="flex-1">
-                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Security</label>
+                <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
+                  Security
+                </label>
                 <div className="text-sm font-semibold text-accent-green flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> End-to-End Encrypted
                 </div>
               </div>
             </div>
             <div>
-              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">Invite Link</label>
+              <label className="text-[10px] font-bold text-obsidian-outline uppercase tracking-wider">
+                Invite Link
+              </label>
               <div className="flex items-center gap-2 mt-1">
-                <input 
-                  readOnly 
+                <input
+                  readOnly
                   value={window.location.href}
                   className="flex-1 bg-black/30 border border-white/5 px-3 py-1.5 shadow-lg text-xs text-obsidian-on-surface-variant outline-none focus:border-accent-purple/50"
                 />
-                <button onClick={copyRoomLink} className="btn-ghost p-1.5 h-auto">
+                <button
+                  onClick={copyRoomLink}
+                  className="btn-ghost p-1.5 h-auto"
+                >
                   <Copy className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -937,16 +1042,15 @@ const RoomPage = () => {
           </div>
         }
         confirmLabel="Close"
-                onConfirm={() => setShowRoomInfo(false)}
+        onConfirm={() => setShowRoomInfo(false)}
         onCancel={() => setShowRoomInfo(false)}
       />
 
       {/* Shortcuts Help Modal */}
-      <KeyboardShortcutsPanel 
-        isOpen={showShortcutsHelp} 
-        onClose={() => setShowShortcutsHelp(false)} 
+      <KeyboardShortcutsPanel
+        isOpen={showShortcutsHelp}
+        onClose={() => setShowShortcutsHelp(false)}
       />
-
 
       {/* Delete room confirmation */}
       <ConfirmDialog
@@ -973,7 +1077,7 @@ const RoomPage = () => {
         onConfirm={() => {
           setShowRefreshConfirm(false);
           // Set flag so the reload detector doesn't think it was an accident
-          sessionStorage.setItem(`reloaded_${code}`, 'true');
+          sessionStorage.setItem(`reloaded_${code}`, "true");
           window.location.reload();
         }}
         onCancel={() => setShowRefreshConfirm(false)}
@@ -988,30 +1092,41 @@ const RoomPage = () => {
                 <Crown className="w-5 h-5 text-accent-yellow" />
               </div>
               <div>
-                <h2 className="text-base font-bold text-white">Transfer Host Before Leaving</h2>
-                <p className="text-xs text-obsidian-outline mt-0.5">Pick a new host to continue the session.</p>
+                <h2 className="text-base font-bold text-white">
+                  Transfer Host Before Leaving
+                </h2>
+                <p className="text-xs text-obsidian-outline mt-0.5">
+                  Pick a new host to continue the session.
+                </p>
               </div>
             </div>
 
             <div className="space-y-2 max-h-56 overflow-y-auto scroll-area mb-4">
               {participants
-                .filter(p => p.userId !== user?.id && p.isOnline !== false)
-                .map(p => (
+                .filter((p) => p.userId !== user?.id && p.isOnline !== false)
+                .map((p) => (
                   <button
                     key={p.userId}
                     type="button"
-                    onClick={() => { setShowLeaveModal(false); confirmLeave(p.userId); }}
+                    onClick={() => {
+                      setShowLeaveModal(false);
+                      confirmLeave(p.userId);
+                    }}
                     className="w-full flex items-center gap-3 p-3 rounded-xl bg-[#13131a] hover:bg-accent-purple/10 hover:border-accent-purple/30 border border-white/5 shadow-lg transition-all text-left"
                   >
                     <div
                       className="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0"
-                      style={{ backgroundColor: p.avatar || '#8b5cf6' }}
+                      style={{ backgroundColor: p.avatar || "#8b5cf6" }}
                     >
                       {p.username?.slice(0, 2)?.toUpperCase()}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-white truncate">{p.username}</p>
-                      <p className="text-xs text-obsidian-outline">{p.isGuest ? 'Guest' : 'Member'}</p>
+                      <p className="text-sm font-semibold text-white truncate">
+                        {p.username}
+                      </p>
+                      <p className="text-xs text-obsidian-outline">
+                        {p.isGuest ? "Guest" : "Member"}
+                      </p>
                     </div>
                     <Crown className="w-4 h-4 text-accent-yellow opacity-60" />
                   </button>
