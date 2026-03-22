@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function GifPicker({ isOpen, onClose, onSelect }) {
   const [gifs, setGifs] = useState([]);
@@ -53,7 +53,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
 
   return (
     <AnimatePresence>
-      <motion.div 
+      <Motion.div 
         ref={pickerRef}
         initial={{ opacity: 0, y: 10, scale: 0.95 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -98,7 +98,7 @@ export default function GifPicker({ isOpen, onClose, onSelect }) {
             </div>
           )}
         </div>
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 }

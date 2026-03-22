@@ -16,6 +16,7 @@ export const usePinnedMessage = () => {
 
   // Sync raw message from room state updates
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setRawPinnedMessage(room?.pinnedMessage || null);
   }, [room?.pinnedMessage]);
 

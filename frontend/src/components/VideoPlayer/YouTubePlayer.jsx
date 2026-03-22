@@ -103,7 +103,7 @@ class YouTubeVideoProxy extends EventTarget {
         this.dispatchEvent(new Event('seeked'));
         this._pendingSeekTime = null;
       }, 50);
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   get duration() {
@@ -122,10 +122,10 @@ class YouTubeVideoProxy extends EventTarget {
         return {
           length: 1,
           start: () => 0,
-          end: (i) => fraction * d
+          end: () => fraction * d
         };
       }
-    } catch {}
+    } catch { /* ignore */ }
     return { length: 0, start: () => 0, end: () => 0 };
   }
 
@@ -140,7 +140,7 @@ class YouTubeVideoProxy extends EventTarget {
 
   set playbackRate(rate) {
     this._playbackRate = rate;
-    try { this.ytPlayer.setPlaybackRate(rate); } catch {}
+    try { this.ytPlayer.setPlaybackRate(rate); } catch { /* ignore */ }
   }
 
   get muted() { return this._muted; }
@@ -150,7 +150,7 @@ class YouTubeVideoProxy extends EventTarget {
     try {
       if (value) this.ytPlayer.mute();
       else this.ytPlayer.unMute();
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   get volume() {
@@ -161,7 +161,7 @@ class YouTubeVideoProxy extends EventTarget {
     try {
       this.ytPlayer.setVolume(value * 100);
       if (value > 0 && this._muted) { this._muted = false; }
-    } catch {}
+    } catch { /* ignore */ }
   }
 
   // --- HTML5 Media API Methods ---
@@ -172,7 +172,7 @@ class YouTubeVideoProxy extends EventTarget {
   }
 
   pause() {
-    try { this.ytPlayer.pauseVideo(); } catch {}
+    try { this.ytPlayer.pauseVideo(); } catch { /* ignore */ }
   }
 
   // --- Internal hooks called by the React component ---
@@ -336,7 +336,7 @@ const YouTubePlayer = ({ videoId: rawVideoId, onReady, onError }) => {
         window._ytReadyQueue = window._ytReadyQueue.filter((fn) => fn !== initPlayer);
       }
       if (playerRef.current && typeof playerRef.current.destroy === 'function') {
-        try { playerRef.current.destroy(); } catch {}
+        try { playerRef.current.destroy(); } catch { /* ignore */ }
         playerRef.current = null;
       }
       proxyRef.current = null;

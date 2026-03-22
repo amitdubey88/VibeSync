@@ -79,6 +79,7 @@ export const useRoomTheme = () => {
 
   useEffect(() => {
     if (room?.currentTheme) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTheme(room.currentTheme);
     }
   }, [room?.currentTheme]);

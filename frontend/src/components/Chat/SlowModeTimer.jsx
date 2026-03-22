@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function SlowModeTimer({ remaining, isHost }) {
   if (isHost && remaining === 0) {
@@ -13,7 +13,7 @@ export default function SlowModeTimer({ remaining, isHost }) {
   return (
     <AnimatePresence>
       {remaining > 0 && typeof remaining === 'number' && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.8 }}
@@ -22,7 +22,7 @@ export default function SlowModeTimer({ remaining, isHost }) {
           <span className="text-sm font-semibold text-white tracking-widest font-mono">
             {remaining}s
           </span>
-        </motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

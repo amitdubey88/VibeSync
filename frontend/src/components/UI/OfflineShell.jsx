@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function OfflineShell() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine);
@@ -20,7 +20,7 @@ export default function OfflineShell() {
   return (
     <AnimatePresence>
       {isOffline && (
-        <motion.div
+        <Motion.div
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -50, opacity: 0 }}
@@ -32,7 +32,7 @@ export default function OfflineShell() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3l18 18" />
           </svg>
           You are offline. Reconnecting...
-        </motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

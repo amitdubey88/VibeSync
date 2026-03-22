@@ -8,9 +8,9 @@ import ConfirmDialog from '../UI/ConfirmDialog';
 import Avatar from '../UI/Avatar';
 
 const ParticipantsList = () => {
-  const { participants, voiceParticipants, room, isHost, transferHost, kickParticipant, muteParticipant, toggleScreenSharePermission } = useRoom();
+  const { participants, voiceParticipants, room, isHost, transferHost, kickParticipant, muteParticipant } = useRoom();
   const { user } = useAuth();
-  const { isCoHost, coHosts, assignCoHost, removeCoHost } = useCoHost();
+  const { coHosts, assignCoHost, removeCoHost } = useCoHost();
   const [openMenuId, setOpenMenuId] = useState(null);
   const [confirm, setConfirm] = useState(null); // { type, userId, username }
   const menuRef = useRef(null);

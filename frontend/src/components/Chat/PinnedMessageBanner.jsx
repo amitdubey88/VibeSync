@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
 
@@ -14,7 +14,7 @@ export default function PinnedMessageBanner({ pinnedMessage, onUnpin }) {
   return (
     <AnimatePresence>
       {pinnedMessage && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: -20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -45,7 +45,7 @@ export default function PinnedMessageBanner({ pinnedMessage, onUnpin }) {
               </svg>
             </button>
           )}
-        </motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

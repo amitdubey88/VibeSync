@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function CountdownLobby() {
   const { room } = useRoom();
@@ -8,6 +8,7 @@ export default function CountdownLobby() {
 
   useEffect(() => {
     if (!room?.scheduledAt) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTimeLeft(null);
       return;
     }
@@ -39,7 +40,7 @@ export default function CountdownLobby() {
 
   return (
     <AnimatePresence>
-      <motion.div 
+      <Motion.div 
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -80,7 +81,7 @@ export default function CountdownLobby() {
             <span className="text-gray-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mt-4">Seconds</span>
           </div>
         </div>
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 }

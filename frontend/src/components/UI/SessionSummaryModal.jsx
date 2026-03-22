@@ -1,18 +1,18 @@
 import React from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function SessionSummaryModal({ summary, onClose }) {
   if (!summary) return null;
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/90 backdrop-blur-md"
       >
-        <motion.div
+        <Motion.div
           initial={{ y: 50, scale: 0.95 }}
           animate={{ y: 0, scale: 1 }}
           exit={{ y: 50, scale: 0.95 }}
@@ -51,8 +51,8 @@ export default function SessionSummaryModal({ summary, onClose }) {
           >
             Return to Dashboard
           </button>
-        </motion.div>
-      </motion.div>
+        </Motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 }

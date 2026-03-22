@@ -9,7 +9,7 @@ import RoomPage from './pages/RoomPage';
 
 // Guard: redirect to home if not authenticated
 const ProtectedRoom = () => {
-  const { isAuthenticated, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) {
     return (
       <div className="min-h-screen gradient-bg flex items-center justify-center">

@@ -2,7 +2,7 @@ import React from 'react';
 import { useRoomTheme } from '../../hooks/useRoomTheme';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function ThemePicker({ isOpen, onClose }) {
   const { theme, changeTheme } = useRoomTheme();
@@ -23,7 +23,7 @@ export default function ThemePicker({ isOpen, onClose }) {
 
   return (
     <AnimatePresence>
-      <motion.div
+      <Motion.div
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95 }}
@@ -60,7 +60,7 @@ export default function ThemePicker({ isOpen, onClose }) {
             Only the host can change themes
           </p>
         )}
-      </motion.div>
+      </Motion.div>
     </AnimatePresence>
   );
 }

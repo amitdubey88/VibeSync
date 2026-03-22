@@ -368,7 +368,6 @@ const useVideoSync = (videoEl) => {
                     videoEl.currentTime = vs.currentTime;
                     safePlay();
                 } else {
-                    // eslint-disable-next-line react-hooks/immutability
                     videoEl.currentTime = vs.currentTime;
                     videoEl.pause();
                 }

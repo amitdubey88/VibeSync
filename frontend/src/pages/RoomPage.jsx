@@ -266,6 +266,8 @@ const RoomPage = () => {
     navigate,
     user?.username,
     isNameConfirmed,
+    guestName,
+    location.search,
   ]);
 
   // Leave room on component unmount (page navigation away).
@@ -321,7 +323,7 @@ const RoomPage = () => {
         ghostRedirectTimer.current = null;
       }
     };
-  }, [room, joining, error, sessionSummary]);
+  }, [room, joining, error, sessionSummary, navigate]);
 
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
@@ -366,7 +368,7 @@ const RoomPage = () => {
       ),
       { duration: 30000, id: `join-req-${req.userId}` }
     );
-  }, [joinRequests, isHost]);
+  }, [joinRequests, isHost, approveJoin, denyJoin]);
 
   const copyRoomCode = () => navigator.clipboard.writeText(code).then(() => toast.success('Room code copied!'));
   
@@ -404,7 +406,7 @@ const RoomPage = () => {
       toast.success(`Welcome, ${guestName}!`, { 
         icon: <User className="w-5 h-5 text-accent-purple" /> 
       });
-    } catch (err) {
+    } catch {
       toast.error('Failed to join. Please try again.');
     } finally {
       setIsLoggingIn(false);

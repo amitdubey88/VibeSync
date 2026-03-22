@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
   const [question, setQuestion] = useState('');
@@ -34,7 +34,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-        <motion.div 
+        <Motion.div 
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -94,7 +94,7 @@ export default function CreatePollModal({ isOpen, onClose, onSubmit }) {
               Start Poll
             </button>
           </form>
-        </motion.div>
+        </Motion.div>
       </div>
     </AnimatePresence>
   );

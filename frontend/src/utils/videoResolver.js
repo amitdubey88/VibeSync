@@ -45,7 +45,7 @@ export const resolveVideoUrl = (url) => {
   let parsedUrl = null;
   const isHttpUrl = rawUrl.startsWith('http://') || rawUrl.startsWith('https://');
   if (isHttpUrl) {
-    try { parsedUrl = new URL(rawUrl); } catch (_) {}
+    try { parsedUrl = new URL(rawUrl); } catch { /* ignore */ }
   }
 
   // 2. HLS Stream Validation (.m3u8)
@@ -55,7 +55,7 @@ export const resolveVideoUrl = (url) => {
     try {
       const pathPart = (parsedUrl?.pathname || rawUrl).split('/').pop().split('?')[0];
       if (pathPart) fileName = decodeURIComponent(pathPart).replace(/\.m3u8$/i, '');
-    } catch (_) {}
+    } catch { /* ignore */ }
     return { url: rawUrl, type: 'hls', title: fileName || 'Live Stream' };
   }
 
@@ -71,7 +71,7 @@ export const resolveVideoUrl = (url) => {
         fileName = decodeURIComponent(pathPart).replace(/\.[a-z0-9]+$/i, '');
         if (!fileName) fileName = decodeURIComponent(pathPart);
       }
-    } catch (_) {
+    } catch {
       const parts = rawUrl.split('/').pop().split('?')[0];
       if (parts) fileName = decodeURIComponent(parts);
     }

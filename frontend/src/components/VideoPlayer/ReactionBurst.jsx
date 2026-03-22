@@ -27,6 +27,7 @@ const ReactionBurst = () => {
             ]
           : newReactions.map(r => withPos(r));
 
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setLocalReactions(prev => [...prev, ...reactionsToSpawn]);
         
         reactionsToSpawn.forEach(r => {
@@ -36,7 +37,7 @@ const ReactionBurst = () => {
         });
       }
     }
-  }, [reactions]);
+  }, [reactions, localReactions]);
 
   return (
     <div className="absolute inset-0 pointer-events-none z-50">

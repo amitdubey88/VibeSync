@@ -103,6 +103,7 @@ const HLSPlayer = ({ src, autoPlay, onCanPlay, onReady, onError }) => {
       }
       if (onReady) onReady(null);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src, autoPlay, onCanPlay, onReady]);
 
   return (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useSocket } from '../../context/SocketContext';
 import { useRoom } from '../../context/RoomContext';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 export default function ModerationPanel() {
   const { socket } = useSocket();
@@ -10,6 +10,7 @@ export default function ModerationPanel() {
   const [newWord, setNewWord] = useState('');
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBannedWords(room?.bannedWords || []);
   }, [room?.bannedWords]);
 
@@ -79,7 +80,7 @@ export default function ModerationPanel() {
         ) : (
           <div className="flex flex-wrap gap-2">
             {bannedWords.map(word => (
-              <motion.span
+              <Motion.span
                 layout
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -96,7 +97,7 @@ export default function ModerationPanel() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                   </svg>
                 </button>
-              </motion.span>
+              </Motion.span>
             ))}
           </div>
         )}

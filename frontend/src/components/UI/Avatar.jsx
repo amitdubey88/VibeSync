@@ -1,3 +1,5 @@
+import { getInitials } from '../../utils/stringUtils';
+
 /**
  * Avatar — reusable user avatar circle.
  *
@@ -26,11 +28,6 @@ const STATUS_COLOR = {
   offline:   'bg-text-muted',
 };
 
-const getInitials = (name = '') => {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-};
 
 const Avatar = ({
   username = '?',
@@ -70,4 +67,3 @@ const Avatar = ({
 };
 
 export default Avatar;
-export { getInitials };

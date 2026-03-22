@@ -67,7 +67,7 @@ const useSyncDataChannel = () => {
 
         peersRef.current[targetSocketId] = pc;
         return pc;
-    }, [socket]);
+    }, [socket, roomKey]);
 
     // ── Host logic: Create connections when participants join ─────────────────
     useEffect(() => {
@@ -111,7 +111,7 @@ const useSyncDataChannel = () => {
             }
         });
 
-    }, [isHost, room?.participants, socket, createPeer, handleDataChannelMessage]);
+    }, [isHost, room?.participants, room?.hostId, socket, createPeer, handleDataChannelMessage, roomKey]);
 
     // ── Signaling listener ───────────────────────────────────────────────────
     useEffect(() => {

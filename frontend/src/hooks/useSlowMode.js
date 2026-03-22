@@ -10,6 +10,7 @@ export const useSlowMode = () => {
 
   useEffect(() => {
     if (room?.slowMode) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSlowMode(room.slowMode);
     }
   }, [room?.slowMode]);

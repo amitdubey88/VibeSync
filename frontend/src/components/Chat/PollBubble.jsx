@@ -1,7 +1,7 @@
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
-import { motion } from 'framer-motion';
+import { motion as Motion } from 'framer-motion';
 
 export default function PollBubble({ poll, onVote, onEnd }) {
   const { user } = useAuth();
@@ -53,7 +53,7 @@ export default function PollBubble({ poll, onVote, onEnd }) {
                   : 'bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10'}
               `}
             >
-              <motion.div 
+              <Motion.div 
                 initial={{ width: 0 }}
                 animate={{ width: `${percentage}%` }}
                 className={`absolute left-0 top-0 bottom-0 ${hasVoted ? 'bg-accent-purple/20' : 'bg-white/10'} transition-all duration-1000 z-0`} 

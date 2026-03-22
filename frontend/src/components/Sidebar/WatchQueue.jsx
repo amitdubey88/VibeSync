@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useWatchQueue } from '../../hooks/useWatchQueue';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { AnimatePresence, Reorder } from 'framer-motion';
 import { resolveVideoUrl } from '../../utils/videoResolver';
 
 export default function WatchQueue() {

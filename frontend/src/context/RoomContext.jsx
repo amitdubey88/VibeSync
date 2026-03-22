@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
+import { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { Play, Star, MessageSquare, MicOff, Lock, Unlock, Radio, LogOut, XCircle } from 'lucide-react';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
@@ -17,12 +17,13 @@ const playUISound = (type = 'message') => {
     else if (type === 'end') sounds.playSessionEnded();
     else if (type === 'social') sounds.playTone(600, 'sine', 0.1, 0, 0.05); // fallback
     else if (type === 'action') sounds.playTone(1200, 'sine', 0.05, 0, 0.05);
-  } catch (e) {
+  } catch {
     // Ignore audio context issues (e.g. strict autoplay policy before interaction)
   }
 };
 
-const RoomContext = createContext(null);
+// eslint-disable-next-line react-refresh/only-export-components
+export const RoomContext = createContext(null);
 
 export const RoomProvider = ({ children }) => {
   const { socket } = useSocket();
@@ -90,6 +91,7 @@ export const RoomProvider = ({ children }) => {
     if (room?.code) {
       deriveKey(room.code).then(setRoomKey);
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoomKey(null);
     }
   }, [room?.code]);
@@ -106,7 +108,9 @@ export const RoomProvider = ({ children }) => {
     // to avoid race conditions.
     try {
       await getRoomMessages(roomCode);
-    } catch (_) {}
+    } catch {
+      // ignore
+    }
   }, [socket]);
 
   const decryptMessageHistory = async (history, key) => {
@@ -123,12 +127,12 @@ export const RoomProvider = ({ children }) => {
       );
 
       if (isE2EE) {
-        try { content = await decryptData(content, key); } catch (_) {}
+        try { content = await decryptData(content, key); } catch { /* ignore */ }
         if (replyTo?.content && typeof replyTo.content === 'string') {
           try {
             const dec = await decryptData(replyTo.content, key);
             replyTo = { ...replyTo, content: dec };
-          } catch (_) {}
+          } catch { /* ignore */ }
         }
       }
       
@@ -139,7 +143,7 @@ export const RoomProvider = ({ children }) => {
       await Promise.all(Object.entries(reactions).map(async ([emojiKey, users]) => {
         let displayKey = emojiKey;
         if (isE2EE && emojiKey.length > 6 && /^[a-zA-Z0-9+/=]+$/.test(emojiKey)) {
-          try { displayKey = await decryptData(emojiKey, key); } catch (_) {}
+          try { displayKey = await decryptData(emojiKey, key); } catch { /* ignore */ }
         }
         if (!decReactions[displayKey]) decReactions[displayKey] = [];
         users.forEach(u => { if (!decReactions[displayKey].includes(u)) decReactions[displayKey].push(u); });
@@ -182,7 +186,51 @@ export const RoomProvider = ({ children }) => {
     }, 100);
 
     return () => clearInterval(interval);
-  }, [videoState?.isPlaying, videoState?.lastUpdated]); // Re-sync on pause/play or hard seek
+  }, [videoState, videoState?.isPlaying, videoState?.lastUpdated]); // Re-sync on pause/play or hard seek
+
+  const currentRoomCode = room?.code;
+  const setVideoSource = useCallback(async (video, opts = {}) => {
+    if (!socket || !currentRoomCode) return;
+
+    // Derive key inline if not yet available (fast-submit race condition)
+    const key = roomKey || (await deriveKey(currentRoomCode));
+    
+    const encryptedUrl = await encryptData(video.url, key);
+    const encryptedTitle = await encryptData(video.title, key);
+    const encryptedType = await encryptData(video.type, key);
+    
+    const encryptedVideo = {
+        ...video,
+        url: encryptedUrl,
+        title: encryptedTitle,
+        type: encryptedType,
+        encryptedType: true,
+        e2ee: true
+    };
+
+    socket.emit('video:set-source', {
+      roomCode: currentRoomCode,
+      video: {
+        ...encryptedVideo,
+        // Metadata intended for UI overlay/notifications (not content) doesn't need E2EE encryption
+        suggestedBy: video.suggestedBy,
+        suggestedById: video.suggestedById
+      },
+      currentTime: opts.currentTime,
+      duration: opts.duration,
+      isPlaying: opts.isPlaying,
+    });
+    
+    setCurrentVideo(video); // Update locally with plain text
+    if (!opts.preserveState) {
+      setVideoState({ 
+        currentTime: opts.currentTime ?? 0, 
+        duration: opts.duration ?? 0,
+        isPlaying: opts.isPlaying ?? false, 
+        lastUpdated: Date.now() 
+      });
+    }
+  }, [socket, currentRoomCode, roomKey]);
 
   // ── Socket event listeners ────────────────────────────────────────────────
   useEffect(() => {
@@ -503,7 +551,7 @@ export const RoomProvider = ({ children }) => {
     const onMessageReaction = async ({ messageId, emoji, username, e2ee }) => {
       let displayEmoji = emoji;
       if (e2ee && roomKey) {
-        try { displayEmoji = await decryptData(emoji, roomKey); } catch (_) {}
+        try { displayEmoji = await decryptData(emoji, roomKey); } catch { /* ignore decryption failure */ }
       }
 
       setMessages(prev => prev.map(m => {
@@ -560,12 +608,12 @@ export const RoomProvider = ({ children }) => {
       });
     };
 
-    const onRemotePlay = ({ currentTime }) => {
+    const onRemotePlay = () => {
       if (!isHost) {
         addSystemMessage(`Host resumed the video`);
       }
     };
-    const onRemotePause = ({ currentTime }) => {
+    const onRemotePause = () => {
       if (!isHost) {
         addSystemMessage(`Host paused the video`);
       }
@@ -673,7 +721,7 @@ export const RoomProvider = ({ children }) => {
       socket.off('queue:suggested', onQueueSuggested);
       socket.off('queue:load-video', onQueueLoadVideo);
     };
-  }, [socket, user, roomKey]);
+  }, [socket, user, roomKey, addSystemMessage, isHost, room?.code, setVideoSource]);
 
   // ── Social Energy Decay — only when inside a room (BUG-11) ─────────────────
   useEffect(() => {
@@ -685,6 +733,7 @@ export const RoomProvider = ({ children }) => {
   }, [room]);
   // Reset energy on room exit
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!room) setEnergy(0);
   }, [room]);
 
@@ -762,49 +811,6 @@ export const RoomProvider = ({ children }) => {
       e2ee: false
     });
   }, [socket, room]);
-
-  const setVideoSource = useCallback(async (video, opts = {}) => {
-    if (!socket || !room) return;
-
-    // Derive key inline if not yet available (fast-submit race condition)
-    const key = roomKey || (await deriveKey(room.code));
-    
-    const encryptedUrl = await encryptData(video.url, key);
-    const encryptedTitle = await encryptData(video.title, key);
-    const encryptedType = await encryptData(video.type, key);
-    
-    const encryptedVideo = {
-        ...video,
-        url: encryptedUrl,
-        title: encryptedTitle,
-        type: encryptedType,
-        encryptedType: true,
-        e2ee: true
-    };
-
-    socket.emit('video:set-source', {
-      roomCode: room.code,
-      video: {
-        ...encryptedVideo,
-        // Metadata intended for UI overlay/notifications (not content) doesn't need E2EE encryption
-        suggestedBy: video.suggestedBy,
-        suggestedById: video.suggestedById
-      },
-      currentTime: opts.currentTime,
-      duration: opts.duration,
-      isPlaying: opts.isPlaying,
-    });
-    
-    setCurrentVideo(video); // Update locally with plain text
-    if (!opts.preserveState) {
-      setVideoState({ 
-        currentTime: opts.currentTime ?? 0, 
-        duration: opts.duration ?? 0,
-        isPlaying: opts.isPlaying ?? false, 
-        lastUpdated: Date.now() 
-      });
-    }
-  }, [socket, room, roomKey]);
 
   const syncDuration = useCallback((duration) => {
     if (!socket || !room) return;
@@ -970,8 +976,11 @@ export const RoomProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useRoom = () => {
-  const ctx = useContext(RoomContext);
-  if (!ctx) throw new Error('useRoom must be used within RoomProvider');
-  return ctx;
+  const context = useContext(RoomContext);
+  if (!context) throw new Error('useRoom must be used within a RoomProvider');
+  return context;
 };
+
+

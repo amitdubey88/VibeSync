@@ -20,6 +20,7 @@ const useBufferSync = (videoEl) => {
 
         // Skip buffer synchronization for Live WebRTC streams as they cannot truly be paused safely.
         if (room?.currentVideo?.type === 'live' || room?.currentVideo?.type === 'uploading') {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setBufferingUsers([]);
             return;
         }
@@ -28,6 +29,7 @@ const useBufferSync = (videoEl) => {
         const currentlyBuffering = room?.participants?.filter(
             (p) => p.isBuffering && String(p.userId) !== String(room?.hostId)
         ) || [];
+
         setBufferingUsers(currentlyBuffering);
 
         if (!isHost) return;
@@ -64,7 +66,7 @@ const useBufferSync = (videoEl) => {
             }
         }
 
-    }, [room?.participants, room?.currentVideo?.type, videoEl, isHost]);
+    }, [room?.participants, room?.currentVideo?.type, room?.hostId, videoEl, isHost]);
 
     return { bufferingUsers };
 };

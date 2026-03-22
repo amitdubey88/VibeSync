@@ -23,7 +23,7 @@ const LandingPage = () => {
   // Pre-fill username from stored session — only if field is still empty
   useEffect(() => {
     if (user?.username && !username) setUsername(user.username);
-  }, [user]); // eslint-disable-line
+  }, [user, username]);
 
   // Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
@@ -51,7 +51,7 @@ const LandingPage = () => {
         sessionStorage.removeItem("vibesync_session");
       }
     }
-  }, [navigate, location.state]);
+  }, [navigate, location.state, location.search]);
 
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {

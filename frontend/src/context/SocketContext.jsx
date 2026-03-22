@@ -1,8 +1,9 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { connectSocket, disconnectSocket, getSocket } from '../services/socket';
+import { createContext, useEffect, useState, useContext } from 'react';
+import { connectSocket, disconnectSocket } from '../services/socket';
 import { useAuth } from './AuthContext';
 
-const SocketContext = createContext(null);
+// eslint-disable-next-line react-refresh/only-export-components
+export const SocketContext = createContext(null);
 
 export const SocketProvider = ({ children }) => {
   const { token } = useAuth();
@@ -13,6 +14,7 @@ export const SocketProvider = ({ children }) => {
     // Token cleared (logout) — tear down socket and reset state.
     if (!token) {
       disconnectSocket();
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSocket(null);
       setIsConnected(false);
       return;
@@ -44,8 +46,9 @@ export const SocketProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSocket = () => {
-  const ctx = useContext(SocketContext);
-  if (!ctx) throw new Error('useSocket must be used within SocketProvider');
-  return ctx;
+  const context = useContext(SocketContext);
+  if (!context) throw new Error('useSocket must be used within a SocketProvider');
+  return context;
 };

@@ -2,7 +2,7 @@ import React from 'react';
 import { useSpeedVote } from '../../hooks/useSpeedVote';
 import { useAuth } from '../../context/AuthContext';
 import { useRoom } from '../../context/RoomContext';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function SpeedVotePanel() {
   const { voteStats, voteResult, submitVote, clearResult } = useSpeedVote();
@@ -18,7 +18,7 @@ export default function SpeedVotePanel() {
   if (isHost && voteResult) {
     return (
       <AnimatePresence>
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9 }}
@@ -47,7 +47,7 @@ export default function SpeedVotePanel() {
               Dismiss
             </button>
           </div>
-        </motion.div>
+        </Motion.div>
       </AnimatePresence>
     );
   }

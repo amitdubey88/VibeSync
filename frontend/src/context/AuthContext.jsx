@@ -1,31 +1,38 @@
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { loginAsGuest, verifyOtp, sendOtp } from '../services/api';
 import { disconnectSocket } from '../services/socket';
 
-const AuthContext = createContext(null);
+// eslint-disable-next-line react-refresh/only-export-components
+export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [token, setToken] = useState(() => localStorage.getItem('vibesync_token'));
   const [loading, setLoading] = useState(true);
 
-  // On mount, restore user from stored token
+  const logout = useCallback(() => {
+    localStorage.removeItem('vibesync_token');
+    setToken(null);
+    setUser(null);
+    disconnectSocket();
+  }, []);
+
   useEffect(() => {
     if (token) {
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        // Check if token is expired
         if (payload.exp * 1000 > Date.now()) {
+          // eslint-disable-next-line react-hooks/set-state-in-effect
           setUser({ id: payload.id, username: payload.username, avatar: payload.avatar, isGuest: payload.isGuest });
         } else {
           logout();
         }
-      } catch (_) {
+      } catch {
         logout();
       }
     }
     setLoading(false);
-  }, []);
+  }, [token, logout]);
 
   const saveAuth = useCallback((data) => {
     const { token: t, user: u } = data;
@@ -46,12 +53,6 @@ export const AuthProvider = ({ children }) => {
     return data;
   }, [saveAuth]);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem('vibesync_token');
-    setToken(null);
-    setUser(null);
-    disconnectSocket();
-  }, []);
 
   // Deprecated: socket connection is entirely managed by SocketContext now
   // to prevent race conditions during React mounts
@@ -66,8 +67,11 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
-  return ctx;
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
+  return context;
 };
+
+

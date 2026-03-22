@@ -240,6 +240,7 @@ const VideoPlayer = () => {
         isStreamingActiveRef.current = false;
       }
     }, 300);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, setPremierStream]); // stable deps — videoRef is a ref so no dep needed
 
   const setVideoRef = useCallback((el) => {
@@ -569,7 +570,7 @@ const VideoPlayer = () => {
         isLiveStreamingInitializedRef.current = false;
       }
     }
-  }, [currentVideo, isHost, setPremierStream, blobUrl]);
+  }, [currentVideo, isHost, setPremierStream, blobUrl, setIsLiveStreamingInitialized]);
 
   // The previous BLACK SCREEN FIX logic has been merged into the isSourceChanged hook above.
   // We keep this empty or remove it. We'll simply omit it.
@@ -593,7 +594,7 @@ const VideoPlayer = () => {
       setPremierStream(null);
       isStreamingActiveRef.current = false;
     }
-  }, [hostChangedFlag, isHost, setPremierStream]);
+  }, [hostChangedFlag, isHost, setPremierStream, setIsLiveStreamingInitialized]);
 
   // ── Keyboard Shortcuts (Space, Arrows, M) ────────────────────────────────
   useEffect(() => {
@@ -623,6 +624,7 @@ const VideoPlayer = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, videoEl]);
 
   // Cleanup blob URLs on unmount
@@ -744,6 +746,7 @@ const VideoPlayer = () => {
       videoEl.pause();
     }
     // Animation is now triggered by onPlayEv/onPauseEv listeners for all interaction methods
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoEl, isHost, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
 
   // ── Keyboard Shortcut Event Listeners ──
@@ -779,6 +782,7 @@ const VideoPlayer = () => {
       window.removeEventListener('video:toggle-fullscreen', handleToggleFullscreen);
       window.removeEventListener('video:toggle-mute', handleToggleMute);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoEl, isHost]);
 
   // Initial auto-hide timer on mount
@@ -870,7 +874,7 @@ const VideoPlayer = () => {
     try {
       const meta = await fetchVideoMetadata(resolved.url, resolved.type);
       if (meta && meta.title) finalTitle = meta.title;
-    } catch (err) {
+    } catch {
       console.warn('[VideoPlayer] Metadata fetch failed, using fallback:', finalTitle);
     }
 

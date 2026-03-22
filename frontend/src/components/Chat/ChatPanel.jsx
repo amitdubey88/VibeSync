@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { useAuth } from "../../context/AuthContext";
 import MessageBubble from "./MessageBubble";
@@ -27,7 +27,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const {
     messages,
     sendMessage,
-    sendReaction,
     room,
     typingUsers,
     broadcastTyping,
@@ -61,7 +60,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   
   // Feature Hooks
   const { pinnedMessage, pinMessage, unpinMessage } = usePinnedMessage();
-  const { activePoll, createPoll, votePoll, endPoll } = usePolls();
+  const { activePoll, createPoll } = usePolls();
   const { isSlowMode, remainingCooldown } = useSlowMode();
   const { isCoHost } = useCoHost();
   
@@ -123,8 +122,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       .map((m) => m.id);
     if (unreadFromOthers.length) markChatRead(unreadFromOthers);
     // Only run when new messages arrive or user opens the panel
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, room?.code]);
+  }, [messages, room, user?.id, user?.username, markChatRead]);
 
   const handleSend = (e) => {
     e?.preventDefault();
@@ -139,11 +137,6 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const handleEmojiSelect = (emoji) => {
     setInput((prev) => prev + emoji);
     inputRef.current?.focus();
-  };
-
-  const handleEmojiReaction = (emoji) => {
-    sendReaction(emoji);
-    setShowEmoji(false);
   };
 
   const handleKeyDown = (e) => {

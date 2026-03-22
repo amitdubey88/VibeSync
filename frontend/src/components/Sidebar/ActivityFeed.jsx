@@ -1,6 +1,5 @@
-import { useRoom } from '../../context/RoomContext';
-import { formatTime } from '../../utils/helpers';
 import { Zap, UserPlus, PlayCircle, Anchor, Info } from 'lucide-react';
+import { useRoom } from '../../context/RoomContext';
 
 const ActivityFeed = () => {
   const { messages } = useRoom();

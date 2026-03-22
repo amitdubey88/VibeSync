@@ -38,3 +38,6 @@ docker-compose.override.yml
 #koyebenv
 .koyebenv
 
+#linterrors
+*-errors.txt
+.txt

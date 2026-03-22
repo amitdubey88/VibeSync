@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSubtitles } from '../../hooks/useSubtitles';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion as Motion, AnimatePresence } from 'framer-motion';
 
 export default function SubtitleOverlay() {
   const { activeCue } = useSubtitles();
@@ -8,7 +8,7 @@ export default function SubtitleOverlay() {
   return (
     <AnimatePresence>
       {activeCue && (
-        <motion.div
+        <Motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95 }}
@@ -24,7 +24,7 @@ export default function SubtitleOverlay() {
           >
             {activeCue}
           </span>
-        </motion.div>
+        </Motion.div>
       )}
     </AnimatePresence>
   );

@@ -40,13 +40,14 @@ export const useSubtitles = () => {
   // Sync active cue with current playback time
   useEffect(() => {
     if (!videoState || cues.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setActiveCue(null);
       return;
     }
     const t = videoState.currentTime;
     const current = cues.find(c => t >= c.start && t <= c.end);
     setActiveCue(current ? current.text : null);
-  }, [videoState?.currentTime, cues]);
+  }, [videoState, videoState?.currentTime, cues]);
 
   useEffect(() => {
     if (!socket) return;

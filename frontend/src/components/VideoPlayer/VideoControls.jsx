@@ -40,6 +40,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     if (!video) return;
     if (video.paused) video.play();
     else video.pause();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoRef, isHost]);
 
   const isLive = videoState?.type === 'live' || videoState?.type === 'uploading' || currentVideo?.type === 'live' || currentVideo?.type === 'uploading';
@@ -79,6 +80,7 @@ const VideoControls = ({ videoRef, videoEl, currentTime, duration, buffered, isH
     } catch(err) {
       console.error('[VideoControls] handleSeek failed setting currentTime:', err);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [videoRef, isHost, displayDuration]);
 
   // Sync mute state from keyboard shortcuts (KeyM)
