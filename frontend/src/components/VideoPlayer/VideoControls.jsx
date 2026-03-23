@@ -29,7 +29,7 @@ const VideoControls = ({
   onLoadClick,
   visible,
 }) => {
-  const { videoState, currentVideo, clips, sendClip } = useRoom();
+  const { videoState, currentVideo, clips, sendClip, setVideoSource } = useRoom();
   const { isMuted, toggleMute, voiceError } = useWebRTCContext();
   const [volume, setVolume] = useState(1);
   const [isMutedLocal, setIsMutedLocal] = useState(false);
