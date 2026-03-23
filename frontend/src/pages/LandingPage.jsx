@@ -380,7 +380,7 @@ const LandingPage = () => {
                   <div className="relative group/input">
                     <input
                       type="text"
-                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all uppercase tracking-wide text-sm font-medium"
+                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary focus:outline-none transition-all uppercase tracking-wide text-sm font-medium"
                       placeholder="Room Code"
                       value={roomCode}
                       onChange={(e) =>
@@ -423,7 +423,7 @@ const LandingPage = () => {
                   <div className="relative group/input">
                     <input
                       type="text"
-                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all tracking-normal text-sm font-medium"
+                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary focus:outline-none transition-all tracking-normal text-sm font-medium"
                       placeholder="Room Name"
                       value={roomName}
                       onChange={(e) => setRoomName(e.target.value)}
@@ -492,7 +492,7 @@ const LandingPage = () => {
                       <div className="mt-4 flex flex-col gap-2 animate-fade-in">
                         <input
                           type="datetime-local"
-                          className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all text-sm font-medium"
+                          className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 focus:outline-none text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all text-sm font-medium"
                           style={{ colorScheme: "dark" }}
                           value={scheduledAt}
                           onChange={(e) => setScheduledAt(e.target.value)}
