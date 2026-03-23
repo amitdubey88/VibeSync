@@ -28,11 +28,11 @@ const ICON_SIZE = {
 };
 
 const VARIANT_MAP = {
-  default: 'text-zinc-500 hover:text-zinc-100 hover:bg-white/10',
-  ghost:   'text-white/70 hover:text-white hover:bg-white/10',
-  primary: 'text-fuchsia-400 hover:bg-fuchsia-500/15',
-  danger:  'text-rose-500/80 hover:text-rose-400 hover:bg-rose-500/10',
-  success: 'text-emerald-500/80 hover:text-emerald-400 hover:bg-emerald-500/10',
+  default: 'text-obsidian-on-surface-variant hover:text-obsidian-on-surface hover:bg-obsidian-primary/10 transition-all duration-200 shadow-sm hover:shadow-md',
+  ghost:   'text-obsidian-on-surface-variant hover:text-obsidian-on-surface hover:bg-obsidian-primary/8 transition-all duration-200',
+  primary: 'text-obsidian-primary hover:bg-obsidian-primary/15 hover:shadow-[0_0_15px_rgba(170,85,255,0.25)] transition-all duration-200',
+  danger:  'text-red-500 hover:text-red-400 hover:bg-red-500/12 hover:shadow-[0_0_12px_rgba(239,68,68,0.2)] transition-all duration-200',
+  success: 'text-emerald-500 hover:text-emerald-400 hover:bg-emerald-500/12 hover:shadow-[0_0_12px_rgba(16,185,129,0.2)] transition-all duration-200',
 };
 
 const IconButton = ({
@@ -58,13 +58,13 @@ const IconButton = ({
       disabled={disabled}
       aria-label={title}
       className={`
-        inline-flex items-center justify-center shrink-0
-        transition-all duration-150
-        hover:-translate-y-px active:scale-90
+        inline-flex items-center justify-center shrink-0 rounded-lg
+        transition-all duration-200 cubic-bezier(0.22, 1, 0.36, 1)
+        hover:-translate-y-0.5 active:scale-95
         disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0
         ${sizeClass}
         ${variantClass}
-        ${active ? 'ring-2 ring-current ring-offset-1 ring-offset-black' : ''}
+        ${active ? 'ring-2 ring-obsidian-primary ring-offset-2 ring-offset-obsidian-bg shadow-[0_0_15px_rgba(170,85,255,0.4)]' : ''}
         ${className}
       `}
     >

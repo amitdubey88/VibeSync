@@ -20,31 +20,31 @@ const ConfirmDialog = ({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/80 backdrop-blur-3xl animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-gradient-to-br from-black/90 to-obsidian-bg/80 backdrop-blur-3xl animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onCancel()}
     >
-      {/* Uses shadow-modal token defined in tailwind.config.js */}
-      <div className="bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 p-6 w-full max-w-sm shadow-[0_10px_40px_rgba(0,0,0,0.8)] animate-slide-up">
+      {/* Premium glass panel modal */}
+      <div className="glass-panel p-6 w-full max-w-sm shadow-[0_20px_60px_rgba(170,85,255,0.15)] animate-slide-up rounded-2xl border border-obsidian-primary/25">
         <div className="flex items-start gap-4 mb-5">
-          <div className={`p-2.5  shrink-0 ${danger ? 'bg-red-500/15' : 'bg-amber-500/15'}`}>
-            <AlertTriangle className={`w-5 h-5 ${danger ? 'text-red-400' : 'text-amber-500'}`} />
+          <div className={`p-3 shrink-0 rounded-lg ${danger ? 'bg-gradient-to-br from-red-500/20 to-red-500/10' : 'bg-gradient-to-br from-amber-500/20 to-amber-500/10'}`}>
+            <AlertTriangle className={`w-5 h-5 ${danger ? 'text-red-400' : 'text-amber-400'}`} />
           </div>
-          <div>
-            <h3 className="text-base font-bold text-zinc-100 font-headline tracking-wide mb-1">{title}</h3>
-            <p className="text-sm text-zinc-400 leading-relaxed font-headline">{message}</p>
+          <div className="flex-1">
+            <h3 className="text-base font-bold text-obsidian-on-surface font-headline tracking-wide mb-1">{title}</h3>
+            <p className="text-sm text-obsidian-on-surface-variant leading-relaxed">{message}</p>
           </div>
         </div>
 
         <div className="flex gap-3">
-          <button onClick={onCancel} className="flex-1 bg-white/5 hover:bg-white/10 text-zinc-300  transition-colors font-headline tracking-wide">
+          <button onClick={onCancel} className="btn-secondary flex-1 text-sm">
             Cancel
           </button>
           <button
             onClick={() => { onConfirm(); onCancel(); }}
-            className={`flex-1 font-semibold  py-2.5 text-sm transition-all active:scale-[0.98]
+            className={`flex-1 font-semibold py-2.5 text-sm transition-all active:scale-[0.98] rounded-xl
               ${danger
-                ? 'bg-rose-600 hover:bg-rose-500 text-white shadow-glow-red/30'
-                : 'bg-amber-500 hover:bg-amber-400 text-black shadow-[0_0_15px_rgba(245,158,11,0.3)] font-bold tracking-wide font-headline'
+                ? 'btn-danger'
+                : 'bg-gradient-to-br from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white shadow-[0_0_20px_rgba(251,146,60,0.3)] font-bold tracking-wide font-headline hover:-translate-y-1'
               }`}
           >
             {confirmLabel}

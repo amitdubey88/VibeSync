@@ -73,9 +73,9 @@ const ParticipantsList = () => {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/5 bg-black/40 backdrop-blur-sm flex items-center justify-between shrink-0">
-        <h3 className="text-sm font-bold text-white font-headline tracking-wide">Participants</h3>
-        <span className="badge bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">{onlineCount} online</span>
+      <div className="px-4 py-3 border-b border-obsidian-primary/15 bg-gradient-to-r from-obsidian-surface/50 to-obsidian-surface/30 backdrop-blur-md flex items-center justify-between shrink-0">
+        <h3 className="text-sm font-bold text-obsidian-on-surface font-headline tracking-wider">Participants</h3>
+        <span className="badge bg-gradient-to-r from-emerald-500/15 to-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/30 shadow-[0_0_12px_rgba(16,185,129,0.1)]">{onlineCount} online</span>
       </div>
 
       {/* List */}
@@ -103,12 +103,12 @@ const ParticipantsList = () => {
               {/* Name + badges */}
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5 flex-wrap">
-                  <span className={`text-sm tracking-widest uppercase font-headline truncate ${isMe ? 'text-obsidian-primary font-bold' : 'text-zinc-200 font-bold'}`}>
+                  <span className={`text-sm tracking-wide font-headline truncate ${isMe ? 'text-obsidian-primary font-bold' : 'text-obsidian-on-surface font-semibold'}`}>
                     {p.username}{isMe ? ' (you)' : ''}
                   </span>
-                  {isRoomHost && <CrownIcon size={14} className="text-amber-400 shrink-0" />}
-                  {coHosts.includes(p.userId) && !isRoomHost && <StarIcon size={14} className="text-fuchsia-400 shrink-0" />}
-                  {p.isGuest && <span className="badge bg-white/10 text-zinc-400 border border-white/10 text-[9px] px-1.5 py-0">Guest</span>}
+                  {isRoomHost && <CrownIcon size={14} className="text-amber-500 drop-shadow-[0_0_4px_rgba(217,119,6,0.5)] shrink-0" />}
+                  {coHosts.includes(p.userId) && !isRoomHost && <StarIcon size={14} className="text-obsidian-primary drop-shadow-[0_0_4px_rgba(170,85,255,0.4)] shrink-0" />}
+                  {p.isGuest && <span className="badge bg-obsidian-tertiary/15 text-obsidian-tertiary border border-obsidian-tertiary/30 text-[9px] px-1.5 py-0.5 rounded-full">Guest</span>}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {p.status === 'away' ? (

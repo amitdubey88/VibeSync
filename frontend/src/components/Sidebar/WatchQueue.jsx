@@ -40,10 +40,10 @@ export default function WatchQueue() {
   };
 
   return (
-    <div className="flex flex-col h-full bg-black/40 backdrop-blur-xl border-l border-white/5 p-4">
+    <div className="flex flex-col h-full bg-gradient-to-b from-obsidian-surface/40 to-obsidian-bg/30 backdrop-blur-xl border-l border-obsidian-primary/15 p-4">
       <div className="mb-4">
-        <h3 className="text-white font-semibold text-lg">Watch Queue</h3>
-        <p className="text-zinc-500 text-[11px] uppercase tracking-wide font-headline mt-1">
+        <h3 className="text-obsidian-on-surface font-semibold text-lg">Watch Queue</h3>
+        <p className="text-obsidian-on-surface-variant text-[11px] uppercase tracking-wider font-headline mt-1">
           {isPrivileged 
             ? "Approve items to play them immediately." 
             : "Suggest videos to watch next."}
@@ -56,12 +56,12 @@ export default function WatchQueue() {
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="Paste video URL..."
-          className="flex-1 bg-black/50 border border-white/10 px-4 py-2.5 text-sm text-white focus:outline-none focus:border-violet-500 transition-colors"
+          className="flex-1 bg-obsidian-surface/50 border border-obsidian-primary/20 px-4 py-2.5 text-sm text-obsidian-on-surface placeholder:text-obsidian-on-surface-variant focus:outline-none focus:border-obsidian-primary focus:ring-1 focus:ring-obsidian-primary/30 transition-all rounded-lg"
         />
         <button
           type="submit"
           disabled={!url.trim()}
-          className="bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white px-6 py-2.5 text-sm font-bold transition-all shrink-0 hover:shadow-[0_0_15px_rgba(139,92,246,0.3)] font-headline uppercase tracking-widest"
+          className="btn-primary disabled:opacity-50 px-6 py-2.5 text-sm shrink-0 font-headline uppercase tracking-widest"
         >
           {isPrivileged ? 'Add' : 'Suggest'}
         </button>
@@ -91,8 +91,8 @@ export default function WatchQueue() {
 
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
         {queue.length === 0 ? (
-          <div className="text-center text-zinc-500 text-sm mt-8 border border-dashed border-white/10 font-headline tracking-wide p-6">
-            <svg className="w-8 h-8 mx-auto text-gray-600 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center text-obsidian-on-surface-variant text-sm mt-8 border border-dashed border-obsidian-primary/20 font-headline tracking-wide p-6 rounded-lg bg-obsidian-primary/5">
+            <svg className="w-8 h-8 mx-auto text-obsidian-primary/40 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
             </svg>
             Queue is empty.
@@ -110,23 +110,23 @@ export default function WatchQueue() {
                   key={item.id}
                   value={item}
                   dragListener={isPrivileged}
-                  className={`bg-white/5 backdrop-blur-md border ${item.status === 'approved' ? 'border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]' : 'border-white/5'} p-3 flex flex-col relative overflow-hidden`}
+                  className={`glass backdrop-blur-md border transition-all duration-200 ${item.status === 'approved' ? 'border-emerald-500/40 shadow-[0_0_15px_rgba(16,185,129,0.2)] bg-emerald-500/5' : 'border-obsidian-primary/20'} p-3 flex flex-col relative overflow-hidden rounded-lg hover:border-obsidian-primary/30`}
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex-1 min-w-0 pr-2">
-                      <p className="text-sm text-zinc-200 truncate font-headline tracking-wide" title={item.url}>
+                      <p className="text-sm text-obsidian-on-surface truncate font-headline tracking-wide" title={item.url}>
                         {item.title}
                       </p>
-                      <p className="text-[9px] text-zinc-500 mt-1 uppercase tracking-widest font-mono">
+                      <p className="text-[9px] text-obsidian-on-surface-variant mt-1 uppercase tracking-wider font-mono">
                         From: {item.suggestedBy} • {item.type}
                       </p>
                     </div>
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1.5">
                       {isPrivileged && item.status !== 'approved' && (
                         <button
                           onClick={() => approveItem(item.id)}
-                          className="p-1.5 bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500 transition-colors duration-200 hover:text-white transition-colors"
+                          className="p-2 bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 text-emerald-400 hover:from-emerald-500/30 hover:to-emerald-500/15 hover:text-emerald-300 transition-all duration-200 rounded-lg hover:shadow-[0_0_12px_rgba(16,185,129,0.25)]"
                           title="Play Immediately"
                         >
                           <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
@@ -138,7 +138,7 @@ export default function WatchQueue() {
                       {(isPrivileged || item.suggestedById === user?.id) && (
                         <button
                           onClick={() => removeItem(item.id)}
-                          className="p-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500 transition-colors duration-200 hover:text-white transition-colors"
+                          className="p-2 bg-gradient-to-br from-red-500/15 to-red-500/8 text-red-400 hover:from-red-500/25 hover:to-red-500/12 hover:text-red-300 transition-all duration-200 rounded-lg hover:shadow-[0_0_12px_rgba(239,68,68,0.2)]"
                           title="Remove"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

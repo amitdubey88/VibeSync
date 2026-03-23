@@ -4,8 +4,6 @@ import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
 import { joinRoom } from '../services/api';
 import VideoPlayer from '../components/VideoPlayer/VideoPlayer';
-import SyncStatusBadge from '../components/VideoPlayer/SyncStatusBadge';
-import QuickReactionBar from '../components/VideoPlayer/QuickReactionBar';
 import ChatPanel from '../components/Chat/ChatPanel';
 import ParticipantsList from '../components/Participants/ParticipantsList';
 import VoiceControls from '../components/Voice/VoiceControls';
@@ -14,11 +12,11 @@ import EnergyMeter from '../components/UI/EnergyMeter';
 import ActivityFeed from '../components/Sidebar/ActivityFeed';
 import Tooltip from '../components/UI/Tooltip';
 import { 
-  RoomIcon, CopyIcon, ParticipantsIcon, ChatIcon, BackIcon, 
-  ExitIcon, DeleteIcon, ThemeIcon, QueueIcon, InviteIcon, 
-  MoreIcon, ShieldIcon, UserIcon, SettingsIcon, RefreshIcon,
-  ChevronDownIcon, WifiIcon, CrownIcon, ActivityIcon, InfoIcon,
-  CheckIcon, XIcon, PlusIcon, MinusIcon, LockIcon, ClockIcon, LinkIcon
+  CopyIcon, ParticipantsIcon, ChatIcon, BackIcon, 
+  ExitIcon, DeleteIcon, ThemeIcon, QueueIcon, 
+  MoreIcon, ShieldIcon, UserIcon, 
+  WifiIcon, CrownIcon, ActivityIcon, 
+  CheckIcon, XIcon, LockIcon, ClockIcon, LinkIcon
 } from '../components/UI/SharpIcons';
 // Material Symbols is still used for some simple utility icons
 import { Loader2 } from 'lucide-react';
@@ -474,22 +472,26 @@ const RoomPage = () => {
   // Pending approval waiting screen
   if (!joining && joinStatus === 'pending') {
     return (
-      <div className="min-h-screen gradient-bg flex items-center justify-center p-6">
-        <div className="card text-center max-w-sm">
-          <div className="w-20 h-20 bg-accent-purple/10 flex items-center justify-center mx-auto mb-4 animate-pulse">
-            <ClockIcon className="w-9 h-9 text-accent-purple" />
+      <div className="min-h-screen bg-gradient-to-br from-obsidian-bg via-obsidian-surface to-obsidian-bg flex items-center justify-center p-6 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-obsidian-primary/12 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+          <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-obsidian-tertiary/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }}></div>
+        </div>
+        <div className="glass-panel text-center max-w-sm p-8 rounded-2xl relative z-10">
+          <div className="w-20 h-20 bg-gradient-to-br from-obsidian-primary/20 to-obsidian-primary/10 flex items-center justify-center mx-auto mb-6 rounded-2xl border border-obsidian-primary/30 animate-pulse-purple-ring">
+            <ClockIcon className="w-9 h-9 text-obsidian-primary" />
           </div>
-          <h2 className="text-xl font-bold text-white mb-2">Waiting for Approval</h2>
-          <p className="text-obsidian-on-surface-variant text-sm mb-4">
-            The host needs to approve your request to join <strong>{code}</strong>.
+          <h2 className="text-2xl font-bold text-obsidian-on-surface mb-3">Waiting for Approval</h2>
+          <p className="text-obsidian-on-surface-variant text-sm mb-8">
+            The host needs to approve your request to join <strong className="text-obsidian-primary">{code}</strong>.
           </p>
-          <div className="flex gap-1.5 justify-center mb-6">
+          <div className="flex gap-2 justify-center mb-8">
             {[0, 1, 2].map(i => (
-              <span key={i} className="w-2.5 h-2.5 bg-accent-purple/60 animate-bounce"
+              <span key={i} className="w-3 h-3 bg-gradient-to-br from-obsidian-primary to-obsidian-tertiary rounded-full animate-bounce"
                 style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
-          <button className="btn-ghost text-sm" onClick={() => { leaveRoom(); navigate('/'); }}>Cancel</button>
+          <button className="btn-secondary text-sm w-full" onClick={() => { leaveRoom(); navigate('/'); }}>Cancel Request</button>
         </div>
       </div>
     );
@@ -512,32 +514,38 @@ const RoomPage = () => {
 
   if (isGuestPromptVisible) {
     return (
-      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-in fade-in duration-500 min-h-screen overflow-y-auto">
-        <div className="absolute top-12 flex flex-col items-center gap-3">
-          <div className="w-12 h-12 bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim flex items-center justify-center shadow-lg shadow-obsidian-primary/20 overflow-hidden relative p-2">
+      <div className="fixed inset-0 z-[200] flex flex-col items-center justify-center p-4 bg-gradient-to-br from-obsidian-bg via-obsidian-surface to-obsidian-bg backdrop-blur-2xl animate-in fade-in duration-500 min-h-screen overflow-y-auto">
+        {/* Animated background orbs */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-20 left-10 w-96 h-96 bg-obsidian-primary/15 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+          <div className="absolute bottom-32 right-10 w-80 h-80 bg-obsidian-tertiary/12 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }}></div>
+        </div>
+
+        <div className="absolute top-12 flex flex-col items-center gap-3 relative z-10">
+          <div className="w-14 h-14 bg-gradient-to-br from-obsidian-primary to-obsidian-primary-dim flex items-center justify-center rounded-2xl shadow-[0_0_40px_rgba(170,85,255,0.4)] overflow-hidden relative p-2 border border-obsidian-primary/40">
             <img src="/favicon-cinematic.png" alt="VibeSync Logo" className="w-full h-full object-contain" />
           </div>
-          <h1 className="text-xl font-black text-white tracking-tight">VibeSync</h1>
+          <h1 className="text-2xl font-black text-transparent bg-clip-text bg-gradient-to-r from-obsidian-primary to-obsidian-tertiary tracking-tight">VibeSync</h1>
         </div>
         
-        <div className="w-full max-w-md bg-[#0a0a0b]/80 border border-white/5 p-8  backdrop-blur-3xl shadow-[0_30px_60px_rgba(0,0,0,0.9)] relative overflow-hidden my-auto">
+        <div className="glass-panel w-full max-w-md p-8 rounded-2xl relative overflow-hidden my-auto border border-obsidian-primary/25">
           {/* Background Glow */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-obsidian-primary/20 blur-[80px]" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-obsidian-primary/80/20 blur-[80px]" />
+          <div className="absolute -top-32 -left-32 w-64 h-64 bg-obsidian-primary/12 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute -bottom-32 -right-32 w-64 h-64 bg-obsidian-tertiary/10 rounded-full blur-[100px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }} />
 
           <div className="relative z-10 text-center">
-            <h2 className="text-2xl font-bold text-white mb-2">Welcome to the Party!</h2>
-            <p className="text-white/50 text-sm mb-8">You've been invited to join <span className="text-white font-semibold">{code}</span>. What should we call you?</p>
+            <h2 className="text-3xl font-bold text-obsidian-on-surface mb-2">Welcome!</h2>
+            <p className="text-obsidian-on-surface-variant text-sm mb-8">You've been invited to join <span className="text-obsidian-primary font-semibold">{code}</span>. What should we call you?</p>
 
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="relative group">
                 <input
                   type="text"
-                  placeholder="YOUR ALIAS (REQUIRED)"
+                  placeholder="Your Display Name"
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && guestName.trim() && !isLoggingIn && handleGuestJoin()}
-                  className="w-full h-14 bg-transparent border-0 border-b border-obsidian-outline-variant py-4 px-0 text-white font-headline placeholder:text-neutral-600 focus:ring-0 focus:border-obsidian-primary transition-all uppercase tracking-widest text-base"
+                  className="w-full h-12 bg-transparent border-0 border-b-2 border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline-variant focus:ring-0 focus:border-obsidian-primary transition-all tracking-normal text-sm font-medium"
                   autoFocus
                 />
               </div>
@@ -545,19 +553,19 @@ const RoomPage = () => {
               <button
                 onClick={handleGuestJoin}
                 disabled={!guestName.trim() || isLoggingIn}
-                className="w-full py-5 bg-obsidian-surface-high border border-obsidian-outline-variant text-white font-headline font-bold tracking-widest uppercase hover:border-obsidian-primary/50 hover:bg-obsidian-surface-highest hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="btn-primary w-full gap-2 flex items-center justify-center"
               >
                 {isLoggingIn ? (
                   <Loader2 className="w-5 h-5 animate-spin" />
                 ) : (
-                  <>Join Party <ActivityIcon className="w-4 h-4 ml-1" /></>
+                  <>Join Party <ActivityIcon className="w-4 h-4" /></>
                 )}
               </button>
             </div>
           </div>
         </div>
         
-        <p className="fixed bottom-8 text-white/20 text-[10px] uppercase tracking-[0.2em] font-bold">Secure • Real-time • Synchronized</p>
+        <p className="fixed bottom-8 text-obsidian-on-surface-variant text-[10px] uppercase tracking-wider font-semibold">Secure • Real-time • Synchronized</p>
       </div>
     );
   }
@@ -568,21 +576,25 @@ const RoomPage = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-obsidian-background flex items-center justify-center p-6">
-        <div className="glass-panel text-center max-w-sm p-8 border border-white/5">
-          <div className="w-16 h-16 bg-red-500/10 border border-red-500/20 flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-outlined text-red-500 text-3xl font-black">X</span>
+      <div className="min-h-screen bg-gradient-to-br from-obsidian-bg via-obsidian-surface to-obsidian-bg flex items-center justify-center p-6 overflow-hidden">
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/3 -left-1/4 w-96 h-96 bg-red-600/8 rounded-full blur-[120px]"></div>
+          <div className="absolute bottom-1/3 -right-1/4 w-96 h-96 bg-obsidian-primary/8 rounded-full blur-[120px]"></div>
+        </div>
+        <div className="glass-panel text-center max-w-sm p-8 rounded-2xl relative z-10">
+          <div className="w-16 h-16 bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-6 rounded-2xl">
+            <span className="material-symbols-outlined text-red-500 text-3xl font-black">error</span>
           </div>
-          <h2 className="text-xl font-headline font-bold text-white mb-2 tracking-widest uppercase">Can't Join Room</h2>
-          <p className="text-obsidian-on-surface-variant text-sm mb-8 tracking-wide">{error}</p>
+          <h2 className="text-2xl font-bold text-obsidian-on-surface mb-2">Can't Join Room</h2>
+          <p className="text-obsidian-on-surface-variant text-sm mb-8">{error}</p>
           <button 
-            className="w-full py-4 bg-white/5 border border-white/10 text-white font-headline font-bold tracking-widest uppercase hover:bg-white/10 transition-all flex items-center justify-center gap-3" 
+            className="btn-secondary w-full flex items-center justify-center gap-2" 
             onClick={() => {
               sessionStorage.removeItem("vibesync_session");
               navigate('/', { replace: true });
             }}
           >
-            <BackIcon size={16} /> Back to Home
+            <BackIcon size={16} /> Back Home
           </button>
         </div>
       </div>
@@ -595,7 +607,7 @@ const RoomPage = () => {
       <OfflineShell />
 
       {/* ── Top bar ── */}
-      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full border-b border-white/10 bg-obsidian-surface/80 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] border-b border-white/5 shrink-0 gap-2 relative z-[100]">
+      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full bg-gradient-to-r from-obsidian-surface via-obsidian-surface to-obsidian-surface/80 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.5)] border-b border-obsidian-primary/15 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => navigate("/")}
@@ -1083,7 +1095,7 @@ const RoomPage = () => {
           <div className="bg-[#0a0a0b] border border-white/5 p-8 shadow-[0_30px_60px_rgba(0,0,0,0.9)] w-full max-w-sm">
             <div className="flex items-center gap-3 mb-6">
               <div className="w-10 h-10 bg-obsidian-primary/20 border border-obsidian-primary/30 flex items-center justify-center shrink-0">
-                <Crown className="w-5 h-5 text-obsidian-primary" />
+                <CrownIcon className="w-5 h-5 text-obsidian-primary" />
               </div>
               <div>
                 <h2 className="text-sm font-headline font-bold text-white tracking-widest uppercase">

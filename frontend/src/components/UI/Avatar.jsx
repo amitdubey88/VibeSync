@@ -44,11 +44,11 @@ const Avatar = ({
     <div className={`relative shrink-0 ${className}`}>
       <div
         className={`
-          avatar font-bold text-white select-none
+          avatar font-bold text-white select-none rounded-full transition-all duration-300
           ${SIZE_MAP[size] ?? SIZE_MAP.md}
           ${speaking
-            ? 'ring-2 ring-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.5)] trigger-pulse-ring'
-            : 'avatar-ring'}
+            ? 'ring-2 ring-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.6)] trigger-pulse-ring'
+            : 'avatar-ring shadow-[0_4px_12px_rgba(0,0,0,0.3)]'}
         `}
         style={avatarBg ? { backgroundColor: avatarBg } : undefined}
         aria-label={username}
@@ -58,7 +58,7 @@ const Avatar = ({
 
       {showDot && (
         <span
-          className={`status-dot absolute -bottom-0.5 -right-0.5 border-2 border-[#0a0a0b] ${dotColor}`}
+          className={`status-dot absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-obsidian-bg ${dotColor} shadow-[0_0_8px_currentColor]`}
           aria-hidden="true"
         />
       )}

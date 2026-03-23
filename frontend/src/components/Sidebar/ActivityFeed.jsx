@@ -9,34 +9,36 @@ const ActivityFeed = () => {
 
   if (systemMessages.length === 0) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4 opacity-50">
-        <Zap className="w-12 h-12 text-fuchsia-500" />
-        <p className="text-sm font-medium text-zinc-400">No activity yet. Invite friends to start the party!</p>
+      <div className="flex-1 flex flex-col items-center justify-center p-8 text-center gap-4 opacity-60">
+        <div className="w-16 h-16 bg-gradient-to-br from-obsidian-primary/15 to-obsidian-primary/8 rounded-2xl flex items-center justify-center">
+          <Zap className="w-8 h-8 text-obsidian-primary" />
+        </div>
+        <p className="text-sm font-medium text-obsidian-on-surface-variant">No activity yet. Invite friends to start the party!</p>
       </div>
     );
   }
 
   const getIcon = (content) => {
-    if (content.includes('joined')) return <UserPlus className="w-3.5 h-3.5 text-emerald-400" />;
-    if (content.includes('left')) return <Zap className="w-3.5 h-3.5 text-zinc-500" />;
+    if (content.includes('joined')) return <UserPlus className="w-4 h-4 text-emerald-400" />;
+    if (content.includes('left')) return <Zap className="w-4 h-4 text-obsidian-on-surface-variant" />;
     if (content.includes('paused') || content.includes('resumed') || content.includes('jumped')) 
-      return <PlayCircle className="w-3.5 h-3.5 text-violet-500" />;
-    if (content.includes('host')) return <Anchor className="w-3.5 h-3.5 text-amber-400" />;
-    return <Info className="w-3.5 h-3.5 text-fuchsia-500" />;
+      return <PlayCircle className="w-4 h-4 text-obsidian-tertiary" />;
+    if (content.includes('host')) return <Anchor className="w-4 h-4 text-amber-400" />;
+    return <Info className="w-4 h-4 text-obsidian-primary" />;
   };
 
   return (
-    <div className="flex-1 overflow-y-auto scroll-area p-4 space-y-4 min-h-0">
+    <div className="flex-1 overflow-y-auto scroll-area p-4 space-y-3 min-h-0">
       {systemMessages.map((m) => (
-        <div key={m.id} className="flex gap-3 animate-fade-in">
-          <div className="mt-0.5 shrink-0">
+        <div key={m.id} className="flex gap-3 animate-fade-in p-2.5 rounded-lg hover:bg-obsidian-primary/8 transition-colors duration-200">
+          <div className="mt-0.5 shrink-0 w-6 h-6 flex items-center justify-center bg-obsidian-primary/15 rounded-md">
             {getIcon(m.content)}
           </div>
-          <div className="flex-1 space-y-0.5">
-            <p className="text-xs font-medium text-zinc-200 leading-tight">
+          <div className="flex-1 space-y-0.5 min-w-0">
+            <p className="text-xs font-medium text-obsidian-on-surface leading-tight">
               {m.content}
             </p>
-            <span className="text-[9px] text-zinc-500 font-mono uppercase tracking-wider">
+            <span className="text-[9px] text-obsidian-on-surface-variant font-mono uppercase tracking-wider">
               {new Date(m.createdAt || m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>

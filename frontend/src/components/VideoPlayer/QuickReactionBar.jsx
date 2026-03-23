@@ -38,12 +38,12 @@ const QuickReactionBar = ({ visible, className, isOverlay }) => {
 
   return (
     <div className={`transition-all duration-300 animate-slide-up ${positionClasses} ${className || ''}`}>
-      <div className="flex flex-wrap items-center justify-center gap-1 md:gap-2 p-1.5 bg-[#0a0a0b]/90 backdrop-blur-3xl border border-white/5 shadow-[0_10px_40px_rgba(0,0,0,0.8)] px-2 py-1.5">
+      <div className="flex flex-wrap items-center justify-center gap-1.5 md:gap-2.5 p-2 bg-gradient-to-r from-obsidian-surface/95 via-obsidian-surface/90 to-obsidian-surface/85 backdrop-blur-3xl border border-obsidian-primary/20 shadow-[0_15px_50px_rgba(170,85,255,0.15),0_0_30px_rgba(170,85,255,0.1)] rounded-2xl px-3 py-2">
         {emojis.map((emoji) => (
           <button
             key={emoji}
             onClick={() => sendReaction(emoji)}
-            className={`${isFullscreen ? 'w-8 h-8 text-lg' : 'w-10 h-10 md:w-12 md:h-12 text-xl md:text-2xl'} flex items-center justify-center hover:bg-white/5 transition-all duration-300 hover:-translate-y-1 hover:scale-110 active:scale-95`}
+            className={`${isFullscreen ? 'w-9 h-9 text-lg' : 'w-11 h-11 md:w-13 md:h-13 text-2xl md:text-3xl'} flex items-center justify-center hover:bg-obsidian-primary/15 transition-all duration-200 cubic-bezier(0.22,1,0.36,1) hover:-translate-y-1 hover:scale-125 active:scale-90 rounded-lg hover:shadow-[0_0_15px_rgba(170,85,255,0.3)]`}
             title={`React with ${emoji}`}
           >
             {emoji}

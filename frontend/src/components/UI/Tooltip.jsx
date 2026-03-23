@@ -50,8 +50,8 @@ const Tooltip = ({ text, children, position = 'top', delay = 400, className = ''
         <div
           role="tooltip"
           className={`absolute z-[9999] pointer-events-none whitespace-nowrap
-            px-2.5 py-1.5  text-[11px] font-semibold text-zinc-100
-            bg-[#0a0a0b]/95 backdrop-blur-xl border border-white/10 shadow-[0_4px_20px_rgba(0,0,0,0.6)] font-headline tracking-wide
+            px-3 py-2 text-[11px] font-semibold text-obsidian-on-surface
+            bg-gradient-to-r from-obsidian-surface/95 to-obsidian-surface/90 backdrop-blur-xl border border-obsidian-primary/25 shadow-[0_8px_32px_rgba(170,85,255,0.2)] font-headline tracking-wide rounded-lg
             animate-fade-in
             ${positionClasses[position]}`}
         >
@@ -59,7 +59,7 @@ const Tooltip = ({ text, children, position = 'top', delay = 400, className = ''
           {/* Arrow */}
           <span
             className={`absolute border-4 ${arrowClasses[position]}`}
-            style={{ borderStyle: 'solid' }}
+            style={{ borderTopColor: 'rgb(20 30 50 / 0.95)' }}
           />
         </div>
       )}
