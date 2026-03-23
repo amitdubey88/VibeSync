@@ -233,21 +233,12 @@ const RoomPage = () => {
     socket.on('room:join-error', onJoinError);
 
     const init = async () => {
-      // Safety timeout: if joining takes more than 10s, fail gracefully
-      const timeoutId = setTimeout(() => {
-        if (joining) {
-          setError('Room connection timed out. Please try again or check your connection.');
-          setJoining(false);
-        }
-      }, 10000);
-
       try {
         // Sanity check: if we think name is confirmed but auth state is missing, reset
         if (!isAuthenticated) {
           console.warn('[RoomPage] Name confirmed but user not authenticated. Resetting...');
           setIsNameConfirmed(false);
           setJoining(false);
-          clearTimeout(timeoutId);
           return;
         }
 
