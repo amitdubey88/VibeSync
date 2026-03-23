@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibesync-v3';
+const CACHE_NAME = 'vibesync-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -30,6 +30,9 @@ self.addEventListener('activate', (e) => {
 self.addEventListener('fetch', (e) => {
   // Only handle GET requests for our own origin
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
+  
+  // Skip socket.io requests
+  if (e.request.url.includes('/socket.io/')) return;
 
   // For navigating to pages (SPA), try network, fallback to cached index.html if offline
   if (e.request.mode === 'navigate') {

@@ -35,9 +35,11 @@ const LandingPage = () => {
   // ── Force fresh state on mount ──────────────────────────────────
   useEffect(() => {
     // Every visit to landing page must require name entry
-    if (isAuthenticated) logout();
+    // Check if it's a fresh visit (not after a login/action)
+    logout();
     setUsername("");
-  }, [logout, isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   // ── Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
