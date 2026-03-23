@@ -35,13 +35,13 @@ const LandingPage = () => {
   // ── Force fresh state on mount ──────────────────────────────────
   useEffect(() => {
     // Every visit to landing page must require name entry
-    // Check if it's a fresh visit (not after a login/action)
     logout();
     setUsername("");
+    sessionStorage.removeItem("vibesync_session");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
-  // ── Auto-rejoin last active room if user accidentally disconnected
+  // ── Handle Kick Notifications ──────────────────────────────────
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     if (query.get("kicked")) {
@@ -56,22 +56,8 @@ const LandingPage = () => {
       });
       // Clean up the URL
       navigate("/", { replace: true });
-      return;
     }
-
-    const saved = sessionStorage.getItem("vibesync_session");
-    // Don't auto-rejoin if they explicitly left or host ended it
-    if (saved && !location.state?.roomEnded) {
-      try {
-        const session = JSON.parse(saved);
-        if (session.roomCode) {
-          navigate(`/room/${session.roomCode}`, { replace: true });
-        }
-      } catch {
-        sessionStorage.removeItem("vibesync_session");
-      }
-    }
-  }, [navigate, location.state, location.search]);
+  }, [navigate, location.search]);
 
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {

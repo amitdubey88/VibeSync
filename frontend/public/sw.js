@@ -1,4 +1,4 @@
-const CACHE_NAME = 'vibesync-v4';
+const CACHE_NAME = 'vibesync-v5';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -27,6 +27,7 @@ self.addEventListener('activate', (e) => {
   );
 });
 
+/*
 self.addEventListener('fetch', (e) => {
   // Only handle GET requests for our own origin
   if (e.request.method !== 'GET' || !e.request.url.startsWith(self.location.origin)) return;
@@ -60,6 +61,7 @@ self.addEventListener('fetch', (e) => {
     })
   );
 });
+*/
 
 self.addEventListener('push', (e) => {
   const data = e.data ? e.data.json() : {};
