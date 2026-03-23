@@ -192,6 +192,26 @@ export const RoomProvider = ({ children }) => {
   const setVideoSource = useCallback(async (video, opts = {}) => {
     if (!socket || !currentRoomCode) return;
 
+    if (!video) {
+        // Clear video source for everyone
+        socket.emit('video:set-source', {
+          roomCode: currentRoomCode,
+          video: null,
+          currentTime: 0,
+          isPlaying: false,
+        });
+        setCurrentVideo(null);
+        setVideoState({ 
+          currentTime: 0, 
+          duration: 0,
+          isPlaying: false, 
+          lastUpdated: Date.now() 
+        });
+        // Reset specific live states
+        setIsLiveStreamingInitialized(false);
+        return;
+    }
+
     // Derive key inline if not yet available (fast-submit race condition)
     const key = roomKey || (await deriveKey(currentRoomCode));
     

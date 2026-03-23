@@ -4,8 +4,9 @@
   "description": "Real-time, zero-latency co-watching platform.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0a0a0f",
-  "theme_color": "#e50914",
+  "background_color": "#050a14",
+  "theme_color": "#aa55ff",
+  "orientation": "any",
   "icons": [
     {
       "src": "/favicon.svg",
@@ -17,5 +18,13 @@
       "sizes": "512x512",
       "type": "image/svg+xml"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "New Room",
+      "url": "/",
+      "icons": [{ "src": "/favicon.svg", "sizes": "192x192" }]
+    }
+  ],
+  "categories": ["entertainment", "social"]
 }

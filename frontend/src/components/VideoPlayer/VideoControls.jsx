@@ -15,6 +15,7 @@ import {
   MicOffIcon,
   PinIcon,
   CrownIcon,
+  DeleteIcon,
 } from "../UI/SharpIcons";
 
 const VideoControls = ({
@@ -326,15 +327,28 @@ const VideoControls = ({
 
         <div className="flex-1" />
 
-        {/* Load video button (host only) */}
-        {(isHost || isCoHost) && onLoadClick && (
-          <button
-            onClick={onLoadClick}
-            className="text-zinc-400 hover:text-obsidian-primary text-obsidian-on-surface-variant transition-colors"
-            title="Change video"
-          >
-            <UploadIcon size={16} />
-          </button>
+        {/* Change video button (host only) */}
+        {(isHost || isCoHost) && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onLoadClick}
+              className="text-zinc-400 hover:text-obsidian-primary transition-colors"
+              title="Change video"
+            >
+              <UploadIcon size={16} />
+            </button>
+            <button
+              onClick={() => {
+                if (window.confirm('Are you sure you want to remove the current video?')) {
+                  setVideoSource(null);
+                }
+              }}
+              className="text-zinc-400 hover:text-red-500 transition-colors"
+              title="Remove current video"
+            >
+              <DeleteIcon size={16} />
+            </button>
+          </div>
         )}
 
         {/* Clip moment */}

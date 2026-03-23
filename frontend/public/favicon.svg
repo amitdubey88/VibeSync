@@ -1,28 +1,38 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Deep Obsidian Background -->
+  <rect width="512" height="512" rx="120" fill="#050a14"/>
+  
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#1a0a2e"/>
-      <stop offset="100%" stop-color="#0d0d1a"/>
-    </linearGradient>
-    <linearGradient id="vGrad" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#e50914"/>
-      <stop offset="100%" stop-color="#8b5cf6"/>
-    </linearGradient>
-    <filter id="glow">
-      <feGaussianBlur stdDeviation="1.5" result="blur"/>
-      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    <!-- Glow Filters -->
+    <filter id="purple-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="35" result="blur"/>
     </filter>
+    <filter id="blue-glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="15" result="blur"/>
+    </filter>
+    <filter id="glass-shine" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+    </filter>
+    
+    <!-- Gradients -->
+    <linearGradient id="neon-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#aa55ff" />
+      <stop offset="100%" stop-color="#4facfe" />
+    </linearGradient>
   </defs>
 
-  <!-- Background rounded square -->
-  <rect width="64" height="64" rx="14" fill="url(#bg)"/>
+  <!-- Large Background Purple Bloom -->
+  <path d="M140 120L256 400L372 120" stroke="#aa55ff" stroke-width="80" stroke-linecap="round" stroke-linejoin="round" filter="url(#purple-glow)" opacity="0.4"/>
+  
+  <!-- Neon Blue Core Glow -->
+  <path d="M140 120L256 400L372 120" stroke="#4facfe" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" filter="url(#blue-glow)" opacity="0.7"/>
 
-  <!-- Bold V shape -->
-  <path d="M12 16 L32 50 L52 16" stroke="url(#vGrad)" stroke-width="8"
-        stroke-linecap="round" stroke-linejoin="round" fill="none" filter="url(#glow)"/>
-
-  <!-- Small sync arc on bottom right -->
-  <path d="M44 46 A10 10 0 0 0 54 37" stroke="#8b5cf6" stroke-width="3"
-        stroke-linecap="round" fill="none" opacity="0.8"/>
-  <polygon points="54,33 54,41 59,37" fill="#8b5cf6" opacity="0.8"/>
+  <!-- Main Glassy V Path -->
+  <path d="M140 120L256 400L372 120" stroke="url(#neon-grad)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+  
+  <!-- Bright Inner Core (The "Light") -->
+  <path d="M140 120L256 400L372 120" stroke="white" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.8" />
+  
+  <!-- Subtle Glass Highlight -->
+  <path d="M150 130L256 385L362 130" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" opacity="0.3" filter="url(#glass-shine)" />
 </svg>
