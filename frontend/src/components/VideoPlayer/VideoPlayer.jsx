@@ -586,6 +586,34 @@ const VideoPlayer = () => {
     }
   }, [currentVideo?.url]);
 
+  // CLEANUP: Reset ALL local playback states when the video is removed (host clicked 'Delete')
+  useEffect(() => {
+    if (!currentVideo) {
+      console.log('[VideoPlayer] Video removed (clearing local states).');
+      
+      // Reset URLs so activeSrc becomes null
+      setBlobUrl(null);
+      blobUrlRef.current = null;
+      setDecryptedUrl(null);
+      decryptedUrlRef.current = null;
+      
+      // Reset UI & Playback states
+      setIsLoading(false);
+      setIsDirectStreaming(false);
+      setIsPendingNextStream(false);
+      setDuration(0);
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setBuffered(0);
+
+      // Stop any active WebRTC broadcast
+      setPremierStream(null);
+      setIsLiveStreamingInitialized(false);
+      isLiveStreamingInitializedRef.current = false;
+      isStreamingActiveRef.current = false;
+    }
+  }, [currentVideo, setPremierStream, setIsLiveStreamingInitialized]);
+
   // Reset local streaming state when host changes (driven by useHostTransferSync hook)
   useEffect(() => {
     if (hostChangedFlag && isHost) {
