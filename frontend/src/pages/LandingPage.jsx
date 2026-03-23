@@ -138,19 +138,19 @@ const LandingPage = () => {
   return (
     <div className="min-h-screen bg-obsidian-background text-obsidian-on-surface font-body selection:bg-obsidian-primary/30 selection:text-obsidian-primary flex flex-col pt-16">
       {/* TopAppBar */}
-      <header className="fixed top-0 left-0 w-full z-50 bg-obsidian-surface/40 backdrop-blur-2xl border-b border-obsidian-outline-variant/30 shadow-[0_10px_30px_rgba(0,0,0,0.3)]">
-        <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto">
+      <header className="fixed top-0 left-0 w-full z-50 bg-gradient-to-b from-obsidian-surface/60 to-obsidian-surface/40 backdrop-blur-2xl border-b border-obsidian-outline-variant/40 shadow-[0_15px_40px_rgba(0,0,0,0.4)]">
+        <div className="flex justify-between items-center px-6 py-4 max-w-7xl mx-auto w-full">
           <div className="flex items-center gap-3">
-            <img src="/favicon-192.png" alt="VibeSync" className="w-9 h-9 object-contain drop-shadow-[0_0_20px_rgba(168,85,247,0.5)]" />
-            <span className="text-2xl font-bold tracking-tight text-obsidian-primary font-headline uppercase">VibeSync</span>
+            <img src="/favicon-192.png" alt="VibeSync" className="w-9 h-9 object-contain drop-shadow-[0_0_25px_rgba(168,85,247,0.6)]" />
+            <span className="text-2xl font-bold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-obsidian-primary to-obsidian-tertiary font-headline uppercase">VibeSync</span>
           </div>
           <nav className="hidden md:flex items-center gap-8">
-            <span className="text-obsidian-primary font-semibold font-headline text-xs tracking-wide flex items-center gap-2">
+            <span className="text-obsidian-primary font-semibold font-headline text-xs tracking-wide flex items-center gap-2 px-3 py-1 rounded-full bg-obsidian-primary/10 border border-obsidian-primary/20">
               <span className="w-2 h-2 bg-obsidian-primary rounded-full animate-pulse"></span>
               LIVE SYNC
             </span>
-            <span className="text-obsidian-outline font-headline text-xs tracking-wide flex items-center gap-2">
-              <EncryptionIcon size={14} className="text-obsidian-outline" />
+            <span className="text-obsidian-outline-variant font-headline text-xs tracking-wide flex items-center gap-2 hover:text-obsidian-on-surface-variant transition-colors">
+              <EncryptionIcon size={14} className="text-obsidian-outline-variant" />
               SECURE
             </span>
           </nav>
@@ -160,7 +160,7 @@ const LandingPage = () => {
                 const accessHub = document.getElementById("access-hub");
                 if (accessHub) accessHub.scrollIntoView({ behavior: 'smooth' });
               }}
-              className="bg-obsidian-primary/15 border border-obsidian-primary/40 text-obsidian-primary px-5 py-2.5 text-xs font-bold font-headline tracking-tight uppercase transition-all active:scale-95 hover:bg-obsidian-primary/25 hover:border-obsidian-primary/60"
+              className="bg-gradient-to-r from-obsidian-primary/20 to-obsidian-tertiary/10 border border-obsidian-primary/50 text-obsidian-primary px-5 py-2.5 text-xs font-bold font-headline tracking-tight uppercase transition-all active:scale-95 hover:bg-obsidian-primary/30 hover:border-obsidian-primary/70 hover:shadow-[0_0_15px_rgba(168,85,247,0.3)]"
             >
               ACCESS ROOM
             </button>
@@ -190,24 +190,27 @@ const LandingPage = () => {
 
       <main className="relative flex-1 overflow-hidden">
         {/* Hero Section */}
-        <section className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-6 overflow-hidden">
-          {/* Background Decorative Elements */}
+        <section className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-center px-6 overflow-hidden pt-20">
+          {/* Animated Background Decorative Elements */}
           <div className="absolute inset-0 pointer-events-none overflow-hidden">
-            <div className="absolute top-20 left-1/3 -translate-x-1/2 w-96 h-96 bg-obsidian-primary/8 rounded-full blur-[130px]"></div>
-            <div className="absolute bottom-0 right-10 w-[500px] h-[500px] bg-obsidian-tertiary/6 rounded-full blur-[140px]"></div>
-            <div className="absolute top-1/2 -left-1/4 w-96 h-96 bg-obsidian-secondary/5 rounded-full blur-[120px]"></div>
+            <div className="absolute top-20 left-1/3 -translate-x-1/2 w-96 h-96 bg-obsidian-primary/12 rounded-full blur-[150px] animate-pulse" style={{ animationDuration: '4s' }}></div>
+            <div className="absolute bottom-0 right-10 w-[600px] h-[600px] bg-obsidian-tertiary/10 rounded-full blur-[160px] animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }}></div>
+            <div className="absolute top-1/2 -left-1/4 w-96 h-96 bg-obsidian-secondary/8 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '6s', animationDelay: '2s' }}></div>
           </div>
 
           <div className="max-w-4xl w-full text-center relative z-10">
+            <div className="inline-block mb-8 px-4 py-2 bg-obsidian-primary/10 border border-obsidian-primary/30 rounded-full">
+              <span className="text-obsidian-primary font-headline text-xs font-bold tracking-widest uppercase">Welcome to VibeSync</span>
+            </div>
             <h1 className="font-headline font-bold text-5xl md:text-7xl lg:text-8xl leading-tight tracking-tight uppercase mb-6">
               Watch Together
               <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-obsidian-primary via-obsidian-tertiary to-obsidian-secondary">
+              <span className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-obsidian-primary via-obsidian-tertiary to-obsidian-secondary animate-pulse" style={{ animationDuration: '3s' }}>
                 Synchronized
               </span>
             </h1>
             <p className="text-obsidian-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light tracking-normal leading-relaxed">
-              Experience seamless, synchronized streaming with friends. Real-time chat, reactions, and perfect playback alignment.
+              Experience seamless, synchronized streaming with friends. Real-time chat, reactions, and perfect playback alignment—all in one elegant platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button 
@@ -215,7 +218,7 @@ const LandingPage = () => {
                   setTab('create');
                   document.getElementById("access-hub")?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto px-8 py-3.5 bg-obsidian-primary text-white font-headline font-bold tracking-tight uppercase shadow-[0_8px_25px_rgba(168,85,247,0.3)] transition-all hover:shadow-[0_12px_35px_rgba(168,85,247,0.4)] hover:-translate-y-0.5 active:scale-95"
+                className="btn-primary w-full sm:w-auto"
               >
                 Create Room
               </button>
@@ -224,7 +227,7 @@ const LandingPage = () => {
                   setTab('join');
                   document.getElementById("access-hub")?.scrollIntoView({ behavior: 'smooth' });
                 }}
-                className="w-full sm:w-auto px-8 py-3.5 bg-obsidian-surface border border-obsidian-primary/40 text-obsidian-primary font-headline font-bold tracking-tight uppercase hover:border-obsidian-primary/70 hover:bg-obsidian-primary/10 transition-all active:scale-95"
+                className="btn-secondary w-full sm:w-auto"
               >
                 Join Room
               </button>
@@ -241,11 +244,12 @@ const LandingPage = () => {
         </section>
 
         {/* Join Room Form Section */}
-        <section id="access-hub" className="py-24 px-6 relative z-20">
-          <div className="max-w-xl mx-auto glass-panel p-8 md:p-12 relative overflow-hidden border border-obsidian-outline-variant/40">
-            <div className="absolute -top-20 -right-20 w-40 h-40 bg-obsidian-primary/10 rounded-full blur-[60px] pointer-events-none"></div>
+        <section id="access-hub" className="py-24 px-6 relative z-20 bg-gradient-to-b from-transparent via-obsidian-primary/5 to-obsidian-tertiary/5">
+          <div className="max-w-xl mx-auto glass-panel p-8 md:p-12 relative overflow-hidden border border-obsidian-outline-variant/40 rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.4)]">
+            <div className="absolute -top-20 -right-20 w-40 h-40 bg-obsidian-primary/15 rounded-full blur-[80px] pointer-events-none animate-pulse" style={{ animationDuration: '4s' }}></div>
+            <div className="absolute -bottom-20 -left-20 w-48 h-48 bg-obsidian-tertiary/10 rounded-full blur-[70px] pointer-events-none animate-pulse" style={{ animationDuration: '5s', animationDelay: '1s' }}></div>
             <div className="relative z-10">
-              <h2 className="font-headline text-3xl font-bold tracking-tight uppercase mb-2">Enter a Room</h2>
+              <h2 className="font-headline text-3xl font-bold tracking-tight uppercase mb-2 bg-gradient-to-r from-obsidian-on-surface to-obsidian-primary bg-clip-text text-transparent">Enter a Room</h2>
               <p className="text-obsidian-on-surface-variant text-sm mb-10 tracking-normal">Pick a username and join or create a watch party.</p>
 
               {/* Username Input (Always visible) */}
@@ -310,7 +314,7 @@ const LandingPage = () => {
                     <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-gradient-to-r from-obsidian-primary to-obsidian-tertiary transition-all duration-500 group-focus-within/input:w-full"></div>
                   </div>
                   
-                  <button type="submit" disabled={loading} className="w-full py-3.5 bg-obsidian-primary text-white font-headline font-bold tracking-tight uppercase shadow-[0_8px_20px_rgba(168,85,247,0.2)] hover:shadow-[0_12px_30px_rgba(168,85,247,0.3)] transition-all hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2">
+                  <button type="submit" disabled={loading} className="btn-primary w-full mt-4 flex items-center justify-center gap-2">
                     {loading ? 'Joining...' : 'Join Room'}
                     {!loading && <EastIcon size={16} className="text-white" />}
                   </button>
@@ -399,7 +403,7 @@ const LandingPage = () => {
                     )}
                   </div>
 
-                  <button type="submit" disabled={loading} className="w-full py-3.5 bg-obsidian-primary text-white font-headline font-bold tracking-tight uppercase shadow-[0_8px_20px_rgba(168,85,247,0.2)] hover:shadow-[0_12px_30px_rgba(168,85,247,0.3)] transition-all hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                  <button type="submit" disabled={loading} className="btn-primary w-full mt-4 flex items-center justify-center gap-2">
                     {loading ? 'Creating...' : 'Create Room'}
                     {!loading && <AddIcon size={16} className="text-white" />}
                   </button>
@@ -423,13 +427,13 @@ const LandingPage = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Feature 1 */}
-            <div className="glass-panel p-6 flex flex-col group hover:border-obsidian-primary/50 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-xl overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-obsidian-primary/5 rounded-full blur-[60px] group-hover:bg-obsidian-primary/10 transition-all duration-500"></div>
+            <div className="glass-panel p-6 flex flex-col group hover:border-obsidian-primary/70 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-2xl overflow-hidden hover:shadow-[0_25px_60px_rgba(168,85,247,0.15)]">
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-obsidian-primary/8 rounded-full blur-[80px] group-hover:bg-obsidian-primary/15 transition-all duration-500"></div>
               <div className="mb-8 flex justify-between items-start relative z-10">
-                <div className="w-12 h-12 bg-obsidian-primary/15 flex items-center justify-center rounded-lg border border-obsidian-primary/30 group-hover:border-obsidian-primary/50 transition-all">
+                <div className="w-12 h-12 bg-gradient-to-br from-obsidian-primary/20 to-obsidian-primary/10 flex items-center justify-center rounded-lg border border-obsidian-primary/40 group-hover:border-obsidian-primary/70 group-hover:shadow-[0_0_20px_rgba(168,85,247,0.2)] transition-all">
                    <SyncIcon size={24} className="text-obsidian-primary" />
                 </div>
-                <span className="text-obsidian-outline-variant/40 font-headline text-xs font-bold">01</span>
+                <span className="text-obsidian-outline-variant/50 font-headline text-xs font-bold">01</span>
               </div>
               <h3 className="font-headline text-lg font-bold tracking-tight uppercase mb-3 group-hover:text-obsidian-primary transition-colors relative z-10">Real-Time Sync</h3>
               <p className="text-obsidian-on-surface-variant leading-relaxed text-sm mb-6 font-light relative z-10">Perfect playback synchronization across all viewers with sub-10ms latency.</p>
@@ -439,13 +443,13 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 2 */}
-            <div className="glass-panel p-6 flex flex-col group hover:border-red-500/50 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-xl overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-red-500/5 rounded-full blur-[60px] group-hover:bg-red-500/10 transition-all duration-500"></div>
+            <div className="glass-panel p-6 flex flex-col group hover:border-red-500/70 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-2xl overflow-hidden hover:shadow-[0_25px_60px_rgba(239,68,68,0.12)]">
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-red-500/8 rounded-full blur-[80px] group-hover:bg-red-500/15 transition-all duration-500"></div>
               <div className="mb-8 flex justify-between items-start relative z-10">
-                <div className="w-12 h-12 bg-red-500/15 flex items-center justify-center rounded-lg border border-red-500/30 group-hover:border-red-500/50 transition-all">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-500/10 flex items-center justify-center rounded-lg border border-red-500/40 group-hover:border-red-500/70 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.2)] transition-all">
                    <EncryptionIcon size={24} className="text-red-500" />
                 </div>
-                <span className="text-obsidian-outline-variant/40 font-headline text-xs font-bold">02</span>
+                <span className="text-obsidian-outline-variant/50 font-headline text-xs font-bold">02</span>
               </div>
               <h3 className="font-headline text-lg font-bold tracking-tight uppercase mb-3 group-hover:text-red-500 transition-colors relative z-10">Total Privacy</h3>
               <p className="text-obsidian-on-surface-variant leading-relaxed text-sm mb-6 font-light relative z-10">End-to-end encryption. Your data stays private and secure.</p>
@@ -455,13 +459,13 @@ const LandingPage = () => {
             </div>
 
             {/* Feature 3 */}
-            <div className="glass-panel p-6 flex flex-col group hover:border-cyan-400/50 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-xl overflow-hidden">
-              <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-400/5 rounded-full blur-[60px] group-hover:bg-cyan-400/10 transition-all duration-500"></div>
+            <div className="glass-panel p-6 flex flex-col group hover:border-cyan-400/70 transition-all duration-300 relative border border-obsidian-outline-variant/40 rounded-2xl overflow-hidden hover:shadow-[0_25px_60px_rgba(34,211,238,0.12)]">
+              <div className="absolute -top-20 -right-20 w-40 h-40 bg-cyan-400/8 rounded-full blur-[80px] group-hover:bg-cyan-400/15 transition-all duration-500"></div>
               <div className="mb-8 flex justify-between items-start relative z-10">
-                <div className="w-12 h-12 bg-cyan-400/15 flex items-center justify-center rounded-lg border border-cyan-400/30 group-hover:border-cyan-400/50 transition-all">
+                <div className="w-12 h-12 bg-gradient-to-br from-cyan-400/20 to-cyan-400/10 flex items-center justify-center rounded-lg border border-cyan-400/40 group-hover:border-cyan-400/70 group-hover:shadow-[0_0_20px_rgba(34,211,238,0.2)] transition-all">
                    <ForumIcon size={24} className="text-cyan-400" />
                 </div>
-                <span className="text-obsidian-outline-variant/40 font-headline text-xs font-bold">03</span>
+                <span className="text-obsidian-outline-variant/50 font-headline text-xs font-bold">03</span>
               </div>
               <h3 className="font-headline text-lg font-bold tracking-tight uppercase mb-3 group-hover:text-cyan-400 transition-colors relative z-10">Live Chat</h3>
               <p className="text-obsidian-on-surface-variant leading-relaxed text-sm mb-6 font-light relative z-10">Real-time reactions and immersive messaging with your community.</p>
@@ -473,18 +477,19 @@ const LandingPage = () => {
         </section>
 
         {/* Demo Section */}
-        <section className="py-32 bg-obsidian-surface-low/30 overflow-hidden relative border-y border-obsidian-outline-variant/30">
-          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <section className="py-32 bg-gradient-to-br from-obsidian-surface-low/40 via-obsidian-primary/5 to-obsidian-tertiary/5 overflow-hidden relative border-y border-obsidian-outline-variant/30">
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-96 h-96 bg-obsidian-primary/8 rounded-full blur-[120px] pointer-events-none"></div>
+          <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center relative z-10">
             <div className="relative">
-              <div className="aspect-video bg-obsidian-surface border border-obsidian-outline-variant/40 shadow-2xl overflow-hidden group rounded-xl">
+              <div className="aspect-video bg-obsidian-surface border border-obsidian-outline-variant/40 shadow-[0_40px_80px_rgba(0,0,0,0.4)] overflow-hidden group rounded-2xl relative">
                 <img 
                   alt="VibeSync Interface" 
-                  className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-105 transition-all duration-1000" 
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-70 group-hover:scale-110 transition-all duration-1000" 
                   src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-obsidian-bg via-transparent to-transparent"></div>
                 <div className="absolute bottom-8 left-8 flex items-center gap-4">
-                  <div className="w-12 h-12 bg-obsidian-primary/20 flex items-center justify-center backdrop-blur-md border border-obsidian-primary/40 rounded-lg">
+                  <div className="w-12 h-12 bg-gradient-to-br from-obsidian-primary/40 to-obsidian-primary/20 flex items-center justify-center backdrop-blur-md border border-obsidian-primary/50 rounded-lg shadow-[0_0_20px_rgba(168,85,247,0.3)]">
                     <PlayIcon size={24} className="text-obsidian-primary" />
                   </div>
                   <div className="font-headline text-xs font-bold tracking-wide uppercase text-white shadow-sm">Watch Preview</div>
@@ -494,12 +499,16 @@ const LandingPage = () => {
             
             <div className="flex flex-col gap-6">
               <span className="text-obsidian-primary font-headline font-bold text-xs tracking-wider uppercase">How it works</span>
-              <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight uppercase leading-tight">Synchronized streaming made simple.</h2>
+              <h2 className="font-headline text-4xl md:text-5xl font-bold tracking-tight uppercase leading-tight">
+                Synchronized streaming
+                <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-obsidian-tertiary to-obsidian-primary">made simple</span>
+              </h2>
               <p className="text-obsidian-on-surface-variant text-base font-light leading-relaxed">Create or join a room, invite friends, and start watching together. Our platform handles all the technical complexity so you can focus on enjoying the experience.</p>
               <div className="flex flex-wrap gap-3 mt-2">
-                <span className="px-3 py-2 bg-obsidian-primary/10 text-[11px] font-headline font-semibold tracking-normal uppercase border border-obsidian-primary/30 text-obsidian-primary rounded-lg">HD Video</span>
-                <span className="px-3 py-2 bg-obsidian-tertiary/10 text-[11px] font-headline font-semibold tracking-normal uppercase border border-obsidian-tertiary/30 text-obsidian-tertiary rounded-lg">Low Latency</span>
-                <span className="px-3 py-2 bg-red-500/10 text-[11px] font-headline font-semibold tracking-normal uppercase border border-red-500/30 text-red-400 rounded-lg">Encrypted</span>
+                <span className="px-4 py-2.5 bg-gradient-to-br from-obsidian-primary/15 to-obsidian-primary/5 text-[11px] font-headline font-semibold tracking-normal uppercase border border-obsidian-primary/30 text-obsidian-primary rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)] transition-all">HD Video</span>
+                <span className="px-4 py-2.5 bg-gradient-to-br from-obsidian-tertiary/15 to-obsidian-tertiary/5 text-[11px] font-headline font-semibold tracking-normal uppercase border border-obsidian-tertiary/30 text-obsidian-tertiary rounded-lg hover:shadow-[0_0_15px_rgba(59,130,246,0.2)] transition-all">Low Latency</span>
+                <span className="px-4 py-2.5 bg-gradient-to-br from-red-500/15 to-red-500/5 text-[11px] font-headline font-semibold tracking-normal uppercase border border-red-500/30 text-red-400 rounded-lg hover:shadow-[0_0_15px_rgba(239,68,68,0.2)] transition-all">Encrypted</span>
               </div>
             </div>
           </div>
@@ -508,23 +517,23 @@ const LandingPage = () => {
       </main>
 
       {/* Footer */}
-      <footer className="bg-obsidian-bg w-full border-t border-obsidian-outline-variant/30 relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-center px-8 py-10 gap-6 max-w-7xl mx-auto">
+      <footer className="bg-gradient-to-t from-obsidian-bg via-obsidian-bg to-obsidian-surface/20 w-full border-t border-obsidian-outline-variant/40 relative z-10 backdrop-blur-sm">
+        <div className="flex flex-col md:flex-row justify-between items-center px-8 py-12 gap-6 max-w-7xl mx-auto">
           <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="text-base font-bold text-obsidian-on-surface font-headline tracking-tight uppercase">VibeSync</span>
+            <span className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-obsidian-on-surface to-obsidian-primary font-headline tracking-tight uppercase">VibeSync</span>
             <p className="font-body text-xs tracking-normal text-obsidian-on-surface-variant">Watch parties, synchronized</p>
           </div>
-          <div className="flex items-center gap-8 border-r border-l px-8 border-obsidian-outline-variant/30 hidden md:flex">
-            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors uppercase" href="#">Privacy</a>
-            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors uppercase" href="#">Terms</a>
-            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors uppercase" href="#">Contact</a>
+          <div className="flex items-center gap-8 border-r border-l px-8 border-obsidian-outline-variant/40 hidden md:flex">
+            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase" href="#">Privacy</a>
+            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase" href="#">Terms</a>
+            <a className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase" href="#">Contact</a>
           </div>
           <div className="flex gap-4">
-            <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
-              <LanguageIcon size={20} className="text-neutral-500 group-hover:text-obsidian-primary transition-colors" />
+            <div className="w-10 h-10 border border-obsidian-outline-variant/40 flex items-center justify-center hover:border-obsidian-primary/70 transition-all group cursor-pointer bg-obsidian-surface/40 backdrop-blur-sm rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+              <LanguageIcon size={20} className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary transition-colors" />
             </div>
-            <div className="w-10 h-10 border border-white/5 flex items-center justify-center hover:border-obsidian-primary/50 transition-colors group cursor-pointer bg-black/20">
-              <ShareIcon size={20} className="text-neutral-500 group-hover:text-obsidian-primary transition-colors" />
+            <div className="w-10 h-10 border border-obsidian-outline-variant/40 flex items-center justify-center hover:border-obsidian-primary/70 transition-all group cursor-pointer bg-obsidian-surface/40 backdrop-blur-sm rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
+              <ShareIcon size={20} className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary transition-colors" />
             </div>
           </div>
         </div>

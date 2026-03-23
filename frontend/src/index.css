@@ -105,36 +105,36 @@
 
 /* ── Component Classes ──────────────────────────────────────────────────────── */
 @layer components {
-  /* Glassmorphism card */
+  /* Glassmorphism card - Premium */
   .glass {
-    background: rgba(24, 32, 48, 0.75);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(24, 32, 48, 0.85) 0%, rgba(18, 24, 38, 0.75) 100%);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(168, 85, 247, 0.15);
   }
 
   .glass-panel {
-    background: rgba(18, 24, 38, 0.7);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(18, 24, 38, 0.8) 0%, rgba(11, 15, 25, 0.75) 100%);
+    backdrop-filter: blur(16px) saturate(160%);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    border: 1px solid rgba(168, 85, 247, 0.12);
   }
 
   .glass-light {
-    background: rgba(30, 40, 58, 0.65);
-    backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: linear-gradient(135deg, rgba(30, 40, 58, 0.75) 0%, rgba(24, 32, 48, 0.65) 100%);
+    backdrop-filter: blur(14px) saturate(170%);
+    border: 1px solid rgba(34, 211, 238, 0.1);
   }
 
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
-           bg-accent-purple text-white transition-all duration-200
-           hover:bg-accent-purple-hover hover:-translate-y-[1px] active:scale-[0.98]
-           focus:outline-none focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-bg-primary
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none;
-  }
-  .btn-primary:not(:disabled):hover {
-    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold text-sm
+           bg-gradient-to-br from-obsidian-primary via-obsidian-primary to-obsidian-primary-dim text-white 
+           transition-all duration-300 cursor-pointer
+           hover:shadow-[0_0_30px_rgba(168,85,247,0.6)] hover:-translate-y-[2px] 
+           active:scale-[0.95] active:shadow-[0_0_15px_rgba(168,85,247,0.4)]
+           focus:outline-none focus:ring-2 focus:ring-obsidian-primary focus:ring-offset-2 focus:ring-offset-bg-primary
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none
+           rounded-lg font-headline uppercase tracking-tight;
   }
 
   /* Ghost button */
@@ -149,14 +149,14 @@
   }
 
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
-           bg-accent-cyan text-white transition-all duration-200
-           hover:bg-cyan-400 hover:-translate-y-[1px] active:scale-[0.98]
-           focus:outline-none focus:ring-2 focus:ring-accent-cyan focus:ring-offset-2 focus:ring-offset-bg-primary
-           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none;
-  }
-  .btn-secondary:not(:disabled):hover {
-    box-shadow: 0 4px 15px rgba(34, 211, 238, 0.4);
+    @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold text-sm
+           bg-obsidian-surface border border-obsidian-tertiary/50 text-obsidian-tertiary 
+           transition-all duration-300 cursor-pointer
+           hover:border-obsidian-tertiary hover:bg-obsidian-tertiary/15 hover:shadow-[0_0_25px_rgba(59,130,246,0.4)] hover:-translate-y-[2px]
+           active:scale-[0.95] active:shadow-[0_0_12px_rgba(59,130,246,0.3)]
+           focus:outline-none focus:ring-2 focus:ring-obsidian-tertiary focus:ring-offset-2 focus:ring-offset-bg-primary
+           disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none
+           rounded-lg font-headline uppercase tracking-tight;
   }
 
   /* Icon button */
@@ -213,6 +213,30 @@
   .card {
     @apply glass p-6 transition-all duration-300 rounded-lg;
     border-radius: 0.75rem;
+  }
+
+  /* Premium input styling */
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="datetime-local"] {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus,
+  input[type="email"]:focus,
+  input[type="datetime-local"]:focus {
+    text-shadow: 0 0 15px rgba(168, 85, 247, 0.2);
+  }
+
+  /* Select styling */
+  select {
+    transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  select:hover {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.1);
   }
 
   /* Video overlay gradient */
@@ -415,6 +439,32 @@
   box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
 }
 
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 20px rgba(168, 85, 247, 0.3), 0 0 40px rgba(168, 85, 247, 0.1); }
+  50% { box-shadow: 0 0 30px rgba(168, 85, 247, 0.5), 0 0 60px rgba(168, 85, 247, 0.2); }
+}
+
+.hover-glow {
+  transition: all 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.hover-glow:hover {
+  animation: glow-pulse 2s ease-in-out;
+}
+
+@keyframes shimmer-text {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+
+.text-shimmer {
+  background: linear-gradient(90deg, rgb(var(--obsidian-on-surface)) 25%, rgb(var(--obsidian-primary)) 50%, rgb(var(--obsidian-on-surface)) 75%);
+  background-size: 1000px 100%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 @keyframes float-up {
   0% { transform: translate(-50%, 0) scale(0.5); opacity: 0; }
   20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
@@ -459,7 +509,7 @@
   animation: participant-leave 0.25s ease-in both;
 }
 
-/* ── Sidebar tab content fade-in ───────────────────────��─────────────────────── */
+/* ── Sidebar tab content fade-in ───────────────────────��───────────��─────────── */
 @keyframes tab-fade {
   0%   { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: translateY(0); }
