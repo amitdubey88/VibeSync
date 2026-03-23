@@ -9,46 +9,46 @@
 /* ── Base Reset ─────────────────────────────────────────────────────────────── */
 @layer base {
   :root {
-    --bg-primary: 8 8 15;
-    --bg-secondary: 15 15 26;
-    --bg-card: 19 19 31;
-    --bg-hover: 26 26 46;
-    --accent-red: 229 9 20;
-    --accent-red-hover: 244 6 18;
-    --accent-purple: 139 92 246;
-    --accent-purple-hover: 124 58 237;
-    --accent-cyan: 6 182 212;
-    --text-primary: 241 241 241;
-    --text-secondary: 160 160 184;
-    --border-dark: 30 30 48;
-    --border-light: 42 42 64;
+    --bg-primary: 11 15 25;
+    --bg-secondary: 18 24 38;
+    --bg-card: 24 32 48;
+    --bg-hover: 32 42 62;
+    --accent-red: 239 68 68;
+    --accent-red-hover: 220 38 38;
+    --accent-purple: 168 85 247;
+    --accent-purple-hover: 147 51 234;
+    --accent-cyan: 34 211 238;
+    --text-primary: 248 250 252;
+    --text-secondary: 148 163 184;
+    --border-dark: 30 41 59;
+    --border-light: 51 65 85;
     
-    /* ── Obsidian Design Tokens (Default) ───────────────────── */
-    --obsidian-bg: 14 14 15;
-    --obsidian-surface: 14 14 15;
-    --obsidian-surface-bright: 44 44 45;
-    --obsidian-surface-dim: 14 14 15;
-    --obsidian-surface-low: 19 19 20;
-    --obsidian-surface-container: 26 25 27;
-    --obsidian-surface-high: 32 31 33;
-    --obsidian-surface-highest: 38 38 39;
-    --obsidian-primary: 189 157 255;
-    --obsidian-primary-dim: 138 76 252;
-    --obsidian-primary-container: 178 140 255;
-    --obsidian-secondary: 195 139 245;
-    --obsidian-secondary-dim: 190 134 239;
-    --obsidian-secondary-container: 97 43 143;
-    --obsidian-tertiary: 255 151 178;
-    --obsidian-tertiary-dim: 241 119 153;
-    --obsidian-tertiary-container: 254 129 164;
-    --obsidian-error: 255 110 132;
-    --obsidian-error-dim: 215 51 87;
-    --obsidian-error-container: 167 1 56;
-    --obsidian-outline: 118 117 118;
-    --obsidian-outline-variant: 72 72 73;
-    --obsidian-on-surface: 255 255 255;
-    --obsidian-on-surface-variant: 173 170 171;
-    --obsidian-on-primary: 60 0 137;
+    /* ── Cosmic Night Design Tokens ───────────────────── */
+    --obsidian-bg: 11 15 25;
+    --obsidian-surface: 18 24 38;
+    --obsidian-surface-bright: 51 65 85;
+    --obsidian-surface-dim: 11 15 25;
+    --obsidian-surface-low: 20 28 42;
+    --obsidian-surface-container: 30 40 58;
+    --obsidian-surface-high: 40 52 72;
+    --obsidian-surface-highest: 48 62 86;
+    --obsidian-primary: 168 85 247;
+    --obsidian-primary-dim: 147 51 234;
+    --obsidian-primary-container: 184 134 255;
+    --obsidian-secondary: 167 139 250;
+    --obsidian-secondary-dim: 139 92 246;
+    --obsidian-secondary-container: 126 71 239;
+    --obsidian-tertiary: 59 130 246;
+    --obsidian-tertiary-dim: 37 99 235;
+    --obsidian-tertiary-container: 96 165 250;
+    --obsidian-error: 239 68 68;
+    --obsidian-error-dim: 220 38 38;
+    --obsidian-error-container: 254 226 226;
+    --obsidian-outline: 100 116 139;
+    --obsidian-outline-variant: 71 85 105;
+    --obsidian-on-surface: 248 250 252;
+    --obsidian-on-surface-variant: 148 163 184;
+    --obsidian-on-primary: 255 255 255;
 
     /* ── Animation timing tokens ─────────────────────────────── */
     --dur-hover:  120ms;   /* button hover lift */
@@ -107,34 +107,34 @@
 @layer components {
   /* Glassmorphism card */
   .glass {
-    background: rgba(19, 19, 31, 0.8);
+    background: rgba(24, 32, 48, 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
   }
 
   .glass-panel {
-    background: rgba(20, 20, 25, 0.65);
+    background: rgba(18, 24, 38, 0.7);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .glass-light {
-    background: rgba(26, 26, 46, 0.7);
+    background: rgba(30, 40, 58, 0.65);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
-           bg-accent-red text-white transition-all duration-200
-           hover:bg-accent-redHover hover:-translate-y-[1px] active:scale-[0.98]
-           focus:outline-none focus:ring-2 focus:ring-accent-red focus:ring-offset-2 focus:ring-offset-bg-primary
+           bg-accent-purple text-white transition-all duration-200
+           hover:bg-accent-purple-hover hover:-translate-y-[1px] active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-bg-primary
            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 disabled:hover:translate-y-0 disabled:hover:shadow-none;
   }
   .btn-primary:not(:disabled):hover {
-    box-shadow: 0 4px 15px rgba(229, 9, 20, 0.4);
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.5);
   }
 
   /* Ghost button */
@@ -145,18 +145,18 @@
            active:scale-[0.98] focus:outline-none disabled:opacity-50 disabled:hover:translate-y-0 disabled:hover:shadow-none;
   }
   .btn-ghost:not(:disabled):hover {
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.15);
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.2);
   }
 
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 px-5 py-2.5 font-semibold text-sm
-           bg-accent-purple text-white transition-all duration-200
-           hover:bg-accent-purpleHover hover:-translate-y-[1px] active:scale-[0.98]
-           focus:outline-none focus:ring-2 focus:ring-accent-purple focus:ring-offset-2 focus:ring-offset-bg-primary
+           bg-accent-cyan text-white transition-all duration-200
+           hover:bg-cyan-400 hover:-translate-y-[1px] active:scale-[0.98]
+           focus:outline-none focus:ring-2 focus:ring-accent-cyan focus:ring-offset-2 focus:ring-offset-bg-primary
            disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-none;
   }
   .btn-secondary:not(:disabled):hover {
-    box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 4px 15px rgba(34, 211, 238, 0.4);
   }
 
   /* Icon button */
@@ -211,8 +211,8 @@
 
   /* Room card */
   .card {
-    @apply glass p-6 transition-all duration-300;
-    border-radius: 0;
+    @apply glass p-6 transition-all duration-300 rounded-lg;
+    border-radius: 0.75rem;
   }
 
   /* Video overlay gradient */
@@ -221,24 +221,24 @@
   }
 
   /* Neon glow effects */
-  .glow-red   { box-shadow: 0 0 20px rgba(229, 9, 20, 0.4); }
-  .glow-purple { box-shadow: 0 0 20px rgba(139, 92, 246, 0.4); }
-  .glow-cyan  { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+  .glow-red   { box-shadow: 0 0 25px rgba(239, 68, 68, 0.4); }
+  .glow-purple { box-shadow: 0 0 25px rgba(168, 85, 247, 0.4); }
+  .glow-cyan  { box-shadow: 0 0 25px rgba(34, 211, 238, 0.4); }
 
   /* Animated gradient background for landing */
   .gradient-bg {
-    background: radial-gradient(ellipse at 20% 50%, rgba(var(--accent-purple), 0.15) 0%, transparent 60%),
-                radial-gradient(ellipse at 80% 20%, rgba(var(--accent-red), 0.1) 0%, transparent 50%),
-                radial-gradient(ellipse at 50% 100%, rgba(var(--accent-cyan), 0.08) 0%, transparent 60%),
+    background: radial-gradient(ellipse at 20% 50%, rgba(168, 85, 247, 0.12) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 100%, rgba(34, 211, 238, 0.06) 0%, transparent 60%),
                 rgb(var(--bg-primary));
   }
 
   /* Cinematic deep app background */
   .bg-cinematic {
     background:
-      radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.08), transparent 40%),
-      radial-gradient(circle at 80% 20%, rgba(229, 9, 20, 0.06), transparent 40%),
-      #0f0f13;
+      radial-gradient(circle at 20% 30%, rgba(168, 85, 247, 0.08), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.06), transparent 40%),
+      rgb(var(--bg-primary));
   }
 
   /* Custom scrollable area */
@@ -309,15 +309,33 @@
   }
 
   .avatar-ring {
-    border: 2px solid rgba(139, 92, 246, 0.5);
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
-    border-radius: 0;
+    border: 2px solid rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.35);
+    border-radius: 0.5rem;
   }
 
   .no-select { user-select: none; -webkit-user-select: none; }
 }
 
 /* ── Custom Keyframes ────────────────────────────────────────────────────────── */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out forwards;
+}
+
+@keyframes slide-up {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out forwards;
+}
+
 @keyframes reactionFloat {
   0%   { transform: translateY(0) scale(1); opacity: 1; }
   80%  { transform: translateY(-120px) scale(1.2); opacity: 0.8; }
@@ -441,7 +459,7 @@
   animation: participant-leave 0.25s ease-in both;
 }
 
-/* ── Sidebar tab content fade-in ─────────────────────────────────────────────── */
+/* ── Sidebar tab content fade-in ───────────────────────��─────────────────────── */
 @keyframes tab-fade {
   0%   { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: translateY(0); }
@@ -451,7 +469,7 @@
   animation: tab-fade 0.2s ease-out both;
 }
 
-/* ── Typing Indicator Dots — staggered bounce ────────────────────────────────── */
+/* ── Typing Indicator Dots — staggered bounce ─────────────────────────��──────── */
 @keyframes typing-dot {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
   30% { transform: translateY(-4px); opacity: 1; }
