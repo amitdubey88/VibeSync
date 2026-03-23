@@ -317,6 +317,14 @@ export const MoreIcon = (props) => (
   </BaseIcon>
 );
 
+export const MenuIcon = (props) => (
+  <BaseIcon {...props}>
+    <path d="M3 6H21" />
+    <path d="M3 12H21" />
+    <path d="M3 18H21" />
+  </BaseIcon>
+);
+
 export const ShieldIcon = (props) => (
   <BaseIcon {...props}>
     <path d="M12 22C12 22 20 18 20 12V5L12 2L4 5V12C4 18 12 22 12 22Z" />

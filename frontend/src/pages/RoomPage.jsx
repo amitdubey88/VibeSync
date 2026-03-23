@@ -14,7 +14,7 @@ import Tooltip from '../components/UI/Tooltip';
 import { 
   CopyIcon, ParticipantsIcon, ChatIcon, BackIcon, 
   ExitIcon, DeleteIcon, ThemeIcon, QueueIcon, 
-  MoreIcon, ShieldIcon, UserIcon, 
+  MoreIcon, MenuIcon, ShieldIcon, UserIcon, 
   WifiIcon, CrownIcon, ActivityIcon, 
   CheckIcon, XIcon, LockIcon, ClockIcon, LinkIcon
 } from '../components/UI/SharpIcons';
@@ -807,7 +807,7 @@ const RoomPage = () => {
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="text-obsidian-on-surface-variant hover:text-obsidian-primary transition-colors hidden md:flex items-center justify-center p-1.5 hover:bg-obsidian-primary/10 ml-2"
             >
-              <MoreIcon size={16} className={isSidebarOpen ? "" : "rotate-180 transition-transform"} />
+              <MenuIcon size={18} className={isSidebarOpen ? "" : "opacity-50"} />
             </button>
           </Tooltip>
         </div>
