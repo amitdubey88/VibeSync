@@ -23,12 +23,7 @@ const LandingPage = () => {
   const [scheduledAt, setScheduledAt] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Pre-fill username from stored session — only if field is still empty
-  useEffect(() => {
-    if (user?.username && !username) setUsername(user.username);
-  }, [user, username]);
-
-  // Auto-rejoin last active room if user accidentally disconnected
+  // ── Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
     const query = new URLSearchParams(location.search);
     if (query.get('kicked')) {
