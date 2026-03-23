@@ -361,6 +361,12 @@ export const PlusIcon = (props) => (
   </BaseIcon>
 );
 
+export const MinusIcon = (props) => (
+  <BaseIcon {...props}>
+    <path d="M5 12H19" />
+  </BaseIcon>
+);
+
 export const WifiIcon = (props) => (
   <BaseIcon {...props}>
     <path d="M5 12.55C8.31 9.24 13.69 9.24 17 12.55" />
