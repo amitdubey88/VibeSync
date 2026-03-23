@@ -333,13 +333,13 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
       {/* ── Emoji picker ── */}
       {showEmoji && (
-        <div className="absolute bottom-20 right-2 z-30 glass-panel p-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)] w-72 animate-fade-in rounded-2xl border border-obsidian-primary/25">
+        <div className="absolute bottom-20 right-2 z-30 glass-panel p-4 shadow-[0_20px_60px_rgba(0,0,0,0.4)] w-[320px] animate-fade-in rounded-2xl border border-obsidian-primary/25">
           <div className="mb-3">
-            <p className="text-xs text-obsidian-on-surface-variant mb-2 font-semibold uppercase tracking-wider">
+            <p className="text-xs text-obsidian-on-surface-variant mb-2 font-semibold uppercase tracking-wider text-center">
               Add to message
             </p>
             {EMOJI_SETS.map((row, i) => (
-              <div key={i} className="flex gap-2 mb-2">
+              <div key={i} className="grid grid-cols-8 gap-1 mb-2">
                 {row.map((e) => (
                   <button
                     key={e}

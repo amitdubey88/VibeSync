@@ -1147,6 +1147,13 @@ const VideoPlayer = () => {
           {/* Subtitles Overlay */}
       <SubtitleOverlay />
 
+      {/* Sync Status Badge (Always visible at top-right when video is loaded) */}
+      {currentVideo && (
+        <div className="absolute top-4 right-4 z-40 pointer-events-none">
+          <SyncStatusBadge status={syncStatus} />
+        </div>
+      )}
+
       {/* Controls Overlay - only render if derived state allows it */}
       {shouldShowControls && (
         <>
@@ -1161,12 +1168,7 @@ const VideoPlayer = () => {
             <QuickReactionBar visible={showControls} isOverlay={true} />
           )}
 
-          {/* Sync Status Badge */}
-          {!(isHost || isCoHost) && currentVideo && currentVideo.type !== 'live' && (
-            <div className="absolute top-4 right-4 z-40 pointer-events-none">
-              <SyncStatusBadge status={syncStatus} />
-            </div>
-          )}
+          {/* Removed legacy SyncStatusBadge block from here */}
 
           {/* Fading Controls Group */}
           <div className={`absolute inset-0 z-30 transition-opacity duration-300 pointer-events-none
