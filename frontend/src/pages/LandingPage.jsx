@@ -1,39 +1,59 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { createRoom, getRoomInfo } from '../services/api';
-import toast from 'react-hot-toast';
-import { 
-  PlayIcon, AddIcon, EastIcon, StarIcon, PublicIcon, LockIcon, 
-  LanguageIcon, ShareIcon, SyncIcon, EncryptionIcon, ForumIcon
-} from '../components/UI/SharpIcons';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { createRoom, getRoomInfo } from "../services/api";
+import toast from "react-hot-toast";
+import {
+  PlayIcon,
+  AddIcon,
+  EastIcon,
+  StarIcon,
+  PublicIcon,
+  LockIcon,
+  LanguageIcon,
+  ShareIcon,
+  SyncIcon,
+  EncryptionIcon,
+  ForumIcon,
+} from "../components/UI/SharpIcons";
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [tab, setTab] = useState('join');
-  const [username, setUsername] = useState('');
-  const [roomCode, setRoomCode] = useState('');
-  const [roomName, setRoomName] = useState('');
-  const [roomType, setRoomType] = useState('public');
-  const [password, setPassword] = useState('');
+  const [tab, setTab] = useState("join");
+  const [username, setUsername] = useState("");
+  const [roomCode, setRoomCode] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [roomType, setRoomType] = useState("public");
+  const [password, setPassword] = useState("");
   const [scheduleToggle, setScheduleToggle] = useState(false);
-  const [scheduledAt, setScheduledAt] = useState('');
+  const [scheduledAt, setScheduledAt] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // ── Force fresh state on mount ──────────────────────────────────
+  useEffect(() => {
+    // Every visit to landing page must require name entry
+    if (isAuthenticated) logout();
+    setUsername("");
+  }, [logout, isAuthenticated]);
 
   // ── Auto-rejoin last active room if user accidentally disconnected
   useEffect(() => {
     const query = new URLSearchParams(location.search);
-    if (query.get('kicked')) {
-      toast.error('You have been removed from the room by the host.', {
-        id: 'kicked-toast',
+    if (query.get("kicked")) {
+      toast.error("You have been removed from the room by the host.", {
+        id: "kicked-toast",
         duration: 5000,
-        icon: <span className="material-symbols-outlined text-red-500 text-xl">block</span>
+        icon: (
+          <span className="material-symbols-outlined text-red-500 text-xl">
+            block
+          </span>
+        ),
       });
       // Clean up the URL
-      navigate('/', { replace: true });
+      navigate("/", { replace: true });
       return;
     }
 
@@ -54,15 +74,21 @@ const LandingPage = () => {
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {
     const name = username.trim();
-    if (!name) { toast.error('Please enter your name first'); return false; }
-    if (name.length < 2) { toast.error('Name must be at least 2 characters'); return false; }
+    if (!name) {
+      toast.error("Please enter your name first");
+      return false;
+    }
+    if (name.length < 2) {
+      toast.error("Name must be at least 2 characters");
+      return false;
+    }
 
     // If already authed with the SAME username, reuse session
     if (isAuthenticated && user?.username === name) return true;
 
     // Different username OR not logged in → issue a fresh guest token
     if (isAuthenticated) logout();
-    
+
     // Retry mechanism for transient network or DB ready-state issues
     let attempts = 0;
     while (attempts < 3) {
@@ -72,11 +98,11 @@ const LandingPage = () => {
       } catch (err) {
         attempts++;
         if (attempts >= 3) {
-          toast.error(err.response?.data?.message || 'Login failed');
+          toast.error(err.response?.data?.message || "Login failed");
           return false;
         }
         // Wait 400ms before retrying
-        await new Promise(r => setTimeout(r, 400));
+        await new Promise((r) => setTimeout(r, 400));
       }
     }
     return false;
@@ -84,20 +110,23 @@ const LandingPage = () => {
 
   const handleJoin = async (e) => {
     e.preventDefault();
-    if (!roomCode.trim()) return toast.error('Enter a room code');
+    if (!roomCode.trim()) return toast.error("Enter a room code");
     setLoading(true);
     try {
       const ok = await ensureAuth();
       if (!ok) return;
       const { room } = await getRoomInfo(roomCode.toUpperCase().trim());
-      sessionStorage.setItem("vibesync_session", JSON.stringify({
-        roomCode: room.code,
-        username: username.trim(),
-        joinedAt: Date.now()
-      }));
+      sessionStorage.setItem(
+        "vibesync_session",
+        JSON.stringify({
+          roomCode: room.code,
+          username: username.trim(),
+          joinedAt: Date.now(),
+        }),
+      );
       navigate(`/room/${room.code}`, { state: { password } });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Room not found');
+      toast.error(err.response?.data?.message || "Room not found");
     } finally {
       setLoading(false);
     }
@@ -105,7 +134,7 @@ const LandingPage = () => {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!roomName.trim()) return toast.error('Enter a room name');
+    if (!roomName.trim()) return toast.error("Enter a room name");
     setLoading(true);
     try {
       const ok = await ensureAuth();
@@ -113,18 +142,24 @@ const LandingPage = () => {
       const { room } = await createRoom({
         name: roomName.trim(),
         type: roomType,
-        password: roomType === 'private' ? password : undefined,
-        scheduledAt: scheduleToggle && scheduledAt ? new Date(scheduledAt).toISOString() : undefined,
+        password: roomType === "private" ? password : undefined,
+        scheduledAt:
+          scheduleToggle && scheduledAt
+            ? new Date(scheduledAt).toISOString()
+            : undefined,
       });
-      toast.success('Room created!');
-      sessionStorage.setItem("vibesync_session", JSON.stringify({
-        roomCode: room.code,
-        username: username.trim(),
-        joinedAt: Date.now()
-      }));
+      toast.success("Room created!");
+      sessionStorage.setItem(
+        "vibesync_session",
+        JSON.stringify({
+          roomCode: room.code,
+          username: username.trim(),
+          joinedAt: Date.now(),
+        }),
+      );
       navigate(`/room/${room.code}`, { state: { password } });
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to create room');
+      toast.error(err.response?.data?.message || "Failed to create room");
     } finally {
       setLoading(false);
     }
@@ -299,7 +334,7 @@ const LandingPage = () => {
               <div className="relative mb-10 group/input">
                 <input
                   type="text"
-                  className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all uppercase tracking-wide text-sm font-medium"
+                  className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:outline-none focus:border-obsidian-primary transition-all uppercase tracking-wide text-sm font-medium"
                   placeholder="Your Display Name"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -360,7 +395,7 @@ const LandingPage = () => {
                   <div className="relative group/input">
                     <input
                       type="password"
-                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all tracking-normal text-sm font-medium"
+                      className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface focus:outline-none placeholder:text-obsidian-outline focus:ring-0 focus:border-obsidian-primary transition-all tracking-normal text-sm font-medium"
                       placeholder="Password (if needed)"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
