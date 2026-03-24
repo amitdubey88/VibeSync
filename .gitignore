@@ -35,8 +35,8 @@ Thumbs.db
 # Docker overrides
 docker-compose.override.yml
 
-#koyebenv
-.koyebenv
+#enderenv
+.envrender
 
 #linterrors
 *-errors.txt
