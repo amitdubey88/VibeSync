@@ -288,7 +288,7 @@ const LandingPage = () => {
           </div>
 
           {/* Scroll Indicator */}
-          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 opacity-50 animate-pulse">
+          <div className="absolute bottom-10 left-1/2 -translate-x-1/2 hidden md:flex flex-col items-center gap-2 opacity-50 animate-pulse">
             <span className="text-[10px] font-headline tracking-[0.3em] uppercase">
               SCROLL
             </span>
