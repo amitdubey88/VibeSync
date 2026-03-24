@@ -111,7 +111,7 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
   if (message.type === 'system') {
     return (
       <div id={`msg-${message.id}`} className="flex justify-center my-2">
-        <span className="text-[10px] text-obsidian-on-surface-variant bg-gradient-to-r from-obsidian-primary/10 to-obsidian-tertiary/10 border border-obsidian-primary/20 px-4 py-2 rounded-full uppercase tracking-wider font-semibold shadow-[0_4px_12px_rgba(170,85,255,0.1)]">
+        <span className="text-[10px] text-white/40 bg-white/5 px-3 py-1 rounded-full uppercase tracking-widest font-medium">
           {message.content}
         </span>
       </div>

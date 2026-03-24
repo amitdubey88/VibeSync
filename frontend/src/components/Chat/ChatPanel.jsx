@@ -152,18 +152,18 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   return (
     <div className="flex flex-col h-full">
       {/* ── Chat Header ── */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/5 bg-[#0a0a0b] shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/5 flex items-center justify-center">
-            <ChatIcon size={20} className="text-white" fill="currentColor" />
+      <div className="flex items-center justify-between px-3 py-1.5 md:px-4 md:py-2 border-b border-white/5 bg-[#0a0a0b] shrink-0">
+        <div className="flex items-center gap-2 md:gap-3">
+          <div className="w-8 h-8 md:w-10 md:h-10 bg-white/5 flex items-center justify-center">
+            <ChatIcon size={16} className="text-white md:w-5 md:h-5" fill="currentColor" />
           </div>
           <div className="flex flex-col">
-            <h2 className="text-[13px] font-black text-white uppercase tracking-wider font-headline leading-tight">
+            <h2 className="text-[11px] md:text-[13px] font-black text-white uppercase tracking-wider font-headline leading-tight">
               Live Chat
             </h2>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 md:gap-1.5">
               <span className="w-1.5 h-1.5 bg-emerald-500" />
-              <span className="text-[9px] font-black text-emerald-500/80 uppercase tracking-[0.15em]">
+              <span className="text-[8px] md:text-[9px] font-black text-emerald-500/80 uppercase tracking-[0.15em]">
                 Connected
               </span>
             </div>
@@ -172,18 +172,18 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
 
         <button
           onClick={() => setChatMuted(!chatMuted)}
-          className={`flex items-center gap-2 px-3 py-1.5 transition-all active:scale-95 ${
+          className={`flex items-center gap-1.5 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 transition-all active:scale-95 ${
             chatMuted
               ? "bg-red-500/10 text-red-500 border border-red-500/20"
               : "bg-white/10 text-white border border-white/10 hover:bg-white/15"
           }`}
         >
           {chatMuted ? (
-            <BellOffIcon size={14} fill="currentColor" />
+            <BellOffIcon size={12} className="md:w-3.5 md:h-3.5" fill="currentColor" />
           ) : (
-            <BellIcon size={14} fill="currentColor" />
+            <BellIcon size={12} className="md:w-3.5 md:h-3.5" fill="currentColor" />
           )}
-          <span className="text-[10px] font-black uppercase tracking-widest">
+          <span className="text-[9px] md:text-[10px] font-black uppercase tracking-widest">
             {chatMuted ? "Muted" : "Active"}
           </span>
         </button>

@@ -842,36 +842,36 @@ const RoomPage = () => {
           <div className="flex w-full overflow-x-auto scrollbar-hide">
             <button
               onClick={() => setActiveMobileTab("chat")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <ChatIcon size={20} className="mb-1" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
+              <ChatIcon size={16} className="mb-0.5" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
               <span>CHAT</span>
               {unreadChatCount > 0 && (
-                <span className="absolute top-2.5 right-[calc(50%-18px)] w-2 h-2 bg-obsidian-primary shadow-[0_0_8px_rgba(189,157,255,0.8)]" />
+                <span className="absolute top-1.5 right-[calc(50%-16px)] w-2 h-2 bg-obsidian-primary shadow-[0_0_8px_rgba(189,157,255,0.8)]" />
               )}
             </button>
             <button
               onClick={() => setActiveMobileTab("people")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <ParticipantsIcon size={20} className="mb-1" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
+              <ParticipantsIcon size={16} className="mb-0.5" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
               <span>PEOPLE ({onlineCount})</span>
               {joinRequests.length > 0 && (
-                <span className="absolute top-2.5 right-[calc(50%-22px)] w-2 h-2 bg-obsidian-primary/80" />
+                <span className="absolute top-1.5 right-[calc(50%-20px)] w-2 h-2 bg-obsidian-primary/80" />
               )}
             </button>
             <button
               onClick={() => setActiveMobileTab("queue")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <QueueIcon size={20} className="mb-1" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
+              <QueueIcon size={16} className="mb-0.5" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
               <span>QUEUE</span>
             </button>
             <button
               onClick={() => setActiveMobileTab("activity")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-2.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
+              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
             >
-              <ActivityIcon size={20} className="mb-1" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
+              <ActivityIcon size={16} className="mb-0.5" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
               <span>ACTIVITY</span>
             </button>
           </div>
