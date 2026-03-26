@@ -858,6 +858,7 @@ export const WebRTCProvider = ({ children }) => {
     useEffect(() => {
         if (!socket || !roomCode || premierStreamRef.current) return;
         if (currentVideo?.type !== 'live') return;
+        if (isHostRef.current) return; // Host is the broadcaster — never connects to their own stream
         if (remotePremierStream) return; // already receiving stream, nothing to do
 
         // Show connecting overlay immediately (don't wait for video-stream:announced

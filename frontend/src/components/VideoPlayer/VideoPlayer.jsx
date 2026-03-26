@@ -241,7 +241,7 @@ const VideoPlayer = () => {
       }
     }, 300);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isHost, setPremierStream]); // stable deps — videoRef is a ref so no dep needed
+  }, [isHost, isCoHost, setPremierStream]); // stable deps — videoRef is a ref so no dep needed
 
   const setVideoRef = useCallback((el) => {
     videoRef.current = el;
@@ -979,7 +979,7 @@ const VideoPlayer = () => {
           </div>
         )}
 
-        {!(isDirectStreaming) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
+        {!isHost && !(isDirectStreaming) && currentVideo?.type === 'live' && !remotePremierStream && !isStreamAnnounced ? (
           /* Participant waiting: host has loaded a live stream but hasn't started broadcasting yet */
           <div className="flex flex-col items-center gap-3 sm:gap-5 p-4 sm:p-8 text-center animate-fade-in">
             <div className="relative w-12 h-12 sm:w-20 sm:h-20  bg-violet-500/10 flex items-center justify-center">
@@ -996,7 +996,7 @@ const VideoPlayer = () => {
               </p>
             </div>
           </div>
-        ) : !(isDirectStreaming) && currentVideo?.type === 'live' && (remotePremierStream || isStreamAnnounced) ? (
+        ) : !isHost && !(isDirectStreaming) && currentVideo?.type === 'live' && (remotePremierStream || isStreamAnnounced) ? (
           /* Participant: Show Direct/Premier Feed — only visible once broadcaster presses play */
           remotePremierStream ? (
             <div className="relative w-full h-full">
