@@ -1176,7 +1176,7 @@ const VideoPlayer = () => {
       <SubtitleOverlay />
 
       {/* Sync Status Badge (Always visible at top-right when video is loaded) */}
-      {currentVideo && (
+      {currentVideo && (videoState?.isPlaying || videoState?.currentTime > 0) && (
         <div className="absolute top-4 right-4 z-40 pointer-events-none">
           <SyncStatusBadge status={syncStatus} />
         </div>
