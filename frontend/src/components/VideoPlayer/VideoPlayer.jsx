@@ -586,6 +586,19 @@ const VideoPlayer = () => {
     }
   }, [currentVideo?.url]);
 
+  // Reset local timing immediately when video TYPE switches to live/hls/uploading.
+  // Without this, the previous video's timestamp (e.g. a YouTube position) would
+  // briefly display on the progress bar while the new source loads.
+  useEffect(() => {
+    const isLiveType = currentVideo?.type === 'live' || currentVideo?.type === 'hls' || currentVideo?.type === 'uploading';
+    if (isLiveType) {
+      setCurrentTime(0);
+      currentTimeRef.current = 0;
+      setDuration(0);
+      setBuffered(0);
+    }
+  }, [currentVideo?.type]);
+
   // CLEANUP: Reset ALL local playback states when the video is removed (host clicked 'Delete')
   useEffect(() => {
     if (!currentVideo) {

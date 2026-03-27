@@ -302,7 +302,7 @@ const useVideoSync = (videoEl) => {
 
             // Smooth Drift Correction Matrix
             if (Math.abs(drift) > 1.2) {
-                // Large drift: Hard jump
+                // Large drift: Hard jump — skip rate nudge since the seek handles it
                 isSyncingRef.current = true;
                 setSyncStatus('catching-up');
                 videoEl.currentTime = expectedTime;
@@ -310,11 +310,13 @@ const useVideoSync = (videoEl) => {
                     isSyncingRef.current = false; 
                     setSyncStatus('synced');
                 }, 800);
-            } else if (Math.abs(drift) > 0.3) {
+            } else if (Math.abs(drift) > 0.5 && !isSyncingRef.current) {
                 // Medium drift: Adjust playback rate to scrub gracefully
+                // Threshold raised from 0.3s → 0.5s to avoid rate-nudging during normal
+                // network jitter, which previously caused perceivable playback stutter.
                 videoEl.playbackRate = drift > 0 ? 1.05 : 0.95;
                 setSyncStatus('catching-up');
-            } else {
+            } else if (!isSyncingRef.current) {
                 // Synchronized: Restore natural rate
                 videoEl.playbackRate = 1.0;
                 setSyncStatus('synced');
