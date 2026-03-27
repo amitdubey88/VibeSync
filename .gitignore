@@ -57,3 +57,5 @@ AUDIT_COMPLETE.md
 *.py
 *.txt
 PUSH_READY.md
+
+.ai
