@@ -1,13 +1,10 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import { getInitials, getAvatarColor, formatMessageTime, formatRelativeTime } from '../../utils/helpers';
+import { formatRelativeTime } from '../../utils/helpers';
 import {
   ReplyIcon,
-  ShieldIcon,
-  CheckIcon,
   PinIcon,
 } from "../UI/SharpIcons";
 import { useRoom } from '../../context/RoomContext';
-import { useAuth } from '../../context/AuthContext';
 import { usePolls } from '../../hooks/usePolls';
 import PollBubble from './PollBubble';
 
@@ -32,7 +29,6 @@ const StatusTick = ({ status, isOwn }) => {
 const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGroup, isHost, isCoHost }) => {
   const { reactToMessage, messageStatuses } = useRoom();
   const { activePoll, votePoll, endPoll } = usePolls();
-  const { user } = useAuth();
   const [dragX, setDragX] = useState(0);
   const [isSnapping, setIsSnapping] = useState(false);
   const [showActions, setShowActions] = useState(false);
@@ -145,11 +141,6 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
     }
   };
 
-  const avatarBg = message.avatar || getAvatarColor(message.username);
-  const swipeProgress = Math.min(dragX / SWIPE_THRESHOLD, 1);
-
-  //  bubble radius: completely brutalist and sharp
-  const bubbleRadius = '';
 
   const bubbleColors = isOwn
     ? 'bg-[#2d2d35]/60 border-white/10 text-white'
