@@ -66,8 +66,7 @@ const VideoControls = ({
     if (!video) return;
     if (video.paused) video.play();
     else video.pause();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoRef, isHost]);
+  }, [videoRef, isHost, isCoHost]);
 
   const isLive =
     videoState?.type === "live" ||
@@ -114,9 +113,8 @@ const VideoControls = ({
           err,
         );
       }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
     },
-    [videoRef, isHost, displayDuration],
+    [videoRef, isHost, isCoHost, displayDuration],
   );
 
   // Sync mute state from keyboard shortcuts (KeyM)
