@@ -240,7 +240,6 @@ const VideoPlayer = () => {
         isStreamingActiveRef.current = false;
       }
     }, 300);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isHost, isCoHost, setPremierStream]); // stable deps — videoRef is a ref so no dep needed
 
   const setVideoRef = useCallback((el) => {
