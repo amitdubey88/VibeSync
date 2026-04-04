@@ -35,6 +35,14 @@ const generateRoomCode = () => {
 const getRoomStore = (req) => req.app.locals.roomStore;
 
 /**
+ * Room code must be 4-10 uppercase alphanumeric characters.
+ * Validate before running HMAC or hitting MongoDB so we never
+ * store, hash, or log user-controlled garbage strings.
+ */
+const ROOM_CODE_RE = /^[A-Z0-9]{4,10}$/;
+const isValidRoomCode = (code) => ROOM_CODE_RE.test(code);
+
+/**
  * Rehydrate a room into the in-memory store from MongoDB.
  * Called when a room code is valid in DB but the in-memory store was cleared
  * (e.g. after a server restart on Render/Koyeb free tier).
@@ -135,10 +143,29 @@ router.post('/', authenticate, async (req, res) => {
     }
 });
 
-// ─── GET /api/rooms/:code ─────────────────────────────────────────────────────
-// Returns room metadata. No auth required (used for previewing room before join).
+// ─── GET /api/rooms/video/metadata ──────────────────────────────────────────
+// Resolves video title for YouTube, Direct, or HLS links.
+// IMPORTANT: This must be declared BEFORE /:code to prevent Express from
+// matching 'video' as a room code when this route is called.
+router.get('/video/metadata', async (req, res) => {
+    const { url, type } = req.query;
+    if (!url) return res.status(400).json({ success: false, message: 'URL required' });
+
+    try {
+        const title = await getVideoMetadata(url, type);
+        return res.json({ success: true, title });
+    } catch {
+        return res.status(500).json({ success: false, message: 'Source resolution failed' });
+    }
+});
+
+// ─── GET /api/rooms/:code ───────────────────────────────────────────────────────────────────
 router.get('/:code', async (req, res) => {
-    const { code } = req.params;
+    const rawCode = req.params.code.toUpperCase();
+    if (!isValidRoomCode(rawCode)) {
+        return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+    const { code } = { code: rawCode };
     // Try in-memory first; fall back to MongoDB (handles server restarts)
     const room = await hydrateRoom(req, code.toUpperCase());
 
@@ -163,7 +190,11 @@ router.get('/:code', async (req, res) => {
 // Validates credentials before allowing socket join. Returns room's video state
 // for initial sync.
 router.post('/:code/join', authenticate, async (req, res) => {
-    const { code } = req.params;
+    const rawCode = req.params.code.toUpperCase();
+    if (!isValidRoomCode(rawCode)) {
+        return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+    const code = rawCode;
     const { password, inviteToken } = req.body;
     // Try in-memory first; fall back to MongoDB (handles server restarts)
     const room = await hydrateRoom(req, code.toUpperCase());
@@ -217,7 +248,11 @@ router.post('/:code/join', authenticate, async (req, res) => {
 // ─── GET /api/rooms/:code/messages ────────────────────────────────────────────
 // Fetch last 100 messages for a room (chat history on join).
 router.get('/:code/messages', authenticate, async (req, res) => {
-    const { code } = req.params;
+    const rawCode = req.params.code.toUpperCase();
+    if (!isValidRoomCode(rawCode)) {
+        return res.status(404).json({ success: false, message: 'Room not found' });
+    }
+    const code = rawCode;
     const room = await hydrateRoom(req, code.toUpperCase());
     if (!room) return res.status(404).json({ success: false, message: 'Room not found' });
 
@@ -237,18 +272,7 @@ router.get('/:code/messages', authenticate, async (req, res) => {
     }
 });
 
-// ─── GET /api/rooms/video/metadata ──────────────────────────────────────────
-// Resolves video title for YouTube, Direct, or HLS links.
-router.get('/video/metadata', async (req, res) => {
-    const { url, type } = req.query;
-    if (!url) return res.status(400).json({ success: false, message: 'URL required' });
-
-    try {
-        const title = await getVideoMetadata(url, type);
-        return res.json({ success: true, title });
-    } catch {
-        return res.status(500).json({ success: false, message: 'Source resolution failed' });
-    }
-});
+// NOTE: The /video/metadata route has been moved above /:code to prevent
+// Express route shadowing. See the route defined ~line 138 above.
 
 module.exports = router;

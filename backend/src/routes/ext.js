@@ -37,12 +37,18 @@ setInterval(() => {
 
 // ── POST /api/ext/sync/:roomCode — push state ────────────────────────────────
 router.post('/sync/:roomCode', (req, res) => {
-  const { roomCode } = req.params;
-  const { action, currentTime, isPlaying, pageUrl, platform, username } = req.body;
+  const rawCode = (req.params.roomCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  if (!rawCode || rawCode.length < 4) return res.status(400).json({ error: 'invalid room code' });
+
+  const { action, currentTime, isPlaying, pageUrl, platform } = req.body;
+  // Sanitize username: strip HTML chars, clamp length
+  const username = typeof req.body.username === 'string'
+    ? req.body.username.replace(/[<>"'`;&]/g, '').trim().slice(0, 30)
+    : null;
 
   if (!username) return res.status(400).json({ error: 'username required' });
 
-  const room = getRoom(roomCode.toUpperCase());
+  const room = getRoom(rawCode);
   room.updatedAt = Date.now();
 
   // Update participant heartbeat
@@ -56,8 +62,9 @@ router.post('/sync/:roomCode', (req, res) => {
       action,
       currentTime: parseFloat(currentTime) || 0,
       isPlaying: Boolean(isPlaying),
-      pageUrl,
-      platform,
+      // Only store the hostname, not the full pageUrl (which could be long/sensitive)
+      pageUrl: pageUrl ? (() => { try { return new URL(pageUrl).hostname; } catch { return null; } })() : null,
+      platform: typeof platform === 'string' ? platform.slice(0, 50) : null,
       pushedBy: username,
       updatedAt: Date.now(),
     };
@@ -74,10 +81,14 @@ router.post('/sync/:roomCode', (req, res) => {
 
 // ── GET /api/ext/sync/:roomCode — get current state ─────────────────────────
 router.get('/sync/:roomCode', (req, res) => {
-  const roomCode = req.params.roomCode.toUpperCase();
-  const { username } = req.query;
+  const rawCode = (req.params.roomCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  if (!rawCode || rawCode.length < 4) return res.status(400).json({ error: 'invalid room code' });
 
-  const room = getRoom(roomCode);
+  const username = typeof req.query.username === 'string'
+    ? req.query.username.replace(/[<>"'`;&]/g, '').trim().slice(0, 30)
+    : null;
+
+  const room = getRoom(rawCode);
 
   // Heartbeat: register this participant as online
   if (username && !room.participants.includes(username)) {
@@ -91,8 +102,8 @@ router.get('/sync/:roomCode', (req, res) => {
   const mainStore = req.app.locals.roomStore;
   let allMessages = [...room.messages];
 
-  if (mainStore && mainStore.has(roomCode)) {
-    const mainRoom = mainStore.get(roomCode);
+  if (mainStore && mainStore.has(rawCode)) {
+    const mainRoom = mainStore.get(rawCode);
     if (mainRoom.messages) {
       allMessages = [...allMessages, ...mainRoom.messages];
     }
@@ -121,14 +132,19 @@ router.get('/sync/:roomCode', (req, res) => {
 
 // ── POST /api/ext/chat/:roomCode — send chat ─────────────────────────────────
 router.post('/chat/:roomCode', (req, res) => {
-  const { roomCode } = req.params;
-  const { message, username } = req.body;
+  const rawCode = (req.params.roomCode || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10);
+  if (!rawCode || rawCode.length < 4) return res.status(400).json({ error: 'invalid room code' });
+
+  const rawMessage = typeof req.body.message === 'string' ? req.body.message : '';
+  const rawUsername = typeof req.body.username === 'string' ? req.body.username : '';
+  const message = rawMessage.trim().slice(0, 500);
+  const username = rawUsername.replace(/[<>"'`;&]/g, '').trim().slice(0, 30);
 
   if (!message || !username) return res.status(400).json({ error: 'message and username required' });
-  if (message.length > 500) return res.status(400).json({ error: 'message too long' });
+  if (rawMessage.length > 500) return res.status(400).json({ error: 'message too long' });
 
-  const code = roomCode.toUpperCase();
-  const room = getRoom(code);
+  const roomCode = rawCode;
+  const room = getRoom(roomCode);
   const msgObj = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
     username: username.slice(0, 30),
@@ -143,11 +159,11 @@ router.post('/chat/:roomCode', (req, res) => {
   const io = req.app.locals.io;
   const mainStore = req.app.locals.roomStore;
 
-  if (io && mainStore && mainStore.has(code)) {
-    const mainRoom = mainStore.get(code);
+  if (io && mainStore && mainStore.has(roomCode)) {
+    const mainRoom = mainStore.get(roomCode);
     const socketMsg = {
       id: msgObj.id,
-      roomId: code,
+      roomId: roomCode,
       userId: `ext_${username}`,
       username: username,
       avatar: null,
@@ -162,7 +178,7 @@ router.post('/chat/:roomCode', (req, res) => {
     if (mainRoom.messages.length > 500) mainRoom.messages.shift();
 
     // Broadcast to the web clients
-    io.to(code).emit('chat:message', socketMsg);
+    io.to(roomCode).emit('chat:message', socketMsg);
   }
 
   res.json({ ok: true });

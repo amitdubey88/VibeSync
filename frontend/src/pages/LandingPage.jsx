@@ -42,9 +42,12 @@ const LandingPage = () => {
   }, []); // Only run once on mount
 
   // ── Handle Kick Notifications ──────────────────────────────────
+  // NOTE: Only trigger when the value is exactly '1' (the sentinel the app
+  // sets on RoomPage when the user is kicked). This prevents social-engineering
+  // attacks where a malicious link like /?kicked=You+have+won tricks the user.
   useEffect(() => {
     const query = new URLSearchParams(location.search);
-    if (query.get("kicked")) {
+    if (query.get("kicked") === "1") {
       toast.error("You have been removed from the room by the host.", {
         id: "kicked-toast",
         duration: 5000,

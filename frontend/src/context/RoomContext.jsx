@@ -2,7 +2,8 @@ import { createContext, useState, useEffect, useCallback, useRef, useContext } f
 import { Play, Star, MessageSquare, MicOff, Lock, Unlock, Radio, LogOut, XCircle } from 'lucide-react';
 import { useSocket } from './SocketContext';
 import { useAuth } from './AuthContext';
-import { getRoomMessages } from '../services/api';
+import { getRoomMessages as _getRoomMessages } from '../services/api'; // reserved for future direct API polling
+
 import toast from 'react-hot-toast';
 import { deriveKey, encryptData, decryptData } from '../utils/crypto';
 import { sounds } from '../utils/soundEffects';
@@ -104,14 +105,9 @@ export const RoomProvider = ({ children }) => {
     const key = await deriveKey(roomCode);
     setRoomKey(key);
 
-    // Optional: Fetch history from API, but we'll rely on onRoomState for hydration
-    // to avoid race conditions.
-    try {
-      await getRoomMessages(roomCode);
-    } catch {
-      // ignore
-    }
+    // Message history is hydrated via onRoomState (socket event) to avoid race conditions.
   }, [socket]);
+
 
   const decryptMessageHistory = async (history, key) => {
     if (!key || !history) return history || [];
@@ -499,7 +495,7 @@ export const RoomProvider = ({ children }) => {
       
       setTimeout(() => {
         // Use navigate if possible, otherwise fallback to href
-        window.location.href = '/?kicked=true';
+        window.location.href = '/?kicked=1';
       }, 1500);
     };
 
@@ -634,9 +630,10 @@ export const RoomProvider = ({ children }) => {
     const onRemotePause = () => {
       // Notification removed as per user request
     };
-    const onRemoteSeek = ({ currentTime }) => {
+    const onRemoteSeek = () => {
       // Notification removed as per user request (decluttering playback noise)
     };
+
 
     socket.on('room:state', onRoomState);
     socket.on('room:participant-update', onParticipantUpdate);
@@ -734,7 +731,8 @@ export const RoomProvider = ({ children }) => {
       socket.off('queue:suggested', onQueueSuggested);
       socket.off('queue:load-video', onQueueLoadVideo);
     };
-  }, [socket, user, roomKey, addSystemMessage, isHost, room?.code, setVideoSource]);
+  }, [socket, user, roomKey, addSystemMessage, room?.code, setVideoSource]);
+
 
   // ── Social Energy Decay — only when inside a room (BUG-11) ─────────────────
   useEffect(() => {

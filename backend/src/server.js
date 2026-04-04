@@ -24,21 +24,51 @@ const server = http.createServer(app);
 const roomStore = new Map();
 app.locals.roomStore = roomStore;
 
+// ── Allowed origins whitelist ────────────────────────────────────────────────
+// Always include the configured FRONTEND_URL. Add localhost for dev.
+const ALLOWED_ORIGINS = [
+    process.env.FRONTEND_URL || 'https://vibe-sync-pied.vercel.app',
+    'http://localhost:5173',
+    'http://localhost:3000',
+].filter(Boolean);
+
+const isAllowedOrigin = (origin) => {
+    if (!origin) return true; // allow server-to-server / curl requests
+    return ALLOWED_ORIGINS.some((o) => origin === o || origin.startsWith(o));
+};
+
 // ── Socket.IO Setup ──────────────────────────────────────────────────────────
 const io = new Server(server, {
     cors: {
-        origin: (origin, cb) => cb(null, true),
+        origin: (origin, cb) => {
+            if (isAllowedOrigin(origin)) return cb(null, true);
+            return cb(new Error('CORS: origin not allowed'));
+        },
         credentials: true,
     },
     pingInterval: 10000,
     pingTimeout: 5000,
 });
 
+// ── Security Headers ─────────────────────────────────────────────────────────
+app.use((_req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Only set HSTS in production (HTTPS)
+    if (process.env.NODE_ENV === 'production') {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+    }
+    next();
+});
+
 // ── CORS — unified, single middleware, first in the stack ────────────────────
 app.use((req, res, next) => {
     const origin = req.headers.origin;
-    res.setHeader('Access-Control-Allow-Origin', origin || '*');
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (isAllowedOrigin(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin || '*');
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS,PATCH');
     res.setHeader('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
     res.setHeader('Access-Control-Max-Age', '86400');
@@ -48,8 +78,9 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(express.json({ limit: '100mb' }));
-app.use(express.urlencoded({ extended: true, limit: '100mb' }));
+// Sane body size limits — videos go through the dedicated /api/upload endpoint
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 if (process.env.NODE_ENV !== 'test') {
     app.use(morgan('dev'));
 }

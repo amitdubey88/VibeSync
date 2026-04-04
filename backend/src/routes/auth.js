@@ -14,6 +14,27 @@ try {
 /** Returns true only if MongoDB connection is ready. */
 const isDbReady = () => mongoose.connection.readyState === 1;
 
+/**
+ * Basic email format validation.
+ * Prevents arbitrary strings from being used as MongoDB query keys.
+ */
+const isValidEmail = (email) => {
+    if (typeof email !== 'string') return false;
+    if (email.length > 254) return false; // RFC 5321 max
+    // Simple but robust email regex (no lookaheads needed for basic validation)
+    return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim());
+};
+
+/**
+ * Strip characters that shouldn't appear in usernames.
+ * Allows unicode letters/numbers so international names work.
+ */
+const sanitizeUsername = (name) => {
+    if (typeof name !== 'string') return '';
+    // Remove HTML/script injection chars, trim, and clamp length
+    return name.replace(/[<>"'`;&]/g, '').trim().slice(0, 30);
+};
+
 /** Generate a JWT for a user payload */
 const signToken = (payload) =>
     jwt.sign(payload, process.env.JWT_SECRET, {
@@ -29,15 +50,18 @@ const pickAvatarColor = (username) => {
     return colors[username.charCodeAt(0) % colors.length];
 };
 
-// ─── POST /api/auth/guest ─────────────────────────────────────────────────────
+// ─── POST /api/auth/guest ─────────────────────────────────────────────────────────────
 router.post('/guest', async (req, res) => {
     try {
         const { username } = req.body;
-        if (!username || username.trim().length < 2) {
-            return res.status(400).json({ success: false, message: 'Username must be at least 2 characters' });
+        if (!username || typeof username !== 'string') {
+            return res.status(400).json({ success: false, message: 'Username required' });
         }
 
-        const sanitized = username.trim().slice(0, 30);
+        const sanitized = sanitizeUsername(username);
+        if (sanitized.length < 2) {
+            return res.status(400).json({ success: false, message: 'Username must be at least 2 characters' });
+        }
         const avatar = pickAvatarColor(sanitized);
         let userId;
 
@@ -68,6 +92,9 @@ router.post('/otp/send', async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) return res.status(400).json({ success: false, message: 'Email required' });
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ success: false, message: 'Invalid email address' });
+        }
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expiry = new Date(Date.now() + 10 * 60 * 1000);
@@ -93,6 +120,13 @@ router.post('/otp/verify', async (req, res) => {
     try {
         const { email, otp, username } = req.body;
         if (!email || !otp) return res.status(400).json({ success: false, message: 'Email and OTP required' });
+        if (!isValidEmail(email)) {
+            return res.status(400).json({ success: false, message: 'Invalid email address' });
+        }
+        // OTP must be exactly 6 digits
+        if (!/^\d{6}$/.test(String(otp))) {
+            return res.status(400).json({ success: false, message: 'Invalid OTP format' });
+        }
 
         if (!User || !isDbReady()) {
             return res.status(503).json({ success: false, message: 'Database unavailable' });

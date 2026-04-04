@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
@@ -349,12 +349,7 @@ const RoomPage = () => {
     }
   });
 
-  // Refresh participant list when switching to participants tab
-  const handleTabChange = useCallback((tab) => {
-    setSidebarTab(tab);
-    if (tab === 'participants') refreshParticipants();
-    if (tab === 'chat') setUnreadChatCount(0); // clear unread count when viewing chat
-  }, [refreshParticipants, setUnreadChatCount]);
+
 
   // Show join-request approval toasts for host
   useEffect(() => {
@@ -448,7 +443,12 @@ const RoomPage = () => {
       const others = participants.filter(
         (p) => p.userId !== user?.id && p.isOnline !== false
       );
-      if (others.length === 1) {
+      if (others.length === 0) {
+        // Host is alone — end the session entirely so the room doesn't persist in memory
+        sessionStorage.removeItem("vibesync_session");
+        deleteRoom();
+        return;
+      } else if (others.length === 1) {
         // Auto-transfer to the only other participant before leaving
         transferHost(others[0].userId);
         setTimeout(() => { leaveRoom(true); navigate('/', { replace: true }); }, 100);
@@ -460,7 +460,7 @@ const RoomPage = () => {
       }
     }
     
-    // For non-hosts or if no others online, show confirmation
+    // For non-hosts, show confirmation
     setShowConfirmLeave(true);
   };
 
@@ -470,11 +470,7 @@ const RoomPage = () => {
     navigate('/', { replace: true });
   };
 
-  const confirmLeave = (transferToUserId) => {
-    sessionStorage.removeItem("vibesync_session");
-    if (transferToUserId) transferHost(transferToUserId);
-    setTimeout(() => { leaveRoom(true); navigate('/', { replace: true }); }, transferToUserId ? 300 : 0);
-  };
+
 
   const handleDeleteRoom = () => setShowDeleteConfirm(true);
 
@@ -906,7 +902,7 @@ const RoomPage = () => {
               return (
                 <button
                   key={id}
-                  onClick={() => { setSidebarTab(id); if (id === 'chat') setActiveMobileTab('chat'); else if (id === 'participants') setActiveMobileTab('people'); }}
+                  onClick={() => { setSidebarTab(id); if (id === 'chat') { setActiveMobileTab('chat'); setUnreadChatCount(0); } else if (id === 'participants') setActiveMobileTab('people'); }}
                   className={`flex-1 flex flex-col items-center justify-center gap-2 group relative transition-all duration-300 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant opacity-40 hover:opacity-100"}`}
                 >
                   <TabIcon size={24} className="mb-1" />

@@ -68,7 +68,9 @@ module.exports = (io, socket, roomStore) => {
             }
             // Cleanup Local disk
             else if (url.startsWith('/uploads/')) {
-                const fileName = url.replace('/uploads/', '');
+                // path.basename() strips any directory traversal (e.g. ../../etc/passwd)
+                const fileName = path.basename(url.replace('/uploads/', ''));
+                if (!fileName) return;
                 const filePath = path.join(__dirname, '..', '..', 'uploads', fileName);
                 if (fs.existsSync(filePath)) {
                     try {

@@ -145,6 +145,23 @@ module.exports = (io, socket, roomStore) => {
         const room = roomStore.get(code);
         if (!room) return;
 
+        // ── Security: validate gifUrl is a safe HTTP/HTTPS URL ────────────────
+        // Block javascript:, data:, and other dangerous URI schemes.
+        if (!gifUrl || typeof gifUrl !== 'string') return;
+        try {
+            const parsed = new URL(gifUrl);
+            // Only allow https/http from known GIF CDNs
+            const ALLOWED_GIF_HOSTS = [
+                'media.giphy.com', 'media0.giphy.com', 'media1.giphy.com',
+                'media2.giphy.com', 'media3.giphy.com', 'media4.giphy.com',
+                'i.giphy.com', 'tenor.com', 'c.tenor.com', 'media.tenor.com',
+            ];
+            if (!['https:', 'http:'].includes(parsed.protocol)) return;
+            if (!ALLOWED_GIF_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith('.' + h))) return;
+        } catch {
+            return; // Invalid URL
+        }
+
         // Slow mode check
         if (room.slowMode?.enabled && socket.user.id !== room.hostId) {
             const cooldown = room.slowMode.cooldown * 1000;
