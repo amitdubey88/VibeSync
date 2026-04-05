@@ -175,7 +175,7 @@ router.get('/:code', async (req, res) => {
 
     // Strip sensitive data
     // eslint-disable-next-line no-unused-vars
-    const { password, messages, ...safeRoom } = room;
+    const { password, messages, _disconnectTimers, ...safeRoom } = room;
     return res.json({
         success: true,
         room: {
