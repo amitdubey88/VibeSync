@@ -2,6 +2,9 @@ import type { Metadata } from 'next';
 import Script from 'next/script';
 import LandingPage from '../src/views/LandingPage';
 
+// Disable static prerendering — LandingPage accesses `document` at init
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Watch Together, Live — VibeSync',
   description:
