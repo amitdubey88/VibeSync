@@ -49,7 +49,7 @@ export default function ContactPage() {
               The fastest way to reach me for support, feature requests, or business inquiries.
             </p>
             <span className="inline-block px-6 py-3 rounded-full bg-obsidian-background/50 border border-obsidian-outline-variant/50 text-obsidian-primary font-headline text-sm tracking-widest uppercase font-semibold group-hover:border-obsidian-primary/50 group-hover:text-obsidian-tertiary transition-colors">
-              amitdubey88@gmail.com
+              amitdubey19990808@gmail.com
             </span>
           </a>
         </div>
