@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { createRoom, getRoomInfo } from "../services/api";
 import toast from "react-hot-toast";
@@ -21,8 +21,10 @@ import {
 
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
-  const location = useLocation();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  // Read roomEnded message from sessionStorage (set by RoomPage before redirecting)
+  const [roomEndedMsg, setRoomEndedMsg] = React.useState('');
 
   const [tab, setTab] = useState("join");
   const [username, setUsername] = useState("");
@@ -40,6 +42,12 @@ const LandingPage = () => {
     logout();
     setUsername("");
     sessionStorage.removeItem("vibesync_session");
+    // Pick up roomEnded message left by RoomPage and clear it
+    const ended = sessionStorage.getItem('vibesync_room_ended');
+    if (ended) {
+      setRoomEndedMsg(ended);
+      sessionStorage.removeItem('vibesync_room_ended');
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount
 
@@ -48,8 +56,7 @@ const LandingPage = () => {
   // sets on RoomPage when the user is kicked). This prevents social-engineering
   // attacks where a malicious link like /?kicked=You+have+won tricks the user.
   useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    if (query.get("kicked") === "1") {
+    if (searchParams.get("kicked") === "1") {
       toast.error("You have been removed from the room by the host.", {
         id: "kicked-toast",
         duration: 5000,
@@ -59,10 +66,10 @@ const LandingPage = () => {
           </span>
         ),
       });
-      // Clean up the URL
-      navigate("/", { replace: true });
+      // Clean up the URL query param
+      router.replace('/');
     }
-  }, [navigate, location.search]);
+  }, [router, searchParams]);
 
   // ── Ensure user is logged in with chosen username ────────────────────────
   const ensureAuth = async () => {
@@ -117,7 +124,10 @@ const LandingPage = () => {
           joinedAt: Date.now(),
         }),
       );
-      navigate(`/room/${room.code}`, { state: { password } });
+      // Store password in sessionStorage so RoomPage can read it on mount
+      if (password) sessionStorage.setItem('vibesync_room_password', password);
+      else sessionStorage.removeItem('vibesync_room_password');
+      router.push(`/room/${room.code}`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Room not found");
     } finally {
@@ -150,7 +160,10 @@ const LandingPage = () => {
           joinedAt: Date.now(),
         }),
       );
-      navigate(`/room/${room.code}`, { state: { password } });
+      // Store password in sessionStorage so RoomPage can read it on mount
+      if (password) sessionStorage.setItem('vibesync_room_password', password);
+      else sessionStorage.removeItem('vibesync_room_password');
+      router.push(`/room/${room.code}`);
     } catch (err) {
       toast.error(err.response?.data?.message || "Failed to create room");
     } finally {
@@ -201,7 +214,7 @@ const LandingPage = () => {
       </header>
 
       {/* ── Room Ended by Host Modal ── */}
-      {location.state?.roomEnded && (
+      {roomEndedMsg && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-lg">
           <div className="glass-panel p-8 max-w-sm w-full border border-obsidian-outline-variant/50 text-center shadow-[0_0_40px_rgba(239,68,68,0.15)] rounded-xl">
             <div className="w-14 h-14 bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-6 rounded-lg">
@@ -213,11 +226,11 @@ const LandingPage = () => {
               Session Ended
             </h2>
             <p className="text-obsidian-on-surface-variant text-sm mb-8 tracking-normal">
-              {location.state.roomEnded}
+              {roomEndedMsg}
             </p>
             <button
               type="button"
-              onClick={() => navigate("/", { replace: true, state: {} })}
+              onClick={() => { setRoomEndedMsg(''); router.replace('/'); }}
               className="w-full py-3 bg-obsidian-primary text-white font-headline font-bold tracking-tight uppercase hover:shadow-[0_8px_20px_rgba(168,85,247,0.3)] transition-all duration-300 rounded-lg"
             >
               Go Back

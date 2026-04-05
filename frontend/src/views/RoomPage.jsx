@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useRoom } from '../context/RoomContext';
 import { useAuth } from '../context/AuthContext';
 import { joinRoom } from '../services/api';
@@ -72,10 +72,10 @@ const LiveTimeTracker = ({ videoState, currentVideo }) => {
   return <span className="font-mono flex items-center gap-1.5"><ClockIcon size={12} /> {formatTime(displayTime)}</span>;
 };
 
-const RoomPage = () => {
-  const { code } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
+const RoomPage = ({ code }) => {
+  // code is passed as a prop from RoomClient (Next.js dynamic route)
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, isAuthenticated, guestLogin } = useAuth();
   const { socket, isConnected } = useSocket();
   const {
@@ -244,9 +244,8 @@ const RoomPage = () => {
           return;
         }
 
-        const password = location.state?.password;
-        const query = new URLSearchParams(location.search);
-        const inviteToken = query.get('t');
+        const password = sessionStorage.getItem('vibesync_room_password') || undefined;
+        const inviteToken = searchParams.get('t');
         await joinRoom(code, password, inviteToken);
         socketJoin(code);
         
@@ -277,14 +276,13 @@ const RoomPage = () => {
     isConnected,
     isAuthenticated,
     code,
-    location.state?.password,
     socketJoin,
     refreshParticipants,
-    navigate,
+    router,
     user?.username,
     isNameConfirmed,
     guestName,
-    location.search,
+    searchParams,
   ]);
 
   // Leave room on component unmount (page navigation away).
@@ -312,9 +310,10 @@ const RoomPage = () => {
       console.log('[RoomPage] Room ended by host, clearing session and redirecting.');
       sessionStorage.removeItem("vibesync_session");
       dismissRoomEnded();
-      navigate('/', { replace: true, state: { roomEnded: roomEndedByHost.message || "Session Ended" } });
+      sessionStorage.setItem('vibesync_room_ended', roomEndedByHost.message || "Session Ended");
+      router.replace('/');
     }
-  }, [roomEndedByHost, sessionSummary, navigate, dismissRoomEnded]);
+  }, [roomEndedByHost, sessionSummary, router, dismissRoomEnded]);
 
   // Ghost-room guard: only fires after the room was real and became null.
   // We debounce by 4 seconds to allow socket reconnection to restore the room
@@ -324,7 +323,7 @@ const RoomPage = () => {
       ghostRedirectTimer.current = setTimeout(() => {
         // Re-check via ref: if room has been restored by reconnect, don't redirect
         if (!roomRef.current && hasEverHadRoom.current) {
-          navigate('/', { replace: true });
+          router.replace('/');
         }
       }, 4000);
     } else {
@@ -340,7 +339,7 @@ const RoomPage = () => {
         ghostRedirectTimer.current = null;
       }
     };
-  }, [room, joining, error, sessionSummary, navigate]);
+  }, [room, joining, error, sessionSummary, router]);
 
   const [showRefreshConfirm, setShowRefreshConfirm] = useState(false);
 
@@ -453,7 +452,7 @@ const RoomPage = () => {
       } else if (others.length === 1) {
         // Auto-transfer to the only other participant before leaving
         transferHost(others[0].userId);
-        setTimeout(() => { leaveRoom(true); navigate('/', { replace: true }); }, 100);
+        setTimeout(() => { leaveRoom(true); router.replace('/'); }, 100);
         return;
       } else if (others.length > 1) {
         // Must explicitly choose host
@@ -469,7 +468,7 @@ const RoomPage = () => {
   const executeLeave = () => {
     sessionStorage.removeItem("vibesync_session");
     leaveRoom(true);
-    navigate('/', { replace: true });
+    router.replace('/');
   };
 
 
@@ -498,7 +497,7 @@ const RoomPage = () => {
                 style={{ animationDelay: `${i * 0.15}s` }} />
             ))}
           </div>
-          <button className="btn-secondary text-sm w-full" onClick={() => { leaveRoom(); navigate('/'); }}>Cancel Request</button>
+          <button className="btn-secondary text-sm w-full" onClick={() => { leaveRoom(); router.push('/'); }}>Cancel Request</button>
         </div>
       </div>
     );
@@ -512,7 +511,7 @@ const RoomPage = () => {
           onClose={() => {
             setSessionSummary(null);
             sessionStorage.removeItem("vibesync_session");
-            navigate('/', { replace: true });
+            router.replace('/');
           }} 
         />
       </div>
@@ -598,7 +597,7 @@ const RoomPage = () => {
             className="btn-secondary w-full flex items-center justify-center gap-2" 
             onClick={() => {
               sessionStorage.removeItem("vibesync_session");
-              navigate('/', { replace: true });
+              router.replace('/');
             }}
           >
             <BackIcon size={16} /> Back Home
@@ -617,7 +616,7 @@ const RoomPage = () => {
       <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full bg-gradient-to-r from-obsidian-surface via-obsidian-surface to-obsidian-surface/80 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.5)] border-b border-obsidian-primary/15 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
           <button
-            onClick={() => navigate("/")}
+            onClick={() => router.push('/')}
             className="flex items-center gap-2 shrink-0 group"
           >
             <img
@@ -1124,7 +1123,7 @@ const RoomPage = () => {
                     onClick={() => {
                       setShowLeaveModal(false);
                       transferHost(p.userId);
-                      navigate('/');
+                      router.push('/');
                     }}
                     className="w-full flex items-center gap-3 p-3 bg-white/5 hover:bg-obsidian-primary/10 border border-white/5 hover:border-obsidian-primary/30 transition-all text-left group"
                   >

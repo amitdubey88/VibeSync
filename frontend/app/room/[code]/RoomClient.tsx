@@ -13,7 +13,7 @@ import { useAuth } from '../../../src/context/AuthContext';
  *
  * The loading spinner replaces <ProtectedRoom> from App.jsx.
  */
-function RoomClient({ code: _code }: { code: string }) {
+function RoomClient({ code }: { code: string }) {
   const { loading } = useAuth();
 
   if (loading) {
@@ -28,7 +28,7 @@ function RoomClient({ code: _code }: { code: string }) {
     <SocketProvider>
       <RoomProvider>
         <WebRTCProvider>
-          <RoomPage />
+          <RoomPage code={code} />
         </WebRTCProvider>
       </RoomProvider>
     </SocketProvider>

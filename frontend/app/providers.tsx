@@ -1,6 +1,5 @@
 'use client';
 
-import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../src/context/AuthContext';
 import { Toaster } from 'react-hot-toast';
 
@@ -12,7 +11,6 @@ import { Toaster } from 'react-hot-toast';
  */
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <BrowserRouter>
       <AuthProvider>
         {children}
         <Toaster
@@ -37,6 +35,5 @@ export function Providers({ children }: { children: React.ReactNode }) {
         }}
         />
       </AuthProvider>
-    </BrowserRouter>
   );
 }
