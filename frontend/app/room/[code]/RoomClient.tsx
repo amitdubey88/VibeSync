@@ -3,7 +3,7 @@
 import { SocketProvider } from '../../../src/context/SocketContext';
 import { RoomProvider } from '../../../src/context/RoomContext';
 import { WebRTCProvider } from '../../../src/context/WebRTCContext';
-import RoomPage from '../../../src/pages/RoomPage';
+import RoomPage from '../../../src/views/RoomPage';
 import { useAuth } from '../../../src/context/AuthContext';
 
 /**

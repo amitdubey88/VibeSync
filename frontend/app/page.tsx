@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
-import LandingPage from '../src/pages/LandingPage';
+import LandingPage from '../src/views/LandingPage';
 
 export const metadata: Metadata = {
   title: 'Watch Together, Live — VibeSync',
