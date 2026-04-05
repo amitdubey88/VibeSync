@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "../context/AuthContext";
 import { createRoom, getRoomInfo } from "../services/api";
 import toast from "react-hot-toast";
@@ -198,6 +199,36 @@ const LandingPage = () => {
               />
               SECURE
             </span>
+            <Link
+              href="/about"
+              className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2"
+            >
+              ABOUT
+            </Link>
+            <Link
+              href="/developer"
+              className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2"
+            >
+              DEVELOPER
+            </Link>
+            <Link
+              href="/privacy"
+              className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2"
+            >
+              PRIVACY
+            </Link>
+            <Link
+              href="/terms"
+              className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2"
+            >
+              TERMS
+            </Link>
+            <Link
+              href="/contact"
+              className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2"
+            >
+              CONTACT
+            </Link>
           </nav>
           <div className="flex items-center gap-4">
             <button
@@ -687,24 +718,36 @@ const LandingPage = () => {
             </p>
           </div>
           <div className="flex items-center gap-8 border-r border-l px-8 border-obsidian-outline-variant/40 hidden md:flex">
-            <a
+            <Link
+              href="/about"
               className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-              href="#"
+            >
+              About
+            </Link>
+            <Link
+              href="/developer"
+              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
+            >
+              Developer
+            </Link>
+            <Link
+              href="/privacy"
+              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
             >
               Privacy
-            </a>
-            <a
+            </Link>
+            <Link
+              href="/terms"
               className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-              href="#"
             >
               Terms
-            </a>
-            <a
+            </Link>
+            <Link
+              href="/contact"
               className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-              href="#"
             >
               Contact
-            </a>
+            </Link>
           </div>
           <div className="flex gap-4">
             <div className="w-10 h-10 border border-obsidian-outline-variant/40 flex items-center justify-center hover:border-obsidian-primary/70 transition-all group cursor-pointer bg-obsidian-surface/40 backdrop-blur-sm rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
