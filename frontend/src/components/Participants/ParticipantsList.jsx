@@ -110,7 +110,7 @@ const ParticipantsList = () => {
                   </span>
                   {isRoomHost && <CrownIcon size={14} className="text-amber-500 drop-shadow-[0_0_4px_rgba(217,119,6,0.5)] shrink-0" />}
                   {coHosts.includes(p.userId) && !isRoomHost && <StarIcon size={14} className="text-obsidian-primary drop-shadow-[0_0_4px_rgba(170,85,255,0.4)] shrink-0" />}
-                  {p.isGuest && <span className="badge bg-obsidian-tertiary/15 text-obsidian-tertiary border border-obsidian-tertiary/30 text-[9px] px-1.5 py-0.5 rounded-full">Guest</span>}
+
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   {p.status === 'away' ? (

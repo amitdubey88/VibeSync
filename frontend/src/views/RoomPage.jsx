@@ -1137,9 +1137,7 @@ const RoomPage = ({ code }) => {
                       <p className="text-sm font-headline font-bold text-white tracking-wide truncate group-hover:text-obsidian-primary">
                         {p.username}
                       </p>
-                      <p className="text-[10px] text-obsidian-on-surface-variant uppercase tracking-widest mt-0.5">
-                        {p.isGuest ? "Guest" : "Member"}
-                      </p>
+
                     </div>
                   </button>
                 ))}

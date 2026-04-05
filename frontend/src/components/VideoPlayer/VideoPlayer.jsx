@@ -960,9 +960,9 @@ const VideoPlayer = () => {
       onKeyDown={(e) => { if (e.key === 'f' || e.key === 'F') e.preventDefault(); }}
       tabIndex={-1}
     >
-      {/* LIVE Badge (Visible to everyone during live streaming) */}
+      {/* LIVE Badge (Visible when controls are shown) */}
       {(currentVideo?.type === 'live' || isDirectStreaming) && (
-        <div className="absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1  shadow-lg animate-fade-in border border-white/10 opacity-60">
+        <div className={`absolute top-5 left-5 z-40 flex items-center gap-2 bg-red-600/40 backdrop-blur-md px-2.5 py-1 shadow-lg border border-white/10 transition-opacity duration-300 ${showControls ? 'opacity-60' : 'opacity-0 pointer-events-none'}`}>
           <span className="w-2 h-2  bg-white animate-pulse" />
           <span className="text-[10px] font-black text-white tracking-widest uppercase">
             Direct Live
@@ -1189,9 +1189,9 @@ const VideoPlayer = () => {
           {/* Subtitles Overlay */}
       <SubtitleOverlay />
 
-      {/* Sync Status Badge (Always visible at top-right when video is loaded) */}
+      {/* Sync Status Badge (Visible when controls are shown) */}
       {currentVideo && (videoState?.isPlaying || videoState?.currentTime > 0) && (
-        <div className="absolute top-4 right-4 z-40 pointer-events-none">
+        <div className={`absolute top-4 right-4 z-40 pointer-events-none transition-opacity duration-300 ${showControls ? 'opacity-100' : 'opacity-0'}`}>
           <SyncStatusBadge status={syncStatus} />
         </div>
       )}
