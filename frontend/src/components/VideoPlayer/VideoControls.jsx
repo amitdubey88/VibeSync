@@ -264,7 +264,7 @@ const VideoControls = ({
       </div>
 
       {/* ── Buttons row ── */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-3 w-full">
         {/* Play/pause */}
         <button
           onClick={togglePlay}
@@ -299,20 +299,20 @@ const VideoControls = ({
           step="0.05"
           value={isMutedLocal ? 0 : volume}
           onChange={handleVolume}
-          className="w-20 accent-obsidian-primary cursor-pointer"
+          className="hidden sm:block w-16 sm:w-20 accent-obsidian-primary cursor-pointer"
         />
 
         {/* Time */}
-        <span className="text-zinc-400 font-headline tracking-wider text-[10px] sm:text-xs font-mono select-none ml-1 whitespace-nowrap">
+        <span className="text-zinc-400 font-headline tracking-wider text-[10px] sm:text-xs font-mono select-none ml-0.5 sm:ml-1 whitespace-nowrap">
           {formatTime(safeTime)} / {formatTime(safeDuration)}
         </span>
 
         {/* Mic toggle */}
-        <div className="flex items-center gap-1.5 ml-2">
+        <div className="flex items-center gap-1 sm:gap-1.5 ml-1 sm:ml-2">
           {voiceError ? (
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse pointer-events-none">
+            <div className="flex items-center gap-1 sm:gap-1.5 px-1.5 sm:px-2 py-1 bg-red-500/20 border border-red-500/30 text-red-500 text-[9px] font-bold uppercase transition-all animate-pulse pointer-events-none whitespace-nowrap">
               <MicOffIcon size={12} />
-              <span>Mic Denied</span>
+              <span className="hidden sm:inline">Mic Denied</span>
             </div>
           ) : (
             <button
