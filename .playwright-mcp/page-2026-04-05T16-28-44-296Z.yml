@@ -1,0 +1,1 @@
+- generic [ref=e2]: "User-Agent: * Allow: / Disallow: /api/ Disallow: /room/ User-Agent: Googlebot Allow: / Disallow: /api/ Disallow: /room/ Sitemap: https://vibesync.app/sitemap.xml"

@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useState, useEffect, useCallback, useRef, useContext } from 'react';
 import { Play, Star, MessageSquare, MicOff, Lock, Unlock, Radio, LogOut, XCircle } from 'lucide-react';
 import { useSocket } from './SocketContext';

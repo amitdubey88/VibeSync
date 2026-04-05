@@ -1,3 +1,5 @@
+'use client';
+
 import { useWebRTCContext } from '../context/WebRTCContext';
 
 /**

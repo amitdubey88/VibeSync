@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';

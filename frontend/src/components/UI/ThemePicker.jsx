@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useRoomTheme } from '../../hooks/useRoomTheme';
 import { useAuth } from '../../context/AuthContext';

@@ -1,3 +1,5 @@
+'use client';
+
 import { createContext, useState, useEffect, useCallback, useContext } from 'react';
 import { loginAsGuest, verifyOtp, sendOtp } from '../services/api';
 import { disconnectSocket } from '../services/socket';
@@ -7,11 +9,13 @@ export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem('vibesync_token'));
+  const [token, setToken] = useState(() =>
+    typeof window !== 'undefined' ? localStorage.getItem('vibesync_token') : null
+  );
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {
-    localStorage.removeItem('vibesync_token');
+    if (typeof window !== 'undefined') localStorage.removeItem('vibesync_token');
     setToken(null);
     setUser(null);
     disconnectSocket();
@@ -36,7 +40,7 @@ export const AuthProvider = ({ children }) => {
 
   const saveAuth = useCallback((data) => {
     const { token: t, user: u } = data;
-    localStorage.setItem('vibesync_token', t);
+    if (typeof window !== 'undefined') localStorage.setItem('vibesync_token', t);
     setToken(t);
     setUser(u);
   }, []);

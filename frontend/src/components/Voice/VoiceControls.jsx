@@ -1,3 +1,5 @@
+'use client';
+
 import { useWebRTCContext } from '../../context/WebRTCContext';
 import { Mic, MicOff } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';

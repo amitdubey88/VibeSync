@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * IconButton — standardized icon-only button.
  *

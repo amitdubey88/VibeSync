@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useSubtitles } from '../../hooks/useSubtitles';
 import { motion as Motion, AnimatePresence } from 'framer-motion';

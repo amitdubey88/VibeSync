@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { useSpeedVote } from '../../hooks/useSpeedVote';
 import { useAuth } from '../../context/AuthContext';

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useCallback, useEffect } from "react";
 import { useRoom } from "../../context/RoomContext";
 import { useWebRTCContext } from "../../context/WebRTCContext";

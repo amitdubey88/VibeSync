@@ -1,3 +1,5 @@
+'use client';
+
 import { CheckCircle2, Loader2, Zap } from 'lucide-react';
 
 const SyncStatusBadge = ({ status }) => {

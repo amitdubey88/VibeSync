@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect, useCallback } from 'react';
 import { Pin, PinOff } from 'lucide-react';
 import toast from 'react-hot-toast';

@@ -1,3 +1,5 @@
+'use client';
+
 import { getInitials } from '../../utils/stringUtils';
 
 /**

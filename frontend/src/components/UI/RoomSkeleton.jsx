@@ -1,3 +1,5 @@
+'use client';
+
 const RoomSkeleton = () => {
   return (
     <div className="h-screen flex flex-col bg-[#0a0a0b] overflow-hidden animate-fade-in">

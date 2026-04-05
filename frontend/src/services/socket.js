@@ -20,7 +20,7 @@ export const connectSocket = (token) => {
 
     currentToken = token;
 
-    const SERVER_URL = import.meta.env.VITE_API_URL || '/';
+    const SERVER_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     socket = io(SERVER_URL, {
         auth: { token },
         transports: ['websocket', 'polling'],

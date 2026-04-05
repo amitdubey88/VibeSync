@@ -1,3 +1,5 @@
+'use client';
+
 import { useRoom } from '../../context/RoomContext';
 import { getInitials, getAvatarColor } from '../../utils/helpers';
 import { Users, Crown } from 'lucide-react';

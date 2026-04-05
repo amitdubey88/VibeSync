@@ -1,3 +1,5 @@
+'use client';
+
 // hooks/useNavigationGuard.js
 
 import { useEffect } from "react";

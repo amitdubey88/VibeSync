@@ -1,3 +1,5 @@
+'use client';
+
 import { useEffect, useState, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useRoom } from '../context/RoomContext';
@@ -385,7 +387,7 @@ const RoomPage = () => {
   const copyInviteLink = () => {
     // Construct the absolute backend invite URL for rich OG previews
     // In production, VITE_API_URL should be the full backend domain (e.g. https://api.vibesync.live)
-    const backendBase = import.meta.env.VITE_API_URL || window.location.origin.replace('5173', '5000');
+    const backendBase = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
     const inviteUrl = `${backendBase}/invite/${code}`;
     
     navigator.clipboard.writeText(inviteUrl).then(() => {

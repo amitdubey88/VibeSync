@@ -1,3 +1,5 @@
+'use client';
+
 import { Zap, UserPlus, PlayCircle, Anchor, Info } from 'lucide-react';
 import { useRoom } from '../../context/RoomContext';
 

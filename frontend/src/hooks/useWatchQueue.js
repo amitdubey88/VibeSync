@@ -1,3 +1,5 @@
+'use client';
+
 import { useRoom } from '../context/RoomContext';
 
 export const useWatchQueue = () => {

@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useRoom } from '../../context/RoomContext';
 import { motion as Motion, AnimatePresence } from 'framer-motion';
