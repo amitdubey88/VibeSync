@@ -20,6 +20,21 @@ import {
   ForumIcon,
 } from "../components/UI/SharpIcons";
 
+const MenuIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="3" y1="12" x2="21" y2="12"></line>
+    <line x1="3" y1="6" x2="21" y2="6"></line>
+    <line x1="3" y1="18" x2="21" y2="18"></line>
+  </svg>
+);
+
+const CloseIcon = ({ size }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="18" y1="6" x2="6" y2="18"></line>
+    <line x1="6" y1="6" x2="18" y2="18"></line>
+  </svg>
+);
+
 const LandingPage = () => {
   const { user, guestLogin, logout, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -28,6 +43,7 @@ const LandingPage = () => {
   const [roomEndedMsg, setRoomEndedMsg] = React.useState('');
 
   const [tab, setTab] = useState("join");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [username, setUsername] = useState("");
   const [roomCode, setRoomCode] = useState("");
   const [roomName, setRoomName] = useState("");
@@ -240,8 +256,37 @@ const LandingPage = () => {
             >
               ACCESS ROOM
             </button>
+            
+            {/* Mobile Menu Toggle Button */}
+            <button 
+              className="md:hidden text-obsidian-on-surface hover:text-obsidian-primary transition-colors flex items-center justify-center p-2 rounded-lg border border-obsidian-outline-variant/30 bg-obsidian-surface/50"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 w-full bg-obsidian-background/95 backdrop-blur-xl border-b border-obsidian-outline-variant/40 shadow-2xl flex flex-col font-headline animate-fade-in z-50">
+            <div className="flex flex-col p-6 gap-6">
+              <span className="text-obsidian-primary font-semibold font-headline text-xs tracking-wide flex items-center gap-2">
+                <span className="w-2 h-2 bg-obsidian-primary rounded-full animate-pulse"></span>
+                LIVE SYNC
+              </span>
+              <span className="text-obsidian-outline-variant font-headline text-xs tracking-wide flex items-center gap-2">
+                <EncryptionIcon size={14} className="text-obsidian-outline-variant" />
+                SECURE
+              </span>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/about" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">ABOUT</Link>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/developer" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">DEVELOPER</Link>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/privacy" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">PRIVACY</Link>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/terms" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">TERMS</Link>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/contact" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">CONTACT</Link>
+            </div>
+          </div>
+        )}
       </header>
 
       {/* ── Room Ended by Host Modal ── */}
