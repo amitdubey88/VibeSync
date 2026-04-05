@@ -6,9 +6,12 @@ export const metadata = {
   description: 'Get in touch with the VibeSync team.',
 };
 
+import { Footer } from '../../src/components/UI/Footer';
+
 export default function ContactPage() {
   return (
-    <div className="min-h-screen bg-obsidian-background text-obsidian-on-surface font-body pt-24 pb-16 px-6 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen bg-obsidian-background text-obsidian-on-surface font-body">
+      <main className="flex-grow pt-24 pb-16 px-6 relative overflow-hidden">
       {/* Decorative Background */}
       <div className="absolute top-1/3 left-1/4 w-[500px] h-[500px] bg-obsidian-primary/5 rounded-full blur-[150px] pointer-events-none"></div>
       <div className="absolute bottom-1/3 right-1/4 w-[400px] h-[400px] bg-cyan-500/5 rounded-full blur-[120px] pointer-events-none"></div>
@@ -52,6 +55,8 @@ export default function ContactPage() {
         </div>
 
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }

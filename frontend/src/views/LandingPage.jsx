@@ -19,6 +19,7 @@ import {
   EncryptionIcon,
   ForumIcon,
 } from "../components/UI/SharpIcons";
+import { Footer } from "../components/UI/Footer";
 
 const MenuIcon = ({ size }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -789,65 +790,7 @@ const LandingPage = () => {
         </section>
       </main>
 
-      {/* Footer */}
-      <footer className="bg-gradient-to-t from-obsidian-bg via-obsidian-bg to-obsidian-surface/20 w-full border-t border-obsidian-outline-variant/40 relative z-10 backdrop-blur-sm">
-        <div className="flex flex-col md:flex-row justify-between items-center px-8 py-12 gap-6 max-w-7xl mx-auto">
-          <div className="flex flex-col items-center md:items-start gap-2">
-            <span className="text-base font-bold text-transparent bg-clip-text bg-gradient-to-r from-obsidian-on-surface to-obsidian-primary font-headline tracking-tight uppercase">
-              VibeSync
-            </span>
-            <p className="font-body text-xs tracking-normal text-obsidian-on-surface-variant">
-              Watch parties, synchronized
-            </p>
-          </div>
-          <div className="flex items-center gap-8 border-r border-l px-8 border-obsidian-outline-variant/40 hidden md:flex">
-            <Link
-              href="/about"
-              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-            >
-              About
-            </Link>
-            <Link
-              href="/developer"
-              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-            >
-              Developer
-            </Link>
-            <Link
-              href="/privacy"
-              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-            >
-              Privacy
-            </Link>
-            <Link
-              href="/terms"
-              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-            >
-              Terms
-            </Link>
-            <Link
-              href="/contact"
-              className="font-headline text-xs tracking-normal text-obsidian-on-surface-variant hover:text-obsidian-primary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
-            >
-              Contact
-            </Link>
-          </div>
-          <div className="flex gap-4">
-            <div className="w-10 h-10 border border-obsidian-outline-variant/40 flex items-center justify-center hover:border-obsidian-primary/70 transition-all group cursor-pointer bg-obsidian-surface/40 backdrop-blur-sm rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-              <LanguageIcon
-                size={20}
-                className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary transition-colors"
-              />
-            </div>
-            <div className="w-10 h-10 border border-obsidian-outline-variant/40 flex items-center justify-center hover:border-obsidian-primary/70 transition-all group cursor-pointer bg-obsidian-surface/40 backdrop-blur-sm rounded-lg hover:shadow-[0_0_15px_rgba(168,85,247,0.2)]">
-              <ShareIcon
-                size={20}
-                className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary transition-colors"
-              />
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 };

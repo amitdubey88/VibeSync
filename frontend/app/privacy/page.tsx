@@ -5,9 +5,12 @@ export const metadata = {
   description: 'Learn how VibeSync protects your data with end-to-end encryption.',
 };
 
+import { Footer } from '../../src/components/UI/Footer';
+
 export default function PrivacyPage() {
   return (
-    <div className="min-h-screen bg-obsidian-background text-obsidian-on-surface font-body pt-24 pb-16 px-6">
+    <div className="flex flex-col min-h-screen bg-obsidian-background text-obsidian-on-surface font-body">
+      <main className="flex-grow pt-24 pb-16 px-6">
       <div className="max-w-4xl mx-auto">
         <div className="mb-12">
           <Link href="/" className="inline-flex items-center text-obsidian-primary hover:text-obsidian-tertiary transition-colors mb-8 text-sm font-semibold tracking-wider font-headline uppercase group">
@@ -98,6 +101,8 @@ export default function PrivacyPage() {
 
         </div>
       </div>
+      </main>
+      <Footer />
     </div>
   );
 }
