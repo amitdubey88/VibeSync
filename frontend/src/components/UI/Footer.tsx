@@ -44,6 +44,12 @@ export const Footer = () => {
           >
             Contact
           </Link>
+          <Link
+            href="/donate"
+            className="font-headline text-xs font-bold tracking-normal text-obsidian-primary hover:text-obsidian-tertiary transition-all duration-300 hover:drop-shadow-[0_0_8px_rgba(168,85,247,0.3)] uppercase"
+          >
+            Donate
+          </Link>
         </div>
         <div className="flex gap-4">
           <span className="font-body text-xs tracking-normal text-obsidian-on-surface-variant/80 text-center md:text-right">

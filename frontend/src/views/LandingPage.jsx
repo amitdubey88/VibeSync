@@ -246,6 +246,12 @@ const LandingPage = () => {
             >
               CONTACT
             </Link>
+            <Link
+              href="/donate"
+              className="text-obsidian-primary font-headline text-xs font-bold tracking-wide hover:text-obsidian-tertiary transition-colors uppercase flex items-center gap-2"
+            >
+              DONATE
+            </Link>
           </nav>
           <div className="flex items-center gap-4">
             <button
@@ -285,6 +291,7 @@ const LandingPage = () => {
               <Link onClick={() => setIsMobileMenuOpen(false)} href="/privacy" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">PRIVACY</Link>
               <Link onClick={() => setIsMobileMenuOpen(false)} href="/terms" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">TERMS</Link>
               <Link onClick={() => setIsMobileMenuOpen(false)} href="/contact" className="text-obsidian-outline-variant font-headline text-xs tracking-wide hover:text-obsidian-on-surface transition-colors uppercase flex items-center gap-2">CONTACT</Link>
+              <Link onClick={() => setIsMobileMenuOpen(false)} href="/donate" className="text-obsidian-primary font-headline text-xs font-bold tracking-wide hover:text-obsidian-tertiary transition-colors uppercase flex items-center gap-2 transition-all">DONATE</Link>
             </div>
           </div>
         )}
