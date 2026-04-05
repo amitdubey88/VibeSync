@@ -421,7 +421,7 @@ const LandingPage = () => {
               <div className="relative mb-10 group/input">
                 <input
                   type="text"
-                  className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:outline-none focus:border-obsidian-primary transition-all uppercase tracking-wide text-sm font-medium"
+                  className="w-full bg-transparent border-0 border-b border-obsidian-outline-variant py-3 px-0 text-obsidian-on-surface placeholder:text-obsidian-outline focus:ring-0 focus:outline-none focus:border-obsidian-primary transition-all tracking-wide text-sm font-normal"
                   placeholder="Your Display Name"
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
