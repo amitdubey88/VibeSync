@@ -6,16 +6,16 @@ import LandingPage from '../src/views/LandingPage';
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Watch Together, Live — VibeSync',
+  title: 'VibeSync - Real-time Sync Watch Parties & Video Streaming',
   description:
-    'Create instant watch party rooms. Sync movies, shows, and streams with friends in real time. No downloads, no lag, just vibes.',
+    'VibeSync is a fast, real-time web application for synchronized video streaming and watch parties. Connect with friends securely via WebRTC to watch movies and YouTube together perfectly in sync.',
   alternates: {
     canonical: '/',
   },
   openGraph: {
-    title: 'VibeSync — Watch Together, Live',
+    title: 'VibeSync - Real-time Sync Watch Parties',
     description:
-      'Create instant watch party rooms. Sync movies, shows, and streams with friends in real time.',
+      'Create instant watch party rooms. Sync movies, shows, and streams with friends in real time. Fast, secure, and completely synchronized.',
     url: '/',
     type: 'website',
   },
@@ -28,7 +28,7 @@ const websiteJsonLd = {
   name: 'VibeSync',
   url: 'https://vibesync.app',
   description:
-    'Real-time synchronized watch parties for movies, shows, and live streams.',
+    'VibeSync is a real-time web application that allows users to sync data, collaborate instantly, and watch videos together securely across devices.',
   applicationCategory: 'EntertainmentApplication',
   operatingSystem: 'Any',
   offers: {

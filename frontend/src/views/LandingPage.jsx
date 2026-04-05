@@ -296,8 +296,11 @@ const LandingPage = () => {
               </span>
             </div>
             <h1 className="font-headline font-bold text-5xl md:text-7xl lg:text-8xl leading-tight tracking-tight uppercase mb-6">
-              Watch Together
+              VibeSync
               <br />
+              <span className="text-[0.4em] font-light text-obsidian-on-surface block mt-3 mb-1 tracking-[0.1em] font-body drop-shadow-none normal-case">
+                Real-Time Sync Web Application
+              </span>
               <span
                 className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-obsidian-primary via-obsidian-tertiary to-obsidian-secondary animate-pulse"
                 style={{ animationDuration: "3s" }}
@@ -306,9 +309,10 @@ const LandingPage = () => {
               </span>
             </h1>
             <p className="text-obsidian-on-surface-variant text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light tracking-normal leading-relaxed">
-              Experience seamless, synchronized streaming with friends.
-              Real-time chat, reactions, and perfect playback alignment—all in
-              one elegant platform.
+              VibeSync is a real-time web app that allows users to sync data, 
+              collaborate instantly, and stay connected across devices.
+              Experience seamless, synchronized watch parties with real-time chat, reactions, 
+              and perfect video playback alignment.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
               <button
@@ -703,6 +707,40 @@ const LandingPage = () => {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* SEO Content Block (For Search Engines & Detailed Context) */}
+        <section className="py-24 bg-obsidian-surface/30 border-t border-obsidian-outline-variant/30">
+          <article className="max-w-5xl mx-auto px-6 text-obsidian-on-surface-variant font-light">
+            <h2 className="text-4xl font-headline font-bold text-white mb-8 tracking-tight uppercase">
+              VibeSync - Real-Time Sync Web Application
+            </h2>
+            <div className="grid md:grid-cols-2 gap-12">
+              <div>
+                <p className="mb-6 text-lg leading-relaxed">
+                  VibeSync is a real-time web app that allows users to sync data, 
+                  collaborate instantly, and stay connected across devices. By 
+                  providing an elegant, easy-to-use interface, it is the premier 
+                  choice for hosting synchronized watch parties online.
+                </p>
+                <p className="mb-6 text-lg leading-relaxed">
+                  Traditional web software isn't built for precise video streaming. 
+                  VibeSync uses WebRTC and a host-authoritative synchronization 
+                  engine to guarantee that everyone in your room sees the exact 
+                  same frame of video at the exact same time.
+                </p>
+              </div>
+              <div>
+                <h3 className="text-2xl font-headline font-bold text-white mb-6 tracking-tight uppercase">Key Features</h3>
+                <ul className="space-y-4 list-disc pl-5">
+                  <li className="text-lg"><strong>Instant real-time synchronization:</strong> Perfect playback alignment with sub-10ms telemetry.</li>
+                  <li className="text-lg"><strong>Fast and responsive interface:</strong> Highly optimized React web application built for maximum performance.</li>
+                  <li className="text-lg"><strong>Secure and scalable architecture:</strong> AES-GCM encrypted connections and zero-retention ephemeral rooms.</li>
+                  <li className="text-lg"><strong>Live Interactive Chat:</strong> Integrated chat and reactions functionality with minimal latency.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
         </section>
       </main>
 
