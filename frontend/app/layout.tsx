@@ -10,6 +10,7 @@ const inter = Inter({
   display: 'swap',
 });
 
+
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
   variable: '--font-space-grotesk',
@@ -86,7 +87,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${spaceGrotesk.variable} ${manrope.variable}`}
-    >
+    > <head><meta name="google-site-verification" content="69zyFhWkvghMbU0K1n0cti6E7NMTFz45QLcIQE86U14" /></head>
       <body className="min-h-screen bg-[#0a0a0b] text-zinc-100 antialiased">
         <Providers>{children}</Providers>
       </body>

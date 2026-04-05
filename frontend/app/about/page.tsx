@@ -48,7 +48,7 @@ export default function About() {
             </h2>
             <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
               {[
-                { title: 'Any Content Anywhere', desc: 'Sync local video uploads, direct web URLs, YouTube, or use our extension for Netflix, Amazon Prime, Disney+, and more.' },
+                { title: 'Any Content Anywhere', desc: 'Sync local video uploads, direct web URLs, and YouTube as you vibe with everyone.' },
                 { title: 'End-to-End Encrypted', desc: 'Zero-knowledge chat and assets. Uses Web Crypto API (AES-GCM) where your keys never leave your browser.' },
                 { title: 'WebRTC P2P Voice Chat', desc: 'High-quality, full-mesh audio channels. Share dual-audio where you hear both the synced video and host commentary.' },
                 { title: 'Room & Guest Moderation', desc: 'Full host controls. Lock your room, require permission to join, or mute unruly participants. Join anonymously without an account.' }
@@ -70,7 +70,7 @@ export default function About() {
             <div className="relative border-l border-obsidian-outline-variant/30 ml-3 md:ml-4 space-y-8 pb-4">
               {[
                 { step: '01', title: 'Create a Secure Room', desc: 'Launch a private or public session as the Host. Everything is instantly protected by your room code.' },
-                { step: '02', title: 'Load Your Media', desc: 'Select a local MP4, drop a YouTube link, initiate a zero-upload P2P WebRTC stream, or connect the Chrome Extension.' },
+                { step: '02', title: 'Load Your Media', desc: 'Select a local MP4, drop a YouTube link, or initiate a zero-upload P2P WebRTC stream.' },
                 { step: '03', title: 'Invite Your Friends', desc: 'Share the unique invite link. Guests join securely without installing heavy desktop apps or signing up for accounts.' },
                 { step: '04', title: 'Watch & Vibe', desc: 'Whenever the host hits play, pauses, or seeks, everyone syncs instantly. Use the E2EE chat or WebRTC voice to react in real-time!' }
               ].map((item, i) => (

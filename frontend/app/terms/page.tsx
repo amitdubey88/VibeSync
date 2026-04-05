@@ -73,11 +73,11 @@ export default function TermsPage() {
           <section className="glass-panel p-8 rounded-2xl border border-obsidian-outline-variant/30 shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
             <h2 className="text-2xl font-bold text-white font-headline uppercase tracking-tight mb-4 flex items-center gap-3">
               <span className="w-1.5 h-6 bg-red-400 rounded-full"></span>
-              4. External Connections & Extensions
+              4. External Connections
             </h2>
             <div className="text-obsidian-on-surface-variant leading-relaxed space-y-4">
               <p>
-                Our Chrome Extension and external link functionality interface directly with third-party sites (e.g., Netflix, Amazon Prime). We do not affiliate with these entities. Your use of third-party platforms remains subject to their respective Terms of Service and subscription requirements.
+                Our external link functionality interfaces directly with third-party sites. We do not affiliate with these entities. Your use of third-party platforms remains subject to their respective Terms of Service and subscription requirements.
               </p>
             </div>
           </section>

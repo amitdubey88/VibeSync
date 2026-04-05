@@ -27,46 +27,28 @@ export default function ContactPage() {
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="flex justify-center max-w-xl mx-auto">
           {/* Email Trigger Card */}
           <a 
-            href="mailto:contact@vibesync.app?subject=Hello%20VibeSync%20Team!"
-            className="glass-panel p-8 rounded-3xl border border-obsidian-outline-variant/30 shadow-[0_15px_50px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center text-center group hover:bg-obsidian-surface hover:border-obsidian-primary/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(168,85,247,0.15)]"
+            href="mailto:amitdubey88@gmail.com?subject=Hello%20VibeSync%20Team!"
+            className="w-full glass-panel p-10 md:p-14 rounded-[2rem] border border-obsidian-outline-variant/30 shadow-[0_15px_50px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center text-center group hover:bg-obsidian-surface hover:border-obsidian-primary/50 transition-all duration-300 hover:-translate-y-2 hover:shadow-[0_20px_40px_rgba(168,85,247,0.15)] relative overflow-hidden"
           >
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-obsidian-primary/20 to-obsidian-tertiary/10 border border-obsidian-primary/30 flex items-center justify-center mb-6 text-obsidian-primary group-hover:scale-110 transition-transform duration-300">
-              <Mail size={28} />
+            {/* Hover Glow Effect inside card */}
+            <div className="absolute inset-0 bg-gradient-to-b from-obsidian-primary/0 to-obsidian-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+
+            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-obsidian-primary/20 to-obsidian-tertiary/10 border border-obsidian-primary/30 flex items-center justify-center mb-8 text-obsidian-primary group-hover:scale-110 transition-transform duration-300 shadow-[0_0_20px_rgba(168,85,247,0.2)]">
+              <Mail size={32} />
             </div>
-            <h3 className="text-2xl font-bold text-white font-headline tracking-wide uppercase mb-3">
-              Email Us
+            <h3 className="text-3xl font-bold text-white font-headline tracking-wide uppercase mb-4">
+              Send an Email
             </h3>
-            <p className="text-obsidian-on-surface-variant mb-6 text-sm">
-              The fastest way to reach us for support, feature requests, or business inquiries.
+            <p className="text-obsidian-on-surface-variant mb-8 text-base md:text-lg max-w-sm">
+              The fastest way to reach me for support, feature requests, or business inquiries.
             </p>
-            <span className="text-obsidian-primary font-headline text-sm tracking-widest uppercase font-semibold group-hover:text-obsidian-tertiary transition-colors">
-              contact@vibesync.app
+            <span className="inline-block px-6 py-3 rounded-full bg-obsidian-background/50 border border-obsidian-outline-variant/50 text-obsidian-primary font-headline text-sm tracking-widest uppercase font-semibold group-hover:border-obsidian-primary/50 group-hover:text-obsidian-tertiary transition-colors">
+              amitdubey88@gmail.com
             </span>
           </a>
-
-          {/* Social Feedback Card */}
-          <div className="glass-panel p-8 rounded-3xl border border-obsidian-outline-variant/30 shadow-[0_15px_50px_rgba(0,0,0,0.15)] flex flex-col items-center justify-center text-center">
-            <h3 className="text-xl font-bold text-white font-headline tracking-wide uppercase mb-6">
-              Connect With Us
-            </h3>
-            <div className="flex flex-col gap-4 w-full">
-              <a href="https://github.com/amitdubey88/VibeSync" target="_blank" rel="noopener noreferrer" className="flex items-center gap-4 p-4 rounded-xl border border-obsidian-outline-variant/20 bg-obsidian-background/50 hover:bg-obsidian-primary/10 hover:border-obsidian-primary/40 transition-all group">
-                <Globe className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary transition-colors" size={20} />
-                <span className="font-semibold text-sm tracking-wide text-obsidian-on-surface-variant group-hover:text-white transition-colors">GitHub Discussions</span>
-              </a>
-              <a href="#" className="flex items-center gap-4 p-4 rounded-xl border border-obsidian-outline-variant/20 bg-obsidian-background/50 hover:bg-cyan-500/10 hover:border-cyan-500/40 transition-all group">
-                <Twitter className="text-obsidian-on-surface-variant group-hover:text-cyan-400 transition-colors" size={20} />
-                <span className="font-semibold text-sm tracking-wide text-obsidian-on-surface-variant group-hover:text-white transition-colors">Twitter Support @VibeSync</span>
-              </a>
-              <a href="#" className="flex items-center gap-4 p-4 rounded-xl border border-obsidian-outline-variant/20 bg-obsidian-background/50 hover:bg-indigo-500/10 hover:border-indigo-500/40 transition-all group">
-                <MessageSquare className="text-obsidian-on-surface-variant group-hover:text-indigo-400 transition-colors" size={20} />
-                <span className="font-semibold text-sm tracking-wide text-obsidian-on-surface-variant group-hover:text-white transition-colors">Join Discord Community</span>
-              </a>
-            </div>
-          </div>
         </div>
 
       </div>

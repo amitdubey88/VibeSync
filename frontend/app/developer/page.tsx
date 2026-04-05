@@ -39,7 +39,7 @@ export default function DeveloperPage() {
             Amit Dubey
           </h2>
           <p className="text-obsidian-primary font-headline text-sm tracking-widest uppercase font-semibold mb-8">
-            Creator & Salesforce Developer (Vibe Coding Enthusiast)
+            Creator, Salesforce Developer and a Vibe Coding Enthusiast
           </p>
           
           <div className="text-obsidian-on-surface-variant leading-relaxed max-w-xl mx-auto space-y-4 mb-10 text-left md:text-center">
