@@ -83,8 +83,8 @@ const ParticipantsList = () => {
       {/* List */}
       <div className="flex-1 overflow-y-auto scroll-area px-2 py-2">
         {participants.map((p) => {
-          const isMe = p.userId === user?.id || p.username === user?.username;
-          const isRoomHost = p.userId === room?.hostId;
+          const isMe = String(p.userId) === String(user?.id) || p.username === user?.username;
+          const isRoomHost = String(p.userId) === String(room?.hostId);
           const isInVoice = voiceParticipants.some((vp) => String(vp.userId) === String(p.userId));
           const voiceData = voiceParticipants.find((vp) => String(vp.userId) === String(p.userId));
           const isSpeaking = voiceData && !voiceData.isMuted;

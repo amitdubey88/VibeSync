@@ -31,7 +31,7 @@ const extractPublicId = (url) => {
 };
 
 module.exports = (io, socket, roomStore) => {
-    const assertHost = (room) => room && room.hostId === socket.user.id;
+    const assertHost = (room) => room && String(room.hostId) === String(socket.user.id);
 
     // ── room:delete ────────────────────────────────────────────────────────────
     // Host deletes the room → cleanup files → wipe DB → notify everyone → destroy room
@@ -134,18 +134,29 @@ module.exports = (io, socket, roomStore) => {
     // ── room:transfer-host ────────────────────────────────────────────────────
     socket.on('room:transfer-host', ({ roomCode, targetUserId }) => {
         const code = roomCode?.toUpperCase();
+        console.log(`[HostTransfer] Request from ${socket.user?.username} (${socket.user?.id}) to transfer to ${targetUserId} in room ${code}`);
         const room = roomStore.get(code);
-        if (!room) return socket.emit('error', { message: 'Room not found' });
+        if (!room) {
+            console.error(`[HostTransfer] Room ${code} not found`);
+            return socket.emit('error', { message: 'Room not found' });
+        }
+        
+        console.log(`[HostTransfer] Current host: ${room.hostId}, AssertHost result: ${assertHost(room)}`);
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can transfer host' });
 
         // Block host transfer during active live streams
         if (room.currentVideo?.type === 'live') {
+            console.warn(`[HostTransfer] Blocked due to active live stream`);
             return socket.emit('error', { message: 'Cannot transfer host while a live stream is active. Stop the stream first.' });
         }
 
-        const target = room.participants.find((p) => p.userId === targetUserId);
-        if (!target) return socket.emit('error', { message: 'Participant not found' });
+        const target = room.participants.find((p) => String(p.userId) === String(targetUserId));
+        if (!target) {
+            console.error(`[HostTransfer] Target participant ${targetUserId} not found in room ${code}`);
+            return socket.emit('error', { message: 'Participant not found' });
+        }
 
+        console.log(`[HostTransfer] Success! Updating hostId to ${targetUserId}`);
         room.hostId = targetUserId;
 
         const hashedCode = hashRoomCode(code);
