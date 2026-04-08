@@ -38,4 +38,4 @@ function addDir(dir, zipPath) {
 addDir(__dirname, '');
 zip.writeZip(out);
 console.log(`\n📦  Extension packaged → ${out}`);
-console.log('    Share this zip file — recipients unzip and use "Load unpacked" in Chrome.\n');
+

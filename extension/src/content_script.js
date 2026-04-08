@@ -197,7 +197,7 @@
 
     connected = true;
     updateOverlayConnected(true);
-    console.log(`[VibeSync] Syncing ${PLATFORM_INFO.name} in room ${settings.vs_room_code}`);
+    
   }
 
   // ── Chat send ─────────────────────────────────────────────────────────────

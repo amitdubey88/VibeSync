@@ -363,7 +363,7 @@ const useVideoSync = (videoEl) => {
     useEffect(() => {
         if (videoEl && cachedSyncStateRef.current && !isHost) {
             const { videoState: vs, currentVideo: remoteVideo } = cachedSyncStateRef.current;
-            console.log('[useVideoSync] Applying cached sync state to newly mounted video element');
+            
             
             const videoType = remoteVideo?.type || currentVideo?.type;
             if (videoType !== 'live' && videoType !== 'uploading') {

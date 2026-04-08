@@ -64,3 +64,4 @@ PUSH_READY.md
 design-system
 frontend/.next
 .playwright-mcp
+console.sh

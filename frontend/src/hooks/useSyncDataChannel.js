@@ -87,8 +87,8 @@ const useSyncDataChannel = () => {
                     maxRetransmits: 0 // We don't care if an old heartbeat drops
                 });
 
-                channel.onopen = () => console.log(`[DataChannel] Opened to ${p.socketId}`);
-                channel.onclose = () => console.log(`[DataChannel] Closed with ${p.socketId}`);
+                channel.onopen = () => 
+                channel.onclose = () => 
                 channel.onmessage = handleDataChannelMessage;
                 channelsRef.current[p.socketId] = channel;
 
@@ -127,8 +127,8 @@ const useSyncDataChannel = () => {
                 // Guest accepts the data channel
                 pc.ondatachannel = (event) => {
                     const channel = event.channel;
-                    channel.onopen = () => console.log(`[DataChannel] Opened to Host (${fromSocketId})`);
-                    channel.onclose = () => console.log(`[DataChannel] Closed with Host (${fromSocketId})`);
+                    channel.onopen = () => 
+                    channel.onclose = () => 
                     channel.onmessage = handleDataChannelMessage;
                     channelsRef.current[fromSocketId] = channel;
                 };

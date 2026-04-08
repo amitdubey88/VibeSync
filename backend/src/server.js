@@ -201,7 +201,7 @@ app.post('/api/upload', (req, res) => {
                 const isFormat = errLower.includes('format not supported') || errLower.includes('invalid file') || errLower.includes('invalid image');
 
                 if (isLimit || isFormat) {
-                    console.log(`[upload] Cloudinary fallback triggered (${isLimit ? 'Limit' : 'Format'}). Local serving: ${req.file.originalname}`);
+                    
                     const protocol = req.headers['x-forwarded-proto'] || req.protocol;
                     const host = req.get('host');
                     const fileUrl = `${protocol}://${host}/uploads/${req.file.filename}`;
@@ -254,9 +254,9 @@ const startServer = async () => {
     await connectDB();
     server.listen(PORT, () => {
         console.log(`\n🚀 VibeSync server running on port ${PORT}`);
-        console.log(`   Environment: ${process.env.NODE_ENV || 'development'}`);
-        console.log(`   Frontend:    ${process.env.FRONTEND_URL || 'http://localhost:5173'}`);
-        console.log(`   Health:      http://localhost:${PORT}/api/health\n`);
+        
+        
+        
     });
 };
 

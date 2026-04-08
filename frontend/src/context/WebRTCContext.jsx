@@ -267,7 +267,7 @@ export const WebRTCProvider = ({ children }) => {
         pc.ontrack = (event) => {
             const stream = event.streams[0];
             if (!stream) return;
-            console.log(`[VideoStream] Received ${event.track.kind} track from ${remoteSocketId}. Total tracks: ${stream.getTracks().length}`);
+            
             clearTimeout(trackDebounceTimer);
             trackDebounceTimer = setTimeout(() => {
                 // Only update if this PC is still the active one for this peer
@@ -291,7 +291,7 @@ export const WebRTCProvider = ({ children }) => {
                 await pc.setLocalDescription(offer);
                 const enc = await encryptData(offer, roomKey);
                 socket.emit('video-stream:offer', { targetSocketId: remoteSocketId, offer: enc, e2ee: true });
-                console.log(`[VideoStream] ICE restart offer sent to ${remoteSocketId}`);
+                
             } catch (e) {
                 console.warn('[VideoStream] ICE restart offer failed:', e);
             }
@@ -345,7 +345,7 @@ export const WebRTCProvider = ({ children }) => {
             }
         });
 
-        console.log(`[VideoStream] Replaced tracks on ${activePeers.length} peer(s) — no renegotiation`);
+        
         return true;
     }, []);
 
@@ -502,15 +502,15 @@ export const WebRTCProvider = ({ children }) => {
                 }
                 // Notify participants so they can force play() if video element stalled
                 socket.emit('video-stream:tracks-replaced', { roomCode });
-                console.log('[VideoStream] Tracks replaced on existing peers — no renegotiation needed');
+                
             } else {
                 // No existing peers — do a full announce (first-time setup or all PCs disconnected)
                 Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
                 socket.emit('video-stream:announce', { roomCode });
-                console.log('[VideoStream] Announced live stream to room (no existing peers to replace)');
+                
             }
         } else {
-            console.log('[VideoStream] Stopping live stream.');
+            
             // Stop old tracks
             if (oldStream) {
                 oldStream.getTracks().forEach(t => t.stop());
@@ -636,7 +636,7 @@ export const WebRTCProvider = ({ children }) => {
                 if (p.socketId === socket.id) return; // skip self
                 if (!p.isOnline) return;              // skip grace-period-offline participants
                 if (!videoPeersRef.current[p.socketId]) {
-                    console.log(`[VideoStream] Announcing stream to ${p.username} (${p.socketId})`);
+                    
                     socket.emit('video-stream:announce', { roomCode, targetSocketId: p.socketId });
                     videoPeersRef.current[p.socketId] = 'pending';
                 }
@@ -646,14 +646,14 @@ export const WebRTCProvider = ({ children }) => {
         // Fallback: a late-joining participant explicitly asks for the stream
         const onRequestAnnounce = ({ fromSocketId }) => {
             if (!premierStreamRef.current) return;
-            console.log(`[VideoStream] Participant ${fromSocketId} requested stream announce`);
+            
             socket.emit('video-stream:announce', { roomCode, targetSocketId: fromSocketId });
             videoPeersRef.current[fromSocketId] = 'pending';
         };
 
         // Participant receives this when the host starts a live stream.
         const onVideoStreamAnnounced = async ({ hostSocketId }) => {
-            console.log(`[VideoStream] Host ${hostSocketId} announced a live stream. Attempting to connect...`);
+            
             setIsStreamAnnounced(true);
 
             // Skip duplicate announce if negotiation already in-flight for this host.
@@ -683,7 +683,7 @@ export const WebRTCProvider = ({ children }) => {
                 pc._suppressNegotiation = false;
                 const enc = await encryptData(offer, roomKey);
                 socket.emit('video-stream:offer', { targetSocketId: hostSocketId, offer: enc, e2ee: true });
-                console.log('[VideoStream] Sent video-stream:offer to host.');
+                
             } catch (err) {
                 console.error('[VideoStream] Failed to create offer:', err);
                 isConnectingRef.current = false;
@@ -735,7 +735,7 @@ export const WebRTCProvider = ({ children }) => {
                 await pc.setLocalDescription(answer);
                 const enc = await encryptData(answer, roomKey);
                 socket.emit('video-stream:answer', { targetSocketId: fromSocketId, answer: enc, e2ee: true });
-                console.log(`[VideoStream] Sent video answer to ${fromSocketId}`);
+                
             } catch (err) {
                 console.error(`[VideoStream] Failed to answer offer from ${fromSocketId}:`, err);
             }
@@ -755,7 +755,7 @@ export const WebRTCProvider = ({ children }) => {
             try {
                 const decrypted = e2ee ? await decryptData(answer, roomKey) : answer;
                 await pc.setRemoteDescription(new RTCSessionDescription(decrypted));
-                console.log(`[VideoStream] Answer accepted from ${fromSocketId} — connection established`);
+                
             } catch (err) {
                 console.warn(`[VideoStream] setRemoteDescription failed for ${fromSocketId}:`, err);
             }
@@ -774,13 +774,13 @@ export const WebRTCProvider = ({ children }) => {
         };
 
         const onVideoStreamEnded = () => {
-            console.log('[VideoStream] Host ended live stream');
+            
             Object.keys(videoPeersRef.current).forEach(closeVideoPeer);
             if (!isConnectingRef.current) {
                 setRemotePremierStream(null);
                 setIsStreamAnnounced(false);
             } else {
-                console.log('[VideoStream] Reconnect already in-progress — skipping stream clear on ended');
+                
             }
         };
 
@@ -788,7 +788,7 @@ export const WebRTCProvider = ({ children }) => {
         // The existing track objects continue receiving new media automatically —
         // this event is just a nudge to force play() if the video element paused.
         const onTracksReplaced = () => {
-            console.log('[VideoStream] Host replaced tracks — nudging playback');
+            
             // Dispatch event for UI overlays to know swap is complete
             window.dispatchEvent(new CustomEvent('video-stream:tracks-replaced'));
 
@@ -834,7 +834,7 @@ export const WebRTCProvider = ({ children }) => {
         if (!hostSocketId) return;
         pendingStreamHostRef.current = null; // consume
 
-        console.log('[VideoStream] Retrying buffered announce with roomKey now available');
+        
         (async () => {
             try {
                 closeVideoPeer(hostSocketId);
@@ -874,7 +874,7 @@ export const WebRTCProvider = ({ children }) => {
             // Skip if stream was already received between retries
             if (remotePremierStream) return;
             attempt++;
-            console.log(`[VideoStream] Late joiner requesting stream (attempt ${attempt}/${maxAttempts})`);
+            
             socket.emit('video-stream:request-announce', { roomCode });
         };
 

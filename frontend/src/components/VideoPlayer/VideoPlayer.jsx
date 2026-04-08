@@ -228,7 +228,7 @@ const VideoPlayer = () => {
     if (!(isHost || isCoHost) || !videoRef.current || !videoRef.current.captureStream) return;
     if (isStreamingActiveRef.current) return;
 
-    console.log('[DirectStream] Starting WebRTC broadcast capture...');
+    
     isStreamingActiveRef.current = true;
 
     // Delay slightly to ensure the video has painted a frame before capturing
@@ -236,7 +236,7 @@ const VideoPlayer = () => {
       try {
         const stream = videoRef.current.captureStream(60);
         setPremierStream(stream);
-        console.log('[DirectStream] Stream captured and announced to room.');
+        
       } catch (e) {
         console.error('[DirectStream] captureStream failed:', e);
         isStreamingActiveRef.current = false;
@@ -321,7 +321,7 @@ const VideoPlayer = () => {
     if (isHost || !videoEl) return;
 
     if (remotePremierStream) {
-      console.log('[VideoPlayer] Attaching remote live stream to video element.');
+      
 
       // FIX: Always pause() BEFORE clearing srcObject. Setting srcObject = null fires a
       // synchronous load() which interrupts any in-flight play() promise with:
@@ -355,7 +355,7 @@ const VideoPlayer = () => {
         });
       }
     } else if (videoEl.srcObject) {
-      console.log('[VideoPlayer] Live stream ended. Clearing srcObject.');
+      
       if (watchdogVideoRef) watchdogVideoRef.current = null;
       if (!videoEl.paused) videoEl.pause();
       videoEl.srcObject = null;
@@ -372,7 +372,7 @@ const VideoPlayer = () => {
     if (isHost) return;
     const isLiveType = currentVideo?.type === 'live' || currentVideo?.type === 'uploading';
     if (!isLiveType && videoEl?.srcObject) {
-      console.log('[VideoPlayer] Live type ended. Force-clearing srcObject for new video source.');
+      
       videoEl.srcObject = null;
       // Force a reload so the element picks up the new `src` attribute
       videoEl.load();
@@ -512,7 +512,7 @@ const VideoPlayer = () => {
     }
 
     if (currentVideo.title !== previousStreamTitleRef.current) {
-      console.log('[VideoPlayer] Stream title changed — showing participant loading overlay');
+      
       setIsSwappingStream(true);
       previousStreamTitleRef.current = currentVideo.title;
       
@@ -525,7 +525,7 @@ const VideoPlayer = () => {
   useEffect(() => {
     if (isHost) return;
     const handleSwapComplete = () => {
-      console.log('[VideoPlayer] Tracks replaced event received — hiding loading overlay');
+      
       setIsSwappingStream(false);
     };
     window.addEventListener('video-stream:tracks-replaced', handleSwapComplete);
@@ -548,7 +548,7 @@ const VideoPlayer = () => {
     if (isSourceChanged) {
       // Check BEFORE resetting: was streaming previously active?
       const wasStreaming = isStreamingActiveRef.current || isLiveStreamingInitializedRef.current;
-      console.log(`[VideoPlayer] Video source changed. wasStreaming=${!!wasStreaming}`);
+      
       
       // Always reset streaming-active so the next startBroadcast() re-captures
       isStreamingActiveRef.current = false;
@@ -557,14 +557,14 @@ const VideoPlayer = () => {
 
       if (!currentVideo?.url || !isLiveType) {
         // No video source, OR switching to a non-live source — fully stop streaming
-        if (wasStreaming) console.log('[VideoPlayer] Closing WebRTC broadcast due to switching away from live mode');
+        if (wasStreaming) 
         setPremierStream(null);
         setIsLiveStreamingInitialized(false);
         isLiveStreamingInitializedRef.current = false;
       } else if (wasStreaming) {
         // Video source changed but streaming was active AND the NEW type is live
         // keep initialized so onPlayingEv → startBroadcast() fires automatically.
-        console.log('[VideoPlayer] Keeping streaming initialized for seamless video switch');
+        
       } else {
         // Source changed but streaming was never started — reset to show overlay
         setIsLiveStreamingInitialized(false);
@@ -579,7 +579,7 @@ const VideoPlayer = () => {
   // Reset local timing when video source changes
   useEffect(() => {
     if (currentVideo?.url) {
-      console.log('[VideoPlayer] Source changed, resetting local timing states.');
+      
       setDuration(0);
       setCurrentTime(0);
       currentTimeRef.current = 0;
@@ -603,7 +603,7 @@ const VideoPlayer = () => {
   // CLEANUP: Reset ALL local playback states when the video is removed (host clicked 'Delete')
   useEffect(() => {
     if (!currentVideo) {
-      console.log('[VideoPlayer] Video removed (clearing local states).');
+      
       
       // Reset URLs so activeSrc becomes null
       setBlobUrl(null);
@@ -631,7 +631,7 @@ const VideoPlayer = () => {
   // Reset local streaming state when host changes (driven by useHostTransferSync hook)
   useEffect(() => {
     if (hostChangedFlag && isHost) {
-      console.log('[VideoPlayer] Host changed. Prepping clean slate for streaming.');
+      
       setIsLiveStreamingInitialized(false);
       setPremierStream(null);
       isStreamingActiveRef.current = false;
@@ -870,7 +870,7 @@ const VideoPlayer = () => {
     }
 
     if (wasAlreadyStreaming) {
-      console.log('[VideoPlayer] Switching live file — pausing for host to start next stream');
+      
       isStreamingActiveRef.current = false;
       setIsLiveStreamingInitialized(false);
       isLiveStreamingInitializedRef.current = false;
@@ -1099,7 +1099,7 @@ const VideoPlayer = () => {
                   <button
                     disabled={!videoRef.current && !videoEl}
                     onClick={() => {
-                      console.log('[DirectStream] User clicked Start Streaming.');
+                      
                       isLiveStreamingInitializedRef.current = true;
                       setIsLiveStreamingInitialized(true);
                       setIsPendingNextStream(false);

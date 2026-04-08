@@ -23,7 +23,7 @@ const useHostTransferSync = () => {
         if (!socket) return;
 
         const onHostChanged = () => {
-            console.log('[HostTransferSync] Host changed — resetting stream state');
+            
             // Clean up stale video peer connections & UI flags inside WebRTCContext
             resetStreamState();
             // Bump counter so VideoPlayer resets its local streaming refs

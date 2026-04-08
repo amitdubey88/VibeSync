@@ -53,7 +53,7 @@ async function hydrateRoom(req, code) {
 
     // Block rehydration if the room was recently ended
     if (endedRooms.has(code)) {
-        console.log(`[rooms/hydrate] Blocked rehydration for ended room: ${code}`);
+        
         return null;
     }
 
@@ -78,7 +78,7 @@ async function hydrateRoom(req, code) {
             requiresApproval: false,
         };
         store.set(code, roomData);
-        console.log(`[rooms] Rehydrated room ${code} from MongoDB after server restart`);
+        
         return roomData;
     } catch (err) {
         console.warn('[rooms/hydrate]', err.message);

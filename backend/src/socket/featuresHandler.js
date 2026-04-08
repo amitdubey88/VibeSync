@@ -208,7 +208,7 @@ module.exports = (io, socket, roomStore) => {
         room.slowMode = { enabled: !!enabled, cooldown: safeCooldown, lastSentAt: {} };
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('room:slowmode:updated', { slowMode: { enabled: room.slowMode.enabled, cooldown: room.slowMode.cooldown } });
-        console.log(`⏱️ Slow mode in ${code}: ${enabled ? `ON (${safeCooldown}s)` : 'OFF'}`);
+        
     });
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -292,7 +292,7 @@ module.exports = (io, socket, roomStore) => {
         room.coHosts = (room.coHosts || []).filter(id => id !== targetUserId);
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('room:cohost-updated', { coHosts: room.coHosts });
-        console.log(`✂️ Co-host removed in ${code}`);
+        
     });
 
     // ═══════════════════════════════════════════════════════════════════════════

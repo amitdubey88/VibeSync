@@ -307,7 +307,7 @@ const RoomPage = ({ code }) => {
   useEffect(() => {
     // If we have a sessionSummary, don't redirect yet (wait for modal dismiss)
     if (roomEndedByHost && !sessionSummary) {
-      console.log('[RoomPage] Room ended by host, clearing session and redirecting.');
+      
       sessionStorage.removeItem("vibesync_session");
       dismissRoomEnded();
       sessionStorage.setItem('vibesync_room_ended', roomEndedByHost.message || "Session Ended");

@@ -114,7 +114,7 @@ module.exports = (io, roomStore) => {
             room.messages.push(msg);
             io.to(hashedCode).emit('chat:message', msg);
 
-            console.log(`✅ ${pending.username} approved into room ${code}`);
+            
         });
 
         // ── room:deny-join ─────────────────────────────────────────────────────
@@ -129,7 +129,7 @@ module.exports = (io, roomStore) => {
             room.pendingJoins = room.pendingJoins.filter((p) => p.userId !== userId);
 
             io.to(pending.socketId).emit('room:join-denied', { message: 'The host declined your request to join.' });
-            console.log(`❌ ${pending.username} denied from room ${code}`);
+            
         });
 
         // ── room:join ──────────────────────────────────────────────────────────
@@ -216,7 +216,7 @@ module.exports = (io, roomStore) => {
                         });
                     }
 
-                    console.log(`⏳ ${socket.user.username} waiting for approval in ${code}`);
+                    
                     return; // Don't proceed — wait for host action
                 }
 

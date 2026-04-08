@@ -70,7 +70,7 @@ module.exports = (io, socket, roomStore) => {
         // Remove from queue after approval
         room.watchQueue = room.watchQueue.filter(q => q.id !== itemId);
         io.to(hashedCode).emit('queue:updated', { queue: room.watchQueue });
-        console.log(`✅ Queue item approved in ${code}: "${item.title}"`);
+        
     });
 
     // ── queue:remove ──────────────────────────────────────────────────────────

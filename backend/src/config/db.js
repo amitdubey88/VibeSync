@@ -7,7 +7,7 @@ const connectDB = async () => {
   while (retries > 0) {
     try {
       await mongoose.connect(mongoUri);
-      console.log('✅ MongoDB connected:', mongoose.connection.host);
+      
       return;
     } catch (err) {
       retries -= 1;

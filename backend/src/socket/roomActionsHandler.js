@@ -60,7 +60,7 @@ module.exports = (io, socket, roomStore) => {
                     return new Promise((resolve) => {
                         cloudinary.uploader.destroy(publicId, { resource_type: 'video' }, (err) => {
                             if (err) console.error(`[cloudinary] delete error (${publicId}):`, err.message);
-                            else console.log(`[cloudinary] deleted media: ${publicId}`);
+                            else 
                             resolve();
                         });
                     });
@@ -75,7 +75,7 @@ module.exports = (io, socket, roomStore) => {
                 if (fs.existsSync(filePath)) {
                     try {
                         fs.unlinkSync(filePath);
-                        console.log(`[fs] deleted local video: ${fileName}`);
+                        
                     } catch (err) {
                         console.error(`[fs] local delete error (${fileName}):`, err.message);
                     }
@@ -108,7 +108,7 @@ module.exports = (io, socket, roomStore) => {
                 await Room.deleteOne({ code: hashedCode });
                 // Delete all messages associated with this room code
                 await Message.deleteMany({ roomId: hashedCode });
-                console.log(`[db] Wiped all data for room ${code}`);
+                
             } catch (e) {
                 console.error('[rooms/delete] DB wipe failed:', e.message);
             }
@@ -134,14 +134,14 @@ module.exports = (io, socket, roomStore) => {
     // ── room:transfer-host ────────────────────────────────────────────────────
     socket.on('room:transfer-host', ({ roomCode, targetUserId }) => {
         const code = roomCode?.toUpperCase();
-        console.log(`[HostTransfer] Request from ${socket.user?.username} (${socket.user?.id}) to transfer to ${targetUserId} in room ${code}`);
+        
         const room = roomStore.get(code);
         if (!room) {
             console.error(`[HostTransfer] Room ${code} not found`);
             return socket.emit('error', { message: 'Room not found' });
         }
         
-        console.log(`[HostTransfer] Current host: ${room.hostId}, AssertHost result: ${assertHost(room)}`);
+        
         if (!assertHost(room)) return socket.emit('error', { message: 'Only the host can transfer host' });
 
         // Block host transfer during active live streams
@@ -156,7 +156,7 @@ module.exports = (io, socket, roomStore) => {
             return socket.emit('error', { message: 'Participant not found' });
         }
 
-        console.log(`[HostTransfer] Success! Updating hostId to ${targetUserId}`);
+        
         room.hostId = targetUserId;
 
         const hashedCode = hashRoomCode(code);

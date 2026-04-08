@@ -36,7 +36,7 @@ module.exports = (io, socket, roomStore) => {
         // Keep videoState running (host is playing locally)
         const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:uploading', { title });
-        console.log(`[sync] Upload started in ${code}: ${title}`);
+        
     });
 
     // ── video:set-source ─────────────────────────────────────────────────────
@@ -69,7 +69,7 @@ module.exports = (io, socket, roomStore) => {
 
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('video:source-changed', { video, videoState: room.videoState });
-        console.log(`[sync] Source changed in ${code}: ${video?.title} @${t.toFixed(2)}s`);
+        
     });
 
     // ── video:play ────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ module.exports = (io, socket, roomStore) => {
         // Broadcast to all OTHER clients (host already played locally)
         const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:play', { currentTime, timestamp: Date.now() });
-        console.log(`[sync] PLAY @${currentTime.toFixed(2)}s in room ${code}`);
+        
     });
 
     // ── video:pause ───────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ module.exports = (io, socket, roomStore) => {
 
         const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:pause', { currentTime });
-        console.log(`[sync] PAUSE @${currentTime.toFixed(2)}s in room ${code}`);
+        
     });
 
     // ── video:seek ────────────────────────────────────────────────────────────
@@ -107,7 +107,7 @@ module.exports = (io, socket, roomStore) => {
 
         const hashedCode = hashRoomCode(code);
         socket.to(hashedCode).emit('video:seek', { currentTime });
-        console.log(`[sync] SEEK @${currentTime.toFixed(2)}s in room ${code}`);
+        
     });
 
     // ── video:heartbeat ───────────────────────────────────────────────────────
@@ -156,7 +156,7 @@ module.exports = (io, socket, roomStore) => {
         const hashedCode = hashRoomCode(code);
         // We can just blast out a state update request. Clients handle onSyncState
         io.to(hashedCode).emit('video:source-changed', { video: room.currentVideo, videoState: room.videoState });
-        console.log(`[sync] Duration synced @${duration.toFixed(2)}s in room ${code}`);
+        
     });
 
     // ── video:request-sync ────────────────────────────────────────────────────
@@ -292,6 +292,6 @@ module.exports = (io, socket, roomStore) => {
 
         const hashedCode = hashRoomCode(code);
         io.to(hashedCode).emit('video:speed-changed', { speed: Number(speed) });
-        console.log(`[sync] Speed set to ${speed}x in room ${code}`);
+        
     });
 };

@@ -32,7 +32,7 @@ async function main() {
   try {
     sharp = require('sharp');
   } catch {
-    console.log('Installing sharp...');
+    
     require('child_process').execSync('npm install sharp', { stdio: 'inherit' });
     sharp = require('sharp');
   }
@@ -46,9 +46,9 @@ async function main() {
       .resize(size, size)
       .png()
       .toFile(path.join(iconsDir, `icon${size}.png`));
-    console.log(`✅  icon${size}.png`);
+    
   }
-  console.log('\nDone! Icons saved to icons/');
+  
 }
 
 main().catch(console.error);

@@ -2,7 +2,7 @@
 // Handles storage and tab messaging coordination
 
 chrome.runtime.onInstalled.addListener(() => {
-  console.log('[VibeSync] Extension installed');
+  
 });
 
 // Relay messages between popup and content scripts

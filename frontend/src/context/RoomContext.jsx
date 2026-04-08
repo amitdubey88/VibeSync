@@ -309,7 +309,7 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onHostChanged = ({ newHostId, newHostUsername }) => {
-      console.log(`[HostChanged] New host ID: ${newHostId}, My ID: ${user?.id}, Am I host? ${String(newHostId) === String(user?.id)}`);
+      
       setIsHost(String(newHostId) === String(user?.id));
       setRoom((prev) => prev ? { ...prev, hostId: newHostId } : prev);
       
@@ -881,7 +881,7 @@ export const RoomProvider = ({ children }) => {
       toast.error('Cannot transfer host during a live stream. Stop the stream first.');
       return;
     }
-    console.log(`[HostTransfer] Sending transfer-host request for target: ${targetUserId}`);
+    
     socket.emit('room:transfer-host', { roomCode: room.code, targetUserId });
   }, [socket, room, currentVideo]);
 

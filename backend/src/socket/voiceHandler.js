@@ -137,7 +137,7 @@ module.exports = (io, socket, roomStore) => {
         const hashedCode = hashRoomCode(code);
         // Relay to everyone else in the room (not the host who emitted it)
         socket.to(hashedCode).emit('voice:premier-started');
-        console.log(`[voice] Premier stream started by ${socket.user.username} in ${code}`);
+        
     });
 
     // Exported cleanup called on socket disconnect
