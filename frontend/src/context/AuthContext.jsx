@@ -9,9 +9,13 @@ export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() =>
-    typeof window !== 'undefined' ? localStorage.getItem('vibesync_token') : null
-  );
+  const [token, setToken] = useState(null);
+
+  // Initialize token from localStorage safely on mount
+  useEffect(() => {
+    const savedToken = typeof window !== 'undefined' ? localStorage.getItem('vibesync_token') : null;
+    if (savedToken) setToken(savedToken);
+  }, []);
   const [loading, setLoading] = useState(true);
 
   const logout = useCallback(() => {

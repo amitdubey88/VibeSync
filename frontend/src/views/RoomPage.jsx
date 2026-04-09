@@ -107,41 +107,36 @@ const RoomPage = ({ code }) => {
   const [isGuestPromptVisible, setIsGuestPromptVisible] = useState(false);
   const [guestName, setGuestName] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-  const [isNameConfirmed, setIsNameConfirmed] = useState(() => {
-    const saved = sessionStorage.getItem("vibesync_session");
-    if (!saved) return false;
-    try {
-      const session = JSON.parse(saved);
-      return session.roomCode === code;
-    } catch { return false; }
-  });
+  const [isNameConfirmed, setIsNameConfirmed] = useState(false);
   const hasJoinedRef = useRef(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState('');
 
-  // Initialize features
-  useRoomTheme();
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.matchMedia ? window.matchMedia('(max-width: 767px)').matches : window.innerWidth < 768;
-  });
-
-  // Keep mobile/desktop layout reactive on resize/orientation changes
+  // ── Hydration-Safe initialization ──
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const mql = window.matchMedia ? window.matchMedia('(max-width: 767px)') : null;
+    // 1. Check Mobile
+    const mql = window.matchMedia('(max-width: 767px)');
+    const updateIsMobile = () => setIsMobile(mql.matches);
+    updateIsMobile();
+    mql.addEventListener('change', updateIsMobile);
 
-    const update = () => {
-      setIsMobile(mql ? mql.matches : window.innerWidth < 768);
-    };
-
-    update();
-    if (mql && typeof mql.addEventListener === 'function') {
-      mql.addEventListener('change', update);
-      return () => mql.removeEventListener('change', update);
+    // 2. Check Session
+    const saved = sessionStorage.getItem("vibesync_session");
+    if (saved) {
+      try {
+        const session = JSON.parse(saved);
+        if (session.roomCode === code) setIsNameConfirmed(true);
+      } catch { /* ignore */ }
     }
 
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
-  }, []);
+    // 3. Set Invite URL
+    setInviteUrl(window.location.href);
+
+    return () => mql.removeEventListener('change', updateIsMobile);
+  }, [code]);
+
+  // Initialize room theme logic
+  useRoomTheme();
 
   // ── Keyboard Shortcuts ──
   useEffect(() => {
@@ -1041,7 +1036,7 @@ const RoomPage = ({ code }) => {
               <div className="flex items-center gap-2 mt-1">
                 <input
                   readOnly
-                  value={window.location.href}
+                  value={inviteUrl}
                   className="flex-1 bg-black/30 border border-white/5 px-3 py-1.5 text-[10px] text-obsidian-on-surface-variant outline-none focus:border-obsidian-primary/50"
                 />
                 <button

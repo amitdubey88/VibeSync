@@ -118,8 +118,13 @@ const VideoPlayer = () => {
   const { setPremierStream, remotePremierStream, isStreamAnnounced, watchdogVideoRef } = useWebRTC();
   const { hostChangedFlag } = useHostTransferSync();
   const videoRef = useRef(null);
-  const [isFullscreen, setIsFullscreen] = useState(!!document.fullscreenElement);
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+    setIsMobile(window.innerWidth < 768);
+  }, []);
 
   // Host-only blob URL — lets host play instantly from local file while uploading
   const [blobUrl, setBlobUrl] = useState(null);

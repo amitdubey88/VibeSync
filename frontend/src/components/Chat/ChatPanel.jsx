@@ -43,24 +43,27 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const { user } = useAuth();
   const { socket } = useSocket();
   const { remotePremierStream } = useWebRTC();
-  const [isFullscreen, setIsFullscreen] = useState(
-    !!document.fullscreenElement,
-  );
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showSwipeGuide, setShowSwipeGuide] = useState(false);
+
+  useEffect(() => {
+    setIsFullscreen(!!document.fullscreenElement);
+    setIsMobile(window.innerWidth < 768);
+    setShowSwipeGuide(localStorage.getItem("vs_swipe_guide_seen") !== "true");
+  }, []);
 
   const isWebRTCStream = currentVideo?.type === "live";
   const isStreamActive =
     isLiveStreamingInitialized || (!isHost && remotePremierStream);
   const shouldShowReactions =
     currentVideo && (!isWebRTCStream || isStreamActive);
+
   const [input, setInput] = useState("");
   const [showEmoji, setShowEmoji] = useState(false);
   const [showGif, setShowGif] = useState(false);
   const [showPollModal, setShowPollModal] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
-  const [showSwipeGuide, setShowSwipeGuide] = useState(
-    () => localStorage.getItem("vs_swipe_guide_seen") !== "true",
-  );
   const [showAttachMenu, setShowAttachMenu] = useState(false);
   
   // Feature Hooks
