@@ -129,6 +129,14 @@
     box-shadow: 0 6px 24px 0 rgba(0, 0, 0, 0.25);
   }
 
+  /* Deep Glass - Heavy Blur */
+  .glass-blur {
+    background: rgba(8, 8, 15, 0.7);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 px-6 py-3 font-semibold text-sm text-white 
            transition-all duration-300 cursor-pointer
@@ -419,13 +427,44 @@
 }
 
 @keyframes shimmer {
-  0%   { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.shimmer-wrapper {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.shimmer-active {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
+  animation: shimmer 2s infinite;
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #1a1a2e 25%, #222236 50%, #1a1a2e 75%);
-  background-size: 200% 100%;
+  @apply relative overflow-hidden bg-obsidian-surface-low rounded-lg;
+}
+
+.skeleton::after {
+  content: "";
+  @apply absolute inset-0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.05),
+    transparent
+  );
   animation: shimmer 1.5s infinite;
 }
 

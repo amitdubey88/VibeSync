@@ -28,3 +28,7 @@ update_*.py
 update_*.pyc
 update_*cjs
 AUDIT_TARGETS.md
+.agent/*
+.agent
+*.agent
+.agent/skills/ui-ux-pro-max/*

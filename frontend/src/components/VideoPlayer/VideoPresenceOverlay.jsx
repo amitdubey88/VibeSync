@@ -30,11 +30,11 @@ const VideoPresenceOverlay = ({ visible }) => {
     .slice(0, 4);
 
   return (
-    <div className={`absolute top-4 left-4 z-40 flex flex-col gap-3 pointer-events-none transition-opacity duration-500 ease-in-out ${visible ? 'opacity-100' : 'opacity-0'}`}>
-      {/* Top Row: Viewer Count & Sync/Status (Simplified) */}
+    <div className={`absolute top-6 left-6 z-40 flex flex-col gap-4 pointer-events-none transition-all duration-500 ease-in-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
+      {/* Top Row: Viewer Count */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1.5 bg-black/60 backdrop-blur-md border border-white/10 px-2.5 py-1  text-[10px] font-bold text-white shadow-xl pointer-events-auto">
-          <Users className="w-3 h-3 text-violet-400" />
+        <div className="flex items-center gap-2 bg-obsidian-bg/40 backdrop-blur-xl border border-white/5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-2xl pointer-events-auto">
+          <Users className="w-3.5 h-3.5 text-obsidian-primary" />
           <span>{onlineCount} watching</span>
         </div>
       </div>
@@ -43,16 +43,16 @@ const VideoPresenceOverlay = ({ visible }) => {
       {Object.entries(reactionCounts).length > 0 && (
         <div className="flex flex-wrap gap-2 animate-bounce">
           {Object.entries(reactionCounts).map(([emoji, count]) => (
-            <div key={emoji} className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md border border-white/20  px-2 py-0.5 text-xs font-bold text-white shadow-lg pointer-events-auto">
+            <div key={emoji} className="flex items-center gap-2 bg-obsidian-bg/40 backdrop-blur-xl border border-white/10 px-3 py-1 rounded-full text-xs font-black text-white shadow-xl pointer-events-auto">
               <span>{emoji}</span>
-              <span className="text-violet-400">x{count}</span>
+              <span className="text-obsidian-primary font-black">x{count}</span>
             </div>
           ))}
         </div>
       )}
 
       {/* Avatar Stack Overlay */}
-      <div className="flex items-center -space-x-2 pointer-events-auto">
+      <div className="flex items-center -space-x-3 pointer-events-auto pl-1">
         {activeParticipants.map((p, idx) => {
           const voiceData = voiceParticipants.find(vp => vp.userId === p.userId);
           const isSpeaking = voiceData && !voiceData.isMuted;
@@ -60,34 +60,33 @@ const VideoPresenceOverlay = ({ visible }) => {
           return (
             <div 
               key={p.userId} 
-              className={`relative flex items-center justify-center w-8 h-8  text-[10px] font-bold text-white shadow-2xl border-2 border-[#0e0e0f] transition-all hover:z-10 hover:-translate-y-1 group
-                ${isSpeaking ? 'ring-2 ring-emerald-400 trigger-pulse-ring' : ''}`}
+              className={`relative flex items-center justify-center w-9 h-9 rounded-full text-[11px] font-black text-white shadow-2xl border-2 border-obsidian-bg/80 transition-all hover:z-20 hover:-translate-y-1 hover:scale-110 group
+                ${isSpeaking ? 'ring-2 ring-obsidian-primary ring-offset-2 ring-offset-transparent' : ''}`}
               style={{ backgroundColor: p.avatar || getAvatarColor(p.username), zIndex: 10 - idx }}
-              title={p.username}
             >
               {getInitials(p.username)}
               
               {/* Speaking Indicator Dot */}
               {isSpeaking && (
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-400  border border-[#0e0e0f] animate-pulse" />
+                <span className="absolute -top-0.5 -right-0.5 w-3 h-3 bg-emerald-400 rounded-full border-2 border-obsidian-bg animate-pulse" />
               )}
 
               {/* Host Crown Indicator */}
               {p.userId === room?.hostId && (
-                <div className="absolute -top-2 left-1/2 -translate-x-1/2 drop-shadow-[0_0_5px_rgba(234,179,8,0.8)]">
-                  <Crown className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 drop-shadow-[0_0_8px_rgba(234,179,8,0.8)]">
+                  <Crown className="w-4 h-4 text-amber-400 fill-amber-400" />
                 </div>
               )}
 
               {/* Tooltip */}
-              <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 backdrop-blur-sm text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-obsidian-bg/90 backdrop-blur-md border border-white/5 text-[9px] font-bold px-2.5 py-1 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap shadow-2xl">
                 {p.username}
               </div>
             </div>
           );
         })}
         {onlineCount > activeParticipants.length && (
-          <div className="w-8 h-8  bg-white/10 border-2 border-[#0e0e0f] flex items-center justify-center text-[10px] font-black text-zinc-500 z-0">
+          <div className="w-9 h-9 rounded-full bg-white/5 backdrop-blur-md border-2 border-obsidian-bg/80 flex items-center justify-center text-[10px] font-black text-white/40 z-0">
             +{onlineCount - activeParticipants.length}
           </div>
         )}

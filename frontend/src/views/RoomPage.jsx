@@ -21,7 +21,7 @@ import {
   CheckIcon, XIcon, LockIcon, ClockIcon, LinkIcon
 } from '../components/UI/SharpIcons';
 // Material Symbols is still used for some simple utility icons
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertCircle, ChevronLeft } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useSocket } from '../context/SocketContext';
 import { useNavigationGuard } from "../hooks/useNavigationGuard";
@@ -588,19 +588,19 @@ const RoomPage = ({ code }) => {
           <div className="absolute bottom-1/3 -right-1/4 w-96 h-96 bg-obsidian-primary/8 rounded-full blur-[120px]"></div>
         </div>
         <div className="glass-panel text-center max-w-sm p-8 rounded-2xl relative z-10">
-          <div className="w-16 h-16 bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-6 rounded-2xl">
-            <span className="material-symbols-outlined text-red-500 text-3xl font-black">error</span>
+          <div className="w-16 h-16 bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-6 rounded-2xl shadow-[0_0_30px_rgba(239,68,68,0.15)]">
+            <span className="text-red-500"><AlertCircle className="w-8 h-8" /></span>
           </div>
           <h2 className="text-2xl font-bold text-obsidian-on-surface mb-2">Can't Join Room</h2>
           <p className="text-obsidian-on-surface-variant text-sm mb-8">{error}</p>
           <button 
-            className="btn-secondary w-full flex items-center justify-center gap-2" 
+            className="btn-secondary w-full flex items-center justify-center gap-2 py-3 rounded-xl border-white/5 bg-white/5 hover:bg-white/10" 
             onClick={() => {
               sessionStorage.removeItem("vibesync_session");
               router.replace('/');
             }}
           >
-            <BackIcon size={16} /> Back Home
+            <ChevronLeft className="w-4 h-4" /> Go Back Home
           </button>
         </div>
       </div>
@@ -613,7 +613,7 @@ const RoomPage = ({ code }) => {
       <OfflineShell />
 
       {/* ── Top bar ── */}
-      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full bg-gradient-to-r from-obsidian-surface via-obsidian-surface to-obsidian-surface/80 backdrop-blur-3xl shadow-[0_15px_50px_rgba(0,0,0,0.5)] border-b border-obsidian-primary/15 shrink-0 gap-2 relative z-[100]">
+      <header className="flex justify-between items-center px-4 md:px-6 h-16 w-full glass-blur border-b border-white/5 shrink-0 gap-2 relative z-[100]">
         <div className="flex items-center gap-3 min-w-0">
           <button
             onClick={() => router.push('/')}
@@ -631,7 +631,7 @@ const RoomPage = ({ code }) => {
 
           <div className="w-px h-5 bg-white/10 mx-1 md:mx-2 hidden sm:block" />
 
-          <h1 className="text-sm font-headline font-bold uppercase tracking-widest text-obsidian-primary truncate max-w-[120px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5">
+          <h1 className="text-sm font-headline font-bold uppercase tracking-widest text-obsidian-primary truncate max-w-[100px] sm:max-w-[200px] border-b border-obsidian-primary/30 pb-0.5 ml-1">
             {room?.name || code}
           </h1>
 
@@ -644,9 +644,9 @@ const RoomPage = ({ code }) => {
             </span>
           </div>
 
-          <div className="hidden xs:flex items-center gap-1.5 bg-obsidian-surface-container px-3 py-1 border border-white/5 shadow-inner ml-2">
-            <ShieldIcon size={14} className="text-green-500" />
-            <span className="text-[9px] font-bold font-headline uppercase tracking-widest text-obsidian-on-surface-variant">
+          <div className="hidden sm:flex items-center gap-1.5 bg-white/5 px-2.5 py-1 rounded-lg border border-white/5 ml-2">
+            <ShieldIcon size={12} className="text-emerald-500" />
+            <span className="text-[8px] font-black font-headline uppercase tracking-[0.2em] text-obsidian-on-surface-variant">
               E2EE
             </span>
           </div>
@@ -703,25 +703,25 @@ const RoomPage = ({ code }) => {
           <Tooltip text="Copy room code" position="bottom">
             <button
               onClick={copyRoomCode}
-              className="flex items-center gap-1.5 bg-transparent hover:bg-white/5 border border-white/5 px-3 py-1.5 shadow-lg text-[10px] font-bold font-headline transition-all uppercase tracking-widest group"
+              className="flex items-center gap-1.5 bg-white/5 hover:bg-white/10 border border-white/10 px-2.5 sm:px-3 py-1.5 rounded-xl transition-all uppercase tracking-widest group"
             >
-              <span className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary hidden sm:inline">
+              <span className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary hidden sm:inline text-[9px] font-bold">
                 CODE
               </span>
-              <span className="text-obsidian-primary group-hover:text-obsidian-primary-dim">
+              <span className="text-obsidian-primary text-[10px] font-bold">
                 {code}
               </span>
-              <CopyIcon size={14} className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary" />
+              <CopyIcon size={12} className="text-obsidian-on-surface-variant group-hover:text-obsidian-primary" />
             </button>
           </Tooltip>
 
           <Tooltip text="Copy invite link" position="bottom">
             <button
               onClick={copyInviteLink}
-              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-obsidian-on-primary-fixed px-3 py-1.5 text-[10px] font-black font-headline uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(189,157,255,0.2)] hover:shadow-[0_0_20px_rgba(189,157,255,0.4)] hidden sm:flex items-center gap-1.5"
+              className="bg-obsidian-primary hover:bg-obsidian-primary-dim text-white px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shadow-[0_4px_12px_rgba(170,85,255,0.2)] hover:scale-105 active:scale-95 flex items-center gap-1.5"
             >
               <LinkIcon size={14} />
-              Invite
+              <span className="hidden xs:inline">Invite</span>
             </button>
           </Tooltip>
 
@@ -835,42 +835,33 @@ const RoomPage = ({ code }) => {
         </div>
 
         {/* Mobile Tab Switcher Overlay (only on mobile) */}
-        <div className="md:hidden flex flex-col bg-[#0a0a0b]/90 backdrop-blur-3xl border-t border-white/5 shadow-[0_-20px_50px_rgba(0,0,0,0.9)] shrink-0 z-40 relative">
-          <div className="flex w-full overflow-x-auto scrollbar-hide">
-            <button
-              onClick={() => setActiveMobileTab("chat")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "chat" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
-            >
-              <ChatIcon size={16} className="mb-0.5" fill={activeMobileTab === "chat" ? "currentColor" : "none"} />
-              <span>CHAT</span>
-              {unreadChatCount > 0 && (
-                <span className="absolute top-1.5 right-[calc(50%-16px)] w-2 h-2 bg-obsidian-primary shadow-[0_0_8px_rgba(189,157,255,0.8)]" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveMobileTab("people")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "people" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
-            >
-              <ParticipantsIcon size={16} className="mb-0.5" fill={activeMobileTab === "people" ? "currentColor" : "none"} />
-              <span>PEOPLE ({onlineCount})</span>
-              {joinRequests.length > 0 && (
-                <span className="absolute top-1.5 right-[calc(50%-20px)] w-2 h-2 bg-obsidian-primary/80" />
-              )}
-            </button>
-            <button
-              onClick={() => setActiveMobileTab("queue")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "queue" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
-            >
-              <QueueIcon size={16} className="mb-0.5" fill={activeMobileTab === "queue" ? "currentColor" : "none"} />
-              <span>QUEUE</span>
-            </button>
-            <button
-              onClick={() => setActiveMobileTab("activity")}
-              className={`min-w-[70px] flex-1 flex flex-col items-center justify-center py-1.5 text-[9px] font-black tracking-widest transition-all ${activeMobileTab === "activity" ? "text-obsidian-primary" : "text-obsidian-outline opacity-40"}`}
-            >
-              <ActivityIcon size={16} className="mb-0.5" fill={activeMobileTab === "activity" ? "currentColor" : "none"} />
-              <span>ACTIVITY</span>
-            </button>
+        <div className="md:hidden flex flex-col bg-obsidian-bg/80 backdrop-blur-3xl border-t border-white/5 shrink-0 z-40 relative px-2">
+          <div className="flex w-full overflow-x-auto scrollbar-hide py-2 gap-1">
+            {[
+              { id: "chat", icon: ChatIcon, label: "CHAT", badge: unreadChatCount > 0 },
+              { id: "people", icon: ParticipantsIcon, label: `PEOPLE (${onlineCount})`, badge: joinRequests.length > 0 },
+              { id: "queue", icon: QueueIcon, label: "QUEUE" },
+              { id: "activity", icon: ActivityIcon, label: "ACTIVITY" }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveMobileTab(tab.id)}
+                className={`min-w-[80px] flex-1 flex flex-col items-center justify-center py-2.5 rounded-2xl transition-all duration-300 relative group
+                  ${activeMobileTab === tab.id ? "bg-obsidian-primary/10 text-obsidian-primary" : "text-obsidian-on-surface-variant hover:bg-white/5 opacity-60 hover:opacity-100"}
+                `}
+              >
+                <tab.icon size={18} className={`mb-1 transition-transform duration-300 ${activeMobileTab === tab.id ? "scale-110" : "group-hover:scale-110"}`} fill={activeMobileTab === tab.id ? "currentColor" : "none"} />
+                <span className="text-[9px] font-black tracking-widest leading-none">{tab.label}</span>
+                
+                {tab.badge && (
+                  <span className="absolute top-2 right-6 w-2 h-2 bg-obsidian-primary rounded-full shadow-[0_0_10px_rgba(170,85,255,0.6)] animate-pulse" />
+                )}
+                
+                {activeMobileTab === tab.id && (
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-obsidian-primary rounded-full shadow-[0_0_12px_rgba(170,85,255,1)]" />
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
@@ -888,35 +879,44 @@ const RoomPage = ({ code }) => {
           ${isSidebarDimmed && isSidebarOpen ? "md:opacity-30 hover:opacity-100" : "opacity-100"}`}
         >
           {/* Desktop Sidebar tabs (hidden on mobile) */}
-          <div className="hidden md:flex border-b border-white/5 shrink-0 px-2 pt-5 pb-2 justify-between bg-[#0a0a0b] relative z-10">
+          <div className="hidden md:flex border-b border-white/5 shrink-0 px-2 pt-6 pb-2 justify-between bg-obsidian-bg relative z-10 transition-colors duration-300">
             {[
-              { id: "chat", icon: ChatIcon, label: "Chat" },
+              { id: "chat", icon: ChatIcon, label: "Chat", badge: unreadChatCount > 0 },
               {
                 id: "participants",
                 icon: ParticipantsIcon,
                 label: `People (${participants?.length || 0})`,
+                badge: joinRequests.length > 0
               },
               { id: "queue", icon: QueueIcon, label: "Queue" },
               { id: "activity", icon: ActivityIcon, label: "Activity" },
-            ].map(({ id, icon: Icon, label }) => {
+            ].map(({ id, icon: Icon, label, badge }) => {
               const TabIcon = Icon;
               return (
                 <button
                   key={id}
-                  onClick={() => { setSidebarTab(id); if (id === 'chat') { setActiveMobileTab('chat'); setUnreadChatCount(0); } else if (id === 'participants') setActiveMobileTab('people'); }}
-                  className={`flex-1 flex flex-col items-center justify-center gap-2 group relative transition-all duration-300 ${sidebarTab === id ? "text-obsidian-primary" : "text-obsidian-on-surface-variant opacity-40 hover:opacity-100"}`}
+                  onClick={() => { 
+                    setSidebarTab(id); 
+                    if (id === 'chat') { 
+                      setActiveMobileTab('chat'); 
+                      setUnreadChatCount(0); 
+                    } else if (id === 'participants') {
+                      setActiveMobileTab('people');
+                    }
+                  }}
+                  className={`flex-1 flex flex-col items-center justify-center gap-1.5 group relative transition-all duration-300 py-3 rounded-xl
+                    ${sidebarTab === id ? "text-obsidian-primary bg-obsidian-primary/10" : "text-obsidian-on-surface-variant opacity-40 hover:opacity-100 hover:bg-white/5"}
+                  `}
                 >
-                  <TabIcon size={24} className="mb-1" />
-                  <span className="text-[9px] font-black uppercase tracking-[0.15em]">
-                    {label}
-                  </span>
+                  <TabIcon size={20} className={`transition-transform duration-300 ${sidebarTab === id ? "scale-110" : "group-hover:scale-110"}`} fill={sidebarTab === id ? "currentColor" : "none"} />
+                  <span className="text-[10px] font-bold tracking-wider uppercase">{label.split(' ')[0]}</span>
                   
-                  {sidebarTab === id && (
-                    <div className="absolute -bottom-2 translate-y-[1px] left-0 w-full h-[2px] bg-obsidian-primary shadow-[0_0_15px_rgba(189,157,255,0.8)]"></div>
+                  {badge && (
+                    <span className="absolute top-2 right-4 w-2 h-2 bg-obsidian-primary rounded-full shadow-[0_0_10px_rgba(170,85,255,0.6)] animate-pulse" />
                   )}
                   
-                  {id === "chat" && unreadChatCount > 0 && sidebarTab !== "chat" && (
-                    <span className="absolute top-0 right-1/4 w-3 h-3 bg-fuchsia-500 shadow-[0_0_8px_rgba(232,121,249,0.8)]" />
+                  {sidebarTab === id && (
+                    <div className="absolute -bottom-[9px] left-1/2 -translate-x-1/2 w-8 h-1 bg-obsidian-primary rounded-full shadow-[0_0_12px_rgba(170,85,255,1)]" />
                   )}
                 </button>
               );
