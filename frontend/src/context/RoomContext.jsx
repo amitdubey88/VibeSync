@@ -889,17 +889,29 @@ export const RoomProvider = ({ children }) => {
         e2ee: true 
     });
 
-    if (content.toLowerCase().match(/@genie\b/i)) {
+    const isGenieMention = content.toLowerCase().match(/@genie\b/i);
+    const isReplyToGenie = replyTo?.username === 'Genie';
+
+    if (isGenieMention || isReplyToGenie) {
       setGenieThinking(true);
       const recentContext = messagesRef.current.slice(-10).map(m => ({
         username: m.username,
         content: m.content
       }));
+
+      // If it's a reply, we can make the prompt more explicit about the context
+      let finalPrompt = content;
+      if (isReplyToGenie && !isGenieMention) {
+        // Automatically prepend context for the AI if not explicitly mentioned
+        // This ensures the AI knows it was invited to the conversation via a reply
+        finalPrompt = `[Replying to your previous message] ${content}`;
+      }
+
       socket.emit('chat:gemini-prompt', {
         roomCode: currentRoom.code,
-        prompt: content,
+        prompt: finalPrompt,
         context: recentContext,
-        currentVideo: currentVideoRef?.current // Pass the latest video info
+        currentVideo: currentVideoRef?.current
       });
     }
   }, [socket]);

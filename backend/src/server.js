@@ -8,6 +8,15 @@ const multer = require('multer');
 const fs = require('fs');
 const { cloudinary, isConfigured: isCloudinaryConfigured } = require('./config/cloudinary');
 
+// Global Error Handlers - Keep server alive if AI or Async tasks fail
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('⚠️ [CRITICAL] Unhandled Rejection at:', promise, 'reason:', reason);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('⚠️ [CRITICAL] Uncaught Exception:', err);
+});
+
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/auth');
 const roomRoutes = require('./routes/rooms');

@@ -127,7 +127,7 @@ module.exports = (io, socket, roomStore) => {
         }
 
         if (!isAiConfigured()) {
-            socket.emit('chat:gemini-response', { text: "I'm sorry, my AI backend is not configured yet. The host needs to provide a Gemini API key." });
+            socket.emit('chat:gemini-response', { text: "I'm sorry, my AI backend is not configured yet. The host needs to provide an API key (Gemini or OpenRouter)." });
             return;
         }
 

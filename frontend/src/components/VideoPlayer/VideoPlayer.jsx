@@ -149,9 +149,11 @@ const VideoPlayer = () => {
   const [showControls, setShowControls] = useState(true);
   const [videoEl, setVideoEl] = useState(null);
   const controlsTimer = useRef(null);
+  const lastShowTimestampRef = useRef(0);
 
   const handleMouseMove = useCallback(() => {
     setShowControls(true);
+    lastShowTimestampRef.current = Date.now();
     window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: true }));
     clearTimeout(controlsTimer.current);
     controlsTimer.current = setTimeout(() => {
@@ -434,7 +436,7 @@ const VideoPlayer = () => {
 
       // For uploads, start broadcast immediately on play.
       // For live streams, only broadcast if the host explicitly clicked 'Start Streaming' first.
-      // NOTE: Read from ref (not state) — 'playing' fires before React commits the state update.
+      // NOTE: Read from ref (not state) — 'playing' fires before React commit the state update.
       const shouldBroadcast = isHost && (
         (currentVideo?.type === 'live' || isDirectStreaming) && isLiveStreamingInitializedRef.current
       );
@@ -761,45 +763,58 @@ const VideoPlayer = () => {
   const clickAnimRef = useRef(null);
   const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
 
-  const handleCenterClick = useCallback(() => {
-    // On mobile, if controls are hidden, first tap ONLY shows them
-    if (isMobile && !showControls) {
+  const handleCenterClick = useCallback((e) => {
+    if (e) e.stopPropagation();
+
+    // Mobile logic: If controls are hidden, first tap only shows them.
+    if (isMobile) {
+      if (!showControls) {
+        handleMouseMove();
+        return;
+      }
+      
+      // If visible, check if we're in the settling period (400ms)
+      const elapsed = Date.now() - lastShowTimestampRef.current;
+      if (elapsed < 400) {
+        return;
+      }
+
+      // If we got here, it's a second tap while visible.
+      // Perform the playback action
+      if (isHost || isCoHost) {
+        if (videoEl?.paused) {
+          videoEl.play().catch(() => {});
+          setClickAnim('play');
+        } else {
+          videoEl?.pause();
+          setClickAnim('pause');
+        }
+        if (clickAnimRef.current) clearTimeout(clickAnimRef.current);
+        clickAnimRef.current = setTimeout(() => setClickAnim(null), 800);
+      }
+      
+      // Instead of hiding instantly, refresh the visibility timer (3.5s)
       handleMouseMove();
       return;
     }
 
-    // Refresh controls visibility timer
+    // Refresh controls visibility timer on desktop
     handleMouseMove();
 
     if (!videoEl) return;
-
-    // Only host/co-host controls playback
     if (!isHost && !isCoHost) return;
-    
-    // Only block during strict pre-live state (host hasn't started stream yet)
-    if (
-      (isHost || isCoHost) &&
-      isWebRTCStream &&
-      !isLiveStreamingInitialized &&
-      !activeSrc
-    ) {
-      return;
-    }
-    
+
     if (videoEl.paused) {
       videoEl.play().catch(() => {});
+      setClickAnim('play');
     } else {
       videoEl.pause();
+      setClickAnim('pause');
     }
-
-    // On mobile, if we just took an action (play/pause), we can hide the controls instantly
-    if (isMobile) {
-      setShowControls(false);
-      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
-      clearTimeout(controlsTimer.current);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoEl, isHost, isCoHost, isMobile, showControls, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
+    
+    if (clickAnimRef.current) clearTimeout(clickAnimRef.current);
+    clickAnimRef.current = setTimeout(() => setClickAnim(null), 800);
+  }, [isMobile, showControls, handleMouseMove, videoEl, isHost, isCoHost]);
 
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {

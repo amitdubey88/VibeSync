@@ -1,25 +1,57 @@
 const { GoogleGenAI } = require('@google/genai');
+const OpenAI = require('openai');
 
 let aiConfigured = false;
 let ai;
 
-// Ordered list of models to try — if one 503s, fall through to the next
 const MODEL_CHAIN = [
-    'gemini-flash-latest',
-    'gemini-2.0-flash',
-    'gemini-1.5-flash',
+    'gemini-flash-latest'
 ];
+
+// OpenRouter Free Models for fallback — verified live IDs (updated 2025-04)
+const OPENROUTER_MODELS = [
+    'nvidia/nemotron-nano-9b-v2:free',
+    'nvidia/nemotron-3-nano-30b-a3b:free',
+    'qwen/qwen3-next-80b-a3b-instruct:free',
+    'openrouter/free'  // Auto-router: picks any available free model
+];
+
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
 
 if (process.env.GEMINI_API_KEY) {
     try {
-        ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        ai = new GoogleGenAI({
+            apiKey: process.env.GEMINI_API_KEY,
+            apiVersion: 'v1beta'
+        });
         aiConfigured = true;
-        console.log('🧞 Genie AI integration enabled (model chain:', MODEL_CHAIN.join(' → '), ')');
+        console.log('🧞 Genie AI (Gemini) enabled');
     } catch (e) {
-        console.error('Failed to initialize Genie AI:', e.message);
+        console.error('Failed to initialize Gemini:', e.message);
     }
-} else {
-    console.log('🧞 Gemini API key not found. AI features will be disabled.');
+}
+
+let openRouter;
+const openRouterKey = process.env.OPENROUTER_API_KEY;
+if (openRouterKey) {
+    try {
+        openRouter = new OpenAI({
+            baseURL: 'https://openrouter.ai/api/v1',
+            apiKey: openRouterKey,
+            defaultHeaders: {
+                "HTTP-Referer": "https://vibesync.app",
+                "X-OpenRouter-Title": "VibeSync Genie"
+            }
+        });
+        console.log('🧞 Genie AI (OpenRouter) enabled as fallback');
+    } catch (e) {
+        console.error('Failed to initialize OpenRouter SDK:', e.message);
+    }
+}
+
+if (!aiConfigured && !openRouterKey) {
+    console.log('🧞 No Gemini or OpenRouter key found. Genie will be disabled.');
 }
 
 /**
@@ -30,8 +62,8 @@ if (process.env.GEMINI_API_KEY) {
  * @returns {Promise<string>} The AI's response text
  */
 const generateChatResponse = async (prompt, contextMessages = [], videoContext = null) => {
-    if (!aiConfigured) {
-        return "I'm sorry, my AI backend is not configured yet. The host needs to provide a Gemini API key.";
+    if (!aiConfigured && !process.env.OPENROUTER_API_KEY) {
+        return "I'm sorry, my AI backend is not configured yet. The host needs to provide an API key.";
     }
 
     try {
@@ -55,10 +87,6 @@ const generateChatResponse = async (prompt, contextMessages = [], videoContext =
         } else {
             videoMeta = `No video is currently playing. The screen is empty.\n`;
         }
-
-        const fullPrompt = `${chatContext}${videoMeta}Current context: You are in a live group chat room where people are watching videos together in real-time on VibeSync.
- 
-User's message: ${prompt}`;
 
         const systemInstruction = `You are Genie 🧞 — a witty, warm, and highly interactive female AI companion inside VibeSync, a Watch Party app.
 
@@ -151,43 +179,76 @@ User's message: ${prompt}`;
 
 
 
-        // Try each model in the chain until one succeeds
-        let lastError = null;
-        for (const model of MODEL_CHAIN) {
-            try {
-                const response = await ai.models.generateContent({
-                    model,
-                    contents: fullPrompt,
-                    config: { systemInstruction }
-                });
+        const finalPrompt = `PERSONA AND SYSTEM RULES:
+${systemInstruction}
 
-                // response.text may be a property or a getter — handle both
-                const text = typeof response.text === 'function' ? response.text() : response.text;
-                if (text) {
-                    console.log(`[Genie] Response generated with model: ${model}`);
-                    return text;
-                }
-            } catch (err) {
-                lastError = err;
-                const code = err?.status || err?.code || '';
-                console.warn(`[Genie] Model ${model} failed (${code}), trying next...`);
-                // Only fall through on transient / availability errors
-                if (![503, 429, 500, 'UNAVAILABLE', 'RESOURCE_EXHAUSTED'].includes(code)) {
-                    throw err; // non-transient error, stop trying
+CONTEXT:
+${chatContext}
+${videoMeta}
+
+USER MESSAGE:
+${prompt}`;
+
+        // 1. Try OpenRouter First (larger free pool)
+        if (openRouter) {
+            for (const modelName of OPENROUTER_MODELS) {
+                try {
+                    console.log(`[Genie] Requesting OpenRouter model: ${modelName}...`);
+                    const completion = await openRouter.chat.completions.create({
+                        model: modelName,
+                        messages: [
+                            { role: "user", content: finalPrompt }
+                        ]
+                    });
+
+                    const text = completion.choices?.[0]?.message?.content;
+
+                    if (text) {
+                        console.log(`[Genie] OpenRouter ${modelName} responded successfully.`);
+                        return text.trim();
+                    }
+                } catch (err) {
+                    console.warn(`[Genie] OpenRouter ${modelName} failed: ${err.message}`);
+                    await sleep(500);
                 }
             }
         }
 
+        // 2. Try Gemini as Last Resort (limited to 20 free requests/day)
+        if (aiConfigured) {
+            console.log('[Genie] OpenRouter unavailable. Falling back to Gemini...');
+            for (const modelName of MODEL_CHAIN) {
+                try {
+                    console.log(`[Genie] Requesting Gemini model: ${modelName}...`);
+                    const result = await ai.models.generateContent({
+                        model: modelName,
+                        contents: [{ role: 'user', parts: [{ text: finalPrompt }] }]
+                    });
+
+                    const text = result.text;
+                    if (text) {
+                        console.log(`[Genie] Gemini ${modelName} responded successfully.`);
+                        return text.trim();
+                    }
+                } catch (err) {
+                    const status = err?.status || err?.code || '';
+                    const message = err?.message || 'Unknown error';
+                    console.warn(`[Genie] Gemini ${modelName} failed (${status}): ${message}`);
+                }
+            }
+        }
+
+
         // All models exhausted
-        console.error('[Genie] All models exhausted:', lastError?.message);
-        return "✨ I'm taking a short break right now — all my AI models are busy. Try again in a moment!";
+        console.error('[Genie] All AI providers exhausted.');
+        return "✨ I'm taking a short break right now — my brain is a bit overloaded. Try again in a moment!";
     } catch (error) {
-        console.error('[Genie API Error]:', error?.message || error);
+        console.error('[Genie Global Error]:', error?.message || error);
         return "✨ Something went wrong on my end. Please try again later!";
     }
 };
 
 module.exports = {
     generateChatResponse,
-    isAiConfigured: () => aiConfigured
+    isAiConfigured: () => aiConfigured || !!process.env.OPENROUTER_API_KEY
 };
