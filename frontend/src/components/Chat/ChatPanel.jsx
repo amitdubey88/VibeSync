@@ -55,9 +55,20 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
     setShowSwipeGuide(localStorage.getItem("vs_swipe_guide_seen") !== "true");
   }, []);
 
+  const [showReactionsMobileToggle, setShowReactionsMobileToggle] = useState(true);
   const isWebRTCStream = currentVideo?.type === "live";
   const isStreamActive =
     isLiveStreamingInitialized || (!isHost && remotePremierStream);
+  
+  // Sync reaction bar with video controls visibility
+  useEffect(() => {
+    const handleVisibility = (e) => {
+      setShowReactionsMobileToggle(e.detail);
+    };
+    window.addEventListener('video:controls-visibility', handleVisibility);
+    return () => window.removeEventListener('video:controls-visibility', handleVisibility);
+  }, []);
+
   const shouldShowReactions =
     currentVideo && (!isWebRTCStream || isStreamActive);
 
@@ -432,11 +443,13 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       )}
 
       {/* Reactions Bar (Mobile Chat ONLY) */}
-      {shouldShowReactions && isMobile && !isFullscreen && (
-        <div className="px-3 py-0.5 border-t border-white/5 bg-white/[0.02]">
-          <QuickReactionBar isOverlay={false} />
-        </div>
-      )}
+      <div className={`px-3 transition-all duration-300 ease-in-out border-t border-white/5 bg-white/[0.02] overflow-hidden ${
+        (shouldShowReactions && isMobile && !isFullscreen && showReactionsMobileToggle) 
+          ? "max-h-20 opacity-100 py-0.5" 
+          : "max-h-0 opacity-0 py-0"
+      }`}>
+        <QuickReactionBar isOverlay={false} />
+      </div>
 
       {/* ── Input bar ── */}
       <div className="flex flex-col border-t border-white/5 shrink-0 bg-white/[0.01] backdrop-blur-md">

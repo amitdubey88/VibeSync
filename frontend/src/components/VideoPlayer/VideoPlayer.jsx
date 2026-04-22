@@ -762,15 +762,14 @@ const VideoPlayer = () => {
   const [clickAnim, setClickAnim] = useState(null); // 'play' | 'pause' | null
 
   const handleCenterClick = useCallback(() => {
-    handleMouseMove();
+    // On mobile, if controls are hidden, first tap ONLY shows them
+    if (isMobile && !showControls) {
+      handleMouseMove();
+      return;
+    }
 
-    console.log('CLICK', {
-      isHost,
-      isWebRTCStream,
-      isLiveStreamingInitialized,
-      hasVideo: !!videoEl,
-      activeSrc
-    });
+    // Refresh controls visibility timer
+    handleMouseMove();
 
     if (!videoEl) return;
 
@@ -792,9 +791,15 @@ const VideoPlayer = () => {
     } else {
       videoEl.pause();
     }
-    // Animation is now triggered by onPlayEv/onPauseEv listeners for all interaction methods
+
+    // On mobile, if we just took an action (play/pause), we can hide the controls instantly
+    if (isMobile) {
+      setShowControls(false);
+      window.dispatchEvent(new CustomEvent('video:controls-visibility', { detail: false }));
+      clearTimeout(controlsTimer.current);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [videoEl, isHost, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
+  }, [videoEl, isHost, isCoHost, isMobile, showControls, handleMouseMove, isWebRTCStream, isLiveStreamingInitialized, activeSrc]);
 
   // ── Keyboard Shortcut Event Listeners ──
   useEffect(() => {
