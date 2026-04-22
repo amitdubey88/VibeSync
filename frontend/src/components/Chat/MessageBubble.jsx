@@ -148,7 +148,53 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
     ? 'bg-[#2d2d35]/60 border-white/10 text-white'
     : 'bg-[#1a1b1e]/90 border-white/10 text-white';
 
-  const senderNameColor = '#8b5cf6'; // julian.x purple
+  const isGenie = message.username === 'Genie';
+  const senderNameColor = isGenie ? '#d946ef' : '#8b5cf6';
+
+  // Only animate Genie messages that just arrived (within last 10s), not old history
+  const isFresh = isGenie && message.type !== 'system'
+    && (Date.now() - new Date(message.createdAt).getTime()) < 10000;
+
+  const [displayedContent, setDisplayedContent] = useState(() => {
+    return isFresh ? '' : (message.content || '');
+  });
+  const [isTypingComplete, setIsTypingComplete] = useState(!isFresh);
+
+  useEffect(() => {
+    const contentStr = message.content || '';
+
+    // Non-Genie, system, or old messages — show immediately
+    if (!isFresh || isTypingComplete) {
+      setDisplayedContent(contentStr);
+      setIsTypingComplete(true);
+      return;
+    }
+
+    // Start typewriter for fresh Genie messages
+    let index = 0;
+    const interval = setInterval(() => {
+      index += 3;
+      setDisplayedContent(contentStr.slice(0, index));
+      if (index >= contentStr.length) {
+        clearInterval(interval);
+        setIsTypingComplete(true);
+      }
+    }, 25);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [message.content]);
+
+  const renderContent = (content) => {
+    if (typeof content !== 'string') return content;
+    const parts = content.split(/(@\w+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('@')) {
+        const isMentioningGenie = part.toLowerCase() === '@genie';
+        return <span key={i} className={`font-black tracking-wide ${isMentioningGenie ? 'text-fuchsia-400 drop-shadow-[0_0_8px_rgba(192,38,211,0.5)]' : 'text-emerald-400 bg-emerald-500/10 px-1 rounded-sm'}`}>{part}</span>;
+      }
+      return part;
+    });
+  };
 
   return (
     <div
@@ -208,7 +254,10 @@ const MessageBubble = ({ message, isOwn, onReply, onPin, prevMessage, isLastInGr
                 <img src={message.content} alt={message.title || 'GIF'} className="max-w-full h-auto min-w-[150px] object-cover" loading="lazy" />
               </div>
             ) : (
-              <span className="whitespace-pre-wrap font-body font-medium">{message.content}</span>
+                <span className="whitespace-pre-wrap font-body font-medium leading-relaxed">
+                  {renderContent(displayedContent)}
+                  {!isTypingComplete && <span className="inline-block w-1.5 h-4 ml-0.5 bg-fuchsia-400 animate-pulse align-middle" />}
+                </span>
             )}
           </div>
 

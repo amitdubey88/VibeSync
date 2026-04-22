@@ -1,6 +1,0 @@
-
-> vibesync-backend@1.0.0 lint
-> eslint src/**/*.js
-
-'eslint' is not recognized as an internal or external command,
-operable program or batch file.

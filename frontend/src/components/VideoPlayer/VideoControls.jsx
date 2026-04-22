@@ -227,11 +227,11 @@ const VideoControls = ({
 
   return (
     <div
-      className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 ${visible ? "opacity-100 translate-y-0 pointer-events-auto" : "opacity-0 translate-y-2 pointer-events-none"}`}
+      className={`absolute inset-x-0 bottom-0 bg-gradient-to-t from-black via-black/80 to-transparent pt-24 pb-6 md:pb-5 px-5 transition-all duration-300 pointer-events-none ${visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}
     >
       {/* ── Progress bar (Visible to everyone, seekable by host) ── */}
       <div
-        className={`relative h-1.5 bg-white/20 mb-3 ${isHost ? "cursor-pointer hover:h-2" : "cursor-default"} transition-all duration-150 group/progress`}
+        className={`relative h-1.5 bg-white/20 mb-3 pointer-events-auto ${isHost ? "cursor-pointer hover:h-2" : "cursor-default"} transition-all duration-150 group/progress`}
         onClick={isHost || isCoHost ? handleSeek : undefined}
       >
         <div
@@ -264,7 +264,7 @@ const VideoControls = ({
       </div>
 
       {/* ── Buttons row ── */}
-      <div className="flex items-center gap-1.5 sm:gap-3 w-full">
+      <div className="flex items-center gap-1.5 sm:gap-3 w-full pointer-events-auto">
         {/* Play/pause */}
         <button
           onClick={togglePlay}
@@ -376,7 +376,7 @@ const VideoControls = ({
       </div>
 
       {!isHost && !isCoHost && (
-        <p className="flex items-center justify-center gap-2 text-center text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-2 select-none">
+        <p className="flex items-center justify-center gap-2 text-center text-[10px] text-zinc-600 font-black uppercase tracking-widest mt-2 select-none pointer-events-none">
           <CrownIcon size={12} className="text-obsidian-primary" />
           <span>Only the host and co-hosts can control playback</span>
         </p>

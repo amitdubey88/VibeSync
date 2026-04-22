@@ -31,13 +31,6 @@ const VideoPresenceOverlay = ({ visible }) => {
 
   return (
     <div className={`absolute top-6 left-6 z-40 flex flex-col gap-4 pointer-events-none transition-all duration-500 ease-in-out ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2'}`}>
-      {/* Top Row: Viewer Count */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2 bg-obsidian-bg/40 backdrop-blur-xl border border-white/5 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.15em] text-white shadow-2xl pointer-events-auto">
-          <Users className="w-3.5 h-3.5 text-obsidian-primary" />
-          <span>{onlineCount} watching</span>
-        </div>
-      </div>
 
       {/* Collective Reactions Counter */}
       {Object.entries(reactionCounts).length > 0 && (

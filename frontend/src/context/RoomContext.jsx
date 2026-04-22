@@ -18,6 +18,7 @@ const playUISound = (type = 'message') => {
     else if (type === 'leave') sounds.playLeave();
     else if (type === 'knock') sounds.playKnock();
     else if (type === 'end') sounds.playSessionEnded();
+    else if (type === 'mention') sounds.playMention();
     else if (type === 'social') sounds.playTone(600, 'sine', 0.1, 0, 0.05); // fallback
     else if (type === 'action') sounds.playTone(1200, 'sine', 0.05, 0, 0.05);
   } catch {
@@ -52,6 +53,7 @@ export const RoomProvider = ({ children }) => {
   const [sessionSummary, setSessionSummary] = useState(null); // Feature 17
   const [typingUsers, setTypingUsers] = useState({}); // { username: timestamp }
   const [isLiveStreamingInitialized, setIsLiveStreamingInitialized] = useState(false);
+  const [genieThinking, setGenieThinking] = useState(false);
 
   // Chat notifications state
   const [unreadChatCount, setUnreadChatCount] = useState(0);
@@ -68,11 +70,16 @@ export const RoomProvider = ({ children }) => {
   const roomRef = useRef(null);
   const participantsRef = useRef([]);
   const messagesRef = useRef([]);
+  const roomKeyRef = useRef(null);
+  const currentVideoRef = useRef(null);
+  useEffect(() => { currentVideoRef.current = currentVideo; }, [currentVideo]);
   useEffect(() => { roomRef.current = room; }, [room]);
   useEffect(() => { participantsRef.current = participants; }, [participants]);
   useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { roomKeyRef.current = roomKey; }, [roomKey]);
   // Always-current ref for isHost so socket closures don't go stale (BUG-7)
   const isHostRef = useRef(false);
+  const genieTimeoutRef = useRef(null);
   // Message delivery/read status: { [msgId]: 'sent' | 'delivered' | 'seen' }
   const [messageStatuses, setMessageStatuses] = useState({});
 
@@ -92,10 +99,14 @@ export const RoomProvider = ({ children }) => {
   // Derive key when room code changes
   useEffect(() => {
     if (room?.code) {
-      deriveKey(room.code).then(setRoomKey);
+      deriveKey(room.code).then((key) => {
+        setRoomKey(key);
+        roomKeyRef.current = key; // Immediate sync for socket handlers
+      });
     } else {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setRoomKey(null);
+      roomKeyRef.current = null;
     }
   }, [room?.code]);
 
@@ -106,6 +117,7 @@ export const RoomProvider = ({ children }) => {
     // Derive key early for history decryption
     const key = await deriveKey(roomCode);
     setRoomKey(key);
+    roomKeyRef.current = key; // Immediate sync for socket handlers
 
     // Message history is hydrated via onRoomState (socket event) to avoid race conditions.
   }, [socket]);
@@ -256,8 +268,13 @@ export const RoomProvider = ({ children }) => {
 
     const onRoomState = async ({ room: r }) => {
       setRoom(r);
+      roomRef.current = r; // Immediate sync for socket handlers
       const key = await deriveKey(r.code);
+      if (!key) {
+        console.error('[E2EE] Failed to derive key for room', r.code, '— crypto.subtle available:', !!window.crypto?.subtle);
+      }
       setRoomKey(key);
+      roomKeyRef.current = key; // Immediate sync for socket handlers
 
       setParticipants(r.participants || []);
       const activeVoice = (r.voiceParticipants || []).filter(p => !p.isPassive);
@@ -333,21 +350,33 @@ export const RoomProvider = ({ children }) => {
     };
 
     const onChatMessage = async (msg) => {
+      // Use ref to always get the latest key (avoids stale closure).
+      // Fall back to on-demand derivation if the key hasn't been set yet.
+      const currentRoom = roomRef.current;
+      let key = roomKeyRef.current;
+      if (!key && currentRoom?.code) {
+        key = await deriveKey(currentRoom.code);
+        if (key) {
+          roomKeyRef.current = key;
+          setRoomKey(key);
+        }
+      }
+
       let displayContent = msg.content;
-      if (msg.e2ee && roomKey) {
-        displayContent = await decryptData(msg.content, roomKey);
+      if (msg.e2ee && key) {
+        displayContent = await decryptData(msg.content, key);
       }
       
       let replyTo = msg.replyTo;
-      if (replyTo && msg.e2ee && roomKey && replyTo.content) {
-        const decryptedReplyContent = await decryptData(replyTo.content, roomKey);
+      if (replyTo && msg.e2ee && key && replyTo.content) {
+        const decryptedReplyContent = await decryptData(replyTo.content, key);
         replyTo = { ...replyTo, content: decryptedReplyContent };
       }
 
       const decryptedMsg = { ...msg, content: displayContent, replyTo };
       
       // Decrypt system messages that use systemType: 'video-source'
-      if (decryptedMsg.e2ee && decryptedMsg.systemType === 'video-source' && roomKey) {
+      if (decryptedMsg.e2ee && decryptedMsg.systemType === 'video-source' && key) {
         // displayContent is already the decrypted title (since it was decrypted above)
         decryptedMsg.content = `Video set to: ${displayContent}`;
       }
@@ -359,8 +388,8 @@ export const RoomProvider = ({ children }) => {
       });
 
       // Emit delivered ACK for messages from others so the sender sees double-ticks
-      if (msg.userId !== user?.id && msg.username !== user?.username && room?.code) {
-        socket.emit('chat:delivered', { roomCode: room.code, messageIds: [msg.id] });
+      if (msg.userId !== user?.id && msg.username !== user?.username && currentRoom?.code) {
+        socket.emit('chat:delivered', { roomCode: currentRoom.code, messageIds: [msg.id] });
       }
       
       // If it's not my message, check if we need to notify
@@ -374,7 +403,11 @@ export const RoomProvider = ({ children }) => {
               else if (displayContent.includes('left the room') || displayContent.includes('removed from')) playUISound('leave');
               else playUISound('social');
             } else {
-              playUISound('message');
+              if (displayContent.toLowerCase().includes(`@${user?.username?.toLowerCase()}`) || displayContent.toLowerCase().includes('@genie')) {
+                playUISound('mention');
+              } else {
+                playUISound('message');
+              }
               setEnergy(prev => Math.min(prev + 10, 100)); // Boost energy
               toast(`${msg.username}: ${displayContent.length > 30 ? displayContent.substring(0, 30) + '...' : displayContent}`, {
                 duration: 2000,
@@ -391,12 +424,10 @@ export const RoomProvider = ({ children }) => {
     const onSourceChanged = async ({ video, videoState: vs }) => {
       let displayVideo = video;
       if (video?.e2ee) {
-        // BUGFIX: roomKey may still be null when the first video:source-changed event
-        // arrives (deriveKey is async and can take 200-500 ms). Using the stale null
-        // key causes decryptData to throw, leaving participants with an encrypted blob
-        // as their video URL → no video visible. Derive on-demand if not yet ready,
-        // mirroring the same defensive pattern in setVideoSource().
-        const key = roomKey || (await deriveKey(room?.code));
+        // Use ref to always get the latest key (avoids stale closure).
+        // Fall back to on-demand derivation if the key hasn't been set yet.
+        const currentRoom = roomRef.current;
+        const key = roomKeyRef.current || (currentRoom?.code ? await deriveKey(currentRoom.code) : null);
         if (key) {
           try {
             const decryptedUrl = await decryptData(video.url, key);
@@ -687,6 +718,32 @@ export const RoomProvider = ({ children }) => {
 
     const onPollUpdate = ({ poll }) => setActivePoll(poll?.active ? poll : null);
 
+    const onGeminiResponse = async ({ text }) => {
+      // Clear safety timeout immediately on receiving any response
+      if (genieTimeoutRef.current) {
+        clearTimeout(genieTimeoutRef.current);
+        genieTimeoutRef.current = null;
+      }
+      setGenieThinking(false);
+
+      const currentRoom = roomRef.current;
+      const key = roomKeyRef.current;
+      if (currentRoom?.code && key) {
+        try {
+          const encryptedContent = await encryptData(text, key);
+          socket.emit('chat:send-bot', {
+              roomCode: currentRoom.code,
+              botName: 'Genie',
+              botAvatar: 'https://www.gstatic.com/lamda/images/sparkle_resting_v2_darkmode_2bdb7df2724e4500732432bd3c5f9586.gif',
+              content: encryptedContent,
+              e2ee: true
+          });
+        } catch (err) {
+          console.error('[E2EE] Failed to encrypt Gemini response', err);
+        }
+      }
+    };
+
     socket.on('chat:typing', onTyping);
     socket.on('chat:message-reaction', onMessageReaction);
     socket.on('chat:delivered', onDelivered);
@@ -697,6 +754,26 @@ export const RoomProvider = ({ children }) => {
     socket.on('queue:updated', onQueueUpdated);
     socket.on('queue:suggested', onQueueSuggested);
     socket.on('queue:load-video', onQueueLoadVideo);
+    socket.on('chat:gemini-response', onGeminiResponse);
+    socket.on('chat:genie-thinking', ({ thinking }) => {
+      setGenieThinking(thinking);
+      
+      // Safety Timer: If Genie starts thinking, schedule a forced reset in 45s
+      // to prevent UI hangs if server reset message is lost.
+      if (thinking) {
+        if (genieTimeoutRef.current) clearTimeout(genieTimeoutRef.current);
+        genieTimeoutRef.current = setTimeout(() => {
+          console.warn('[Genie] Response timed out. Forcing thinking state to false.');
+          setGenieThinking(false);
+          genieTimeoutRef.current = null;
+        }, 45000); // 45s safety window
+      } else {
+        if (genieTimeoutRef.current) {
+          clearTimeout(genieTimeoutRef.current);
+          genieTimeoutRef.current = null;
+        }
+      }
+    });
 
     return () => {
       socket.off('room:state', onRoomState);
@@ -733,8 +810,12 @@ export const RoomProvider = ({ children }) => {
       socket.off('queue:updated', onQueueUpdated);
       socket.off('queue:suggested', onQueueSuggested);
       socket.off('queue:load-video', onQueueLoadVideo);
+      socket.off('chat:gemini-response', onGeminiResponse);
     };
-  }, [socket, user, roomKey, addSystemMessage, room?.code, setVideoSource]);
+    // NOTE: roomKey and room?.code removed from deps — handlers now use roomKeyRef/roomRef
+    // to avoid tearing down all listeners on every key/room change (which caused missed events).
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [socket, user, addSystemMessage, setVideoSource]);
 
 
   // ── Social Energy Decay — only when inside a room (BUG-11) ─────────────────
@@ -773,24 +854,55 @@ export const RoomProvider = ({ children }) => {
 
   // ── Chat actions ──────────────────────────────────────────────────────────
   const sendMessage = useCallback(async (content, replyTo = null) => {
-    if (!socket || !room || !roomKey) return;
+    if (!socket) return;
+
+    // Use refs for the latest room/key, with on-demand derivation fallback
+    const currentRoom = roomRef.current;
+    if (!currentRoom) return;
+
+    let key = roomKeyRef.current;
+    if (!key && currentRoom.code) {
+      key = await deriveKey(currentRoom.code);
+      if (key) {
+        roomKeyRef.current = key;
+        setRoomKey(key);
+      }
+    }
+    if (!key) {
+      console.error('[E2EE] Cannot send message — key derivation failed. crypto.subtle:', !!window.crypto?.subtle);
+      return;
+    }
     
-    const encryptedContent = await encryptData(content, roomKey);
+    const encryptedContent = await encryptData(content, key);
     let finalReplyTo = replyTo;
     
     // Also encrypt the context being replied to so it doesn't fail decryption on load
     if (replyTo && replyTo.content) {
-      const encryptedReplyContent = await encryptData(replyTo.content, roomKey);
+      const encryptedReplyContent = await encryptData(replyTo.content, key);
       finalReplyTo = { ...replyTo, content: encryptedReplyContent };
     }
 
     socket.emit('chat:send', { 
-        roomCode: room.code, 
+      roomCode: currentRoom.code, 
         content: encryptedContent, 
         replyTo: finalReplyTo,
         e2ee: true 
     });
-  }, [socket, room, roomKey]);
+
+    if (content.toLowerCase().match(/@genie\b/i)) {
+      setGenieThinking(true);
+      const recentContext = messagesRef.current.slice(-10).map(m => ({
+        username: m.username,
+        content: m.content
+      }));
+      socket.emit('chat:gemini-prompt', {
+        roomCode: currentRoom.code,
+        prompt: content,
+        context: recentContext,
+        currentVideo: currentVideoRef?.current // Pass the latest video info
+      });
+    }
+  }, [socket]);
 
   const sendReaction = useCallback(async (emoji) => {
     if (!socket || !room || !roomKey) return;
@@ -979,6 +1091,7 @@ export const RoomProvider = ({ children }) => {
       clips, sendClip,
       hostAway,
       typingUsers, broadcastTyping,
+      genieThinking,
       reactToMessage,
       messageStatuses, markChatRead,
       isLiveStreamingInitialized, setIsLiveStreamingInitialized,

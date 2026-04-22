@@ -65,3 +65,4 @@ design-system
 frontend/.next
 .playwright-mcp
 console.sh
+.env.example

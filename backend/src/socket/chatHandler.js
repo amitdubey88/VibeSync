@@ -4,6 +4,7 @@
  */
 
 const { hashRoomCode } = require('../utils/hash');
+const { generateChatResponse, isAiConfigured } = require('../utils/gemini');
 
 let Message;
 try { Message = require('../models/Message'); } catch { /* Fallback */ }
@@ -109,6 +110,83 @@ module.exports = (io, socket, roomStore) => {
             username: socket.user.username,
             timestamp: Date.now()
         });
+    });
+
+    // ── chat:gemini-prompt (E2EE AI integration) ──────────────────────────────
+    // A client asks Gemini something. We generate the response in plaintext 
+    // and send it back solely to the requesting client so they can E2EE encrypt it 
+    // and broadcast it as the bot.
+    socket.on('chat:gemini-prompt', async ({ prompt, context, currentVideo, roomCode: passedRoomCode }) => {
+        // Robust Room Identification
+        const roomCode = passedRoomCode || socket.roomCode || (context && context.roomCode);
+        const hCode = roomCode ? hashRoomCode(roomCode.toUpperCase()) : null;
+
+        if (!hCode) {
+            console.warn('[Gemini] Prompt rejected: No room code found on socket or context.');
+            return;
+        }
+
+        if (!isAiConfigured()) {
+            socket.emit('chat:gemini-response', { text: "I'm sorry, my AI backend is not configured yet. The host needs to provide a Gemini API key." });
+            return;
+        }
+
+        // Broadcast thinking state to the room
+        console.log(`🧞 Genie started thinking for room ${roomCode} (Prompt: "${prompt?.substring(0, 50)}...")`);
+        io.to(hCode).emit('chat:genie-thinking', { thinking: true });
+
+        try {
+            const responseText = await generateChatResponse(prompt, context, currentVideo);
+            socket.emit('chat:gemini-response', { text: responseText });
+        } catch (e) {
+            console.error(`[Gemini Request Error] Room ${roomCode}:`, e);
+            socket.emit('chat:gemini-response', { text: "I'm having a little trouble thinking clearly. Please try again!" });
+        } finally {
+            // Always clear thinking state for common room visibility
+            io.to(hCode).emit('chat:genie-thinking', { thinking: false });
+            console.log(`🧞 Genie finished response for room ${roomCode}`);
+        }
+    });
+
+    // ── chat:send-bot (E2EE bot broadcasting) ─────────────────────────────────
+    socket.on('chat:send-bot', async ({ roomCode, botName, botAvatar, content, e2ee, replyTo }) => {
+        const code = roomCode?.toUpperCase();
+        const room = roomStore.get(code);
+        if (!room) return;
+
+        const message = {
+            id: `msg_${Date.now()}_bot_${Math.random().toString(36).slice(2, 6)}`,
+            roomId: roomCode,
+            userId: `bot_${botName.toLowerCase()}`,
+            username: botName,
+            avatar: botAvatar,
+            content,
+            type: 'text',
+            replyTo: replyTo || null,
+            e2ee: !!e2ee,
+            createdAt: new Date().toISOString(),
+        };
+
+        room.messages = room.messages || [];
+        room.messages.push(message);
+        if (room.messages.length > 500) room.messages.shift();
+
+        const hashedCode = hashRoomCode(code);
+        if (Message) {
+            Message.create({
+                id: message.id,
+                roomId: hashedCode,
+                userId: message.userId,
+                username: message.username,
+                avatar: message.avatar,
+                content,
+                type: 'text',
+                replyTo: message.replyTo,
+                e2ee: message.e2ee,
+            }).catch((err) => console.error('[chat:persist bot]', err.message));
+        }
+
+        io.to(hashedCode).emit('chat:message', message);
     });
 
     // ── chat:message-reaction ─────────────────────────────────────────────────

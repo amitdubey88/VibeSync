@@ -64,6 +64,13 @@ class SoundSynthesizer {
     this.playTone(150, 'square', 0.1, 0.15, 0.1);
   }
 
+  // 6. Mention Sound
+  playMention() {
+    this.init();
+    this.playTone(880, 'sine', 0.1, 0, 0.15);
+    this.playTone(1318.51, 'sine', 0.2, 0.1, 0.2); // E6
+  }
+
   // 5. Session Ended (Dramatic / Power down)
   playSessionEnded() {
     this.init();

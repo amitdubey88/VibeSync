@@ -33,12 +33,14 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
     messages,
     sendMessage,
     room,
+    participants,
     typingUsers,
     broadcastTyping,
     markChatRead,
     isHost,
     isLiveStreamingInitialized,
     currentVideo,
+    genieThinking,
   } = useRoom();
   const { user } = useAuth();
   const { socket } = useSocket();
@@ -65,6 +67,9 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
   const [showPollModal, setShowPollModal] = useState(false);
   const [replyToMessage, setReplyToMessage] = useState(null);
   const [showAttachMenu, setShowAttachMenu] = useState(false);
+  
+  const [mentionSearch, setMentionSearch] = useState(null);
+  const [mentionIndex, setMentionIndex] = useState(0);
   
   // Feature Hooks
   const { pinnedMessage, pinMessage, unpinMessage } = usePinnedMessage();
@@ -139,6 +144,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
     sendMessage(text, replyToMessage);
     setInput("");
     setReplyToMessage(null);
+    setMentionSearch(null);
     inputRef.current?.focus();
   };
 
@@ -147,7 +153,70 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
     inputRef.current?.focus();
   };
 
+  const mentionableUsers = [
+    { username: 'Genie', isBot: true },
+    ...(participants || [])
+  ];
+
+  const filteredMentions = mentionSearch !== null
+    ? mentionableUsers.filter(u => u.username.toLowerCase().includes(mentionSearch.toLowerCase()))
+    : [];
+
+  const insertMention = (username) => {
+    const cursor = inputRef.current.selectionStart || input.length;
+    const textBeforeCursor = input.slice(0, cursor);
+    const textAfterCursor = input.slice(cursor);
+    const words = textBeforeCursor.split(/\s/);
+    words.pop(); // remove the partial mention
+    
+    const newTextBefore = words.length > 0 ? words.join(' ') + ` @${username} ` : `@${username} `;
+    setInput(newTextBefore + textAfterCursor);
+    setMentionSearch(null);
+    inputRef.current?.focus();
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setInput(val);
+    if (val.trim()) broadcastTyping();
+
+    const cursor = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursor);
+    const words = textBeforeCursor.split(/\s/);
+    const lastWord = words[words.length - 1];
+
+    if (lastWord.startsWith('@')) {
+      const search = lastWord.slice(1);
+      setMentionSearch(search);
+      setMentionIndex(0);
+    } else {
+      setMentionSearch(null);
+    }
+  };
+
   const handleKeyDown = (e) => {
+    if (filteredMentions.length > 0 && mentionSearch !== null) {
+      if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev > 0 ? prev - 1 : filteredMentions.length - 1));
+        return;
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        setMentionIndex(prev => (prev < filteredMentions.length - 1 ? prev + 1 : 0));
+        return;
+      }
+      if (e.key === 'Enter' || e.key === 'Tab') {
+        e.preventDefault();
+        insertMention(filteredMentions[mentionIndex].username);
+        return;
+      }
+      if (e.key === 'Escape') {
+        setMentionSearch(null);
+        return;
+      }
+    }
+
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSend();
@@ -321,17 +390,19 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
       </div>
 
       {/* ── Typing Indicator ── */}
-      {Object.keys(typingUsers).length > 0 && (
+      {(Object.keys(typingUsers).length > 0 || genieThinking) && (
         <div className="px-4 py-2 flex items-center gap-2.5 animate-fade-in border-t border-obsidian-primary/15 bg-gradient-to-r from-obsidian-primary/10 to-transparent shrink-0">
           <div className="flex gap-[3px] items-center">
-            <span className="w-1.5 h-1.5 bg-obsidian-primary/70 rounded-full animate-typing-dot-1" />
-            <span className="w-1.5 h-1.5 bg-obsidian-primary/70 rounded-full animate-typing-dot-2" />
-            <span className="w-1.5 h-1.5 bg-obsidian-primary rounded-full animate-typing-dot-3" />
+            <span className={`w-1.5 h-1.5 rounded-full animate-typing-dot-1 ${genieThinking ? 'bg-fuchsia-400' : 'bg-obsidian-primary/70'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full animate-typing-dot-2 ${genieThinking ? 'bg-fuchsia-400' : 'bg-obsidian-primary/70'}`} />
+            <span className={`w-1.5 h-1.5 rounded-full animate-typing-dot-3 ${genieThinking ? 'bg-fuchsia-500' : 'bg-obsidian-primary'}`} />
           </div>
-          <span className="text-[10px] text-obsidian-primary/80 font-semibold tracking-wide uppercase">
-            {Object.keys(typingUsers).length === 1
-              ? `${Object.keys(typingUsers)[0]} is typing`
-              : `${Object.keys(typingUsers).length} people typing`}
+          <span className={`text-[10px] font-semibold tracking-wide uppercase ${genieThinking ? 'text-fuchsia-400/90' : 'text-obsidian-primary/80'}`}>
+            {genieThinking
+              ? '🧞 Genie is preparing a response…'
+              : Object.keys(typingUsers).length === 1
+                ? `${Object.keys(typingUsers)[0]} is typing`
+                : `${Object.keys(typingUsers).length} people typing`}
           </span>
         </div>
       )}
@@ -394,6 +465,24 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             >
               <XIcon size={16} />
             </button>
+          </div>
+        )}
+
+        {filteredMentions.length > 0 && mentionSearch !== null && (
+          <div className="absolute bottom-full left-0 mb-1 w-full md:max-w-[250px] md:left-14 bg-[#0a0a0b]/95 backdrop-blur-3xl border border-white/5 rounded-t-xl shadow-[0_-10px_40px_rgba(0,0,0,0.8)] z-50 overflow-hidden animate-slide-up">
+            <div className="max-h-48 overflow-y-auto scroll-area py-1">
+              {filteredMentions.map((u, i) => (
+                <button
+                  key={u.id || u.username}
+                  type="button"
+                  onClick={() => insertMention(u.username)}
+                  className={`w-full text-left px-4 py-2 flex items-center gap-2 transition-colors ${i === mentionIndex ? 'bg-obsidian-primary/20 text-obsidian-on-surface' : 'text-obsidian-on-surface-variant hover:bg-white/5'}`}
+                >
+                  <span className={`font-bold ${u.isBot ? 'text-fuchsia-400' : 'text-emerald-400'}`}>@{u.username}</span> 
+                  {u.isBot && <span className="text-[9px] bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-300 px-1 rounded uppercase tracking-wider font-bold">AI</span>}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -473,6 +562,21 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
             <SmileIcon size={20} />
           </button>
 
+          <button
+            type="button"
+            onClick={() => {
+              setInput(prev => prev ? `${prev} @Genie ` : '@Genie ');
+              setShowEmoji(false);
+              setShowGif(false);
+              setShowAttachMenu(false);
+              inputRef.current?.focus();
+            }}
+            className={`flex items-center justify-center w-6 h-6 md:w-7 md:h-7 transition-all active:scale-90 rounded-full shrink-0 border ${genieThinking ? 'border-fuchsia-500/50 bg-fuchsia-500/15 animate-pulse' : 'border-fuchsia-500/30 hover:bg-fuchsia-500/10 hover:border-fuchsia-500/50'}`}
+            title="Ask Genie AI"
+          >
+            <span className="text-[8px] md:text-[9px] font-black text-fuchsia-400 tracking-tight">AI</span>
+          </button>
+
           <div className="relative flex-1">
             <input
               ref={inputRef}
@@ -480,12 +584,7 @@ const ChatPanel = ({ chatMuted, setChatMuted }) => {
               className="w-full px-1 py-2.5 bg-transparent border-0 border-b border-white/5 text-white placeholder:text-white/20 text-[13px] font-medium transition-all focus:outline-none focus:border-obsidian-primary selection:bg-obsidian-primary/30"
               placeholder="Sync your vibe..."
               value={input}
-              onChange={(e) => {
-                setInput(e.target.value);
-                if (e.target.value.trim()) {
-                  broadcastTyping();
-                }
-              }}
+              onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               maxLength={2000}
               autoComplete="off"

@@ -13,27 +13,40 @@ const SALT = new TextEncoder().encode('VibeSync-E2EE-Salt-2026'); // Fixed salt 
  * Derives a CryptoKey from a room code.
  */
 export async function deriveKey(roomCode) {
-    const encoder = new TextEncoder();
-    const baseKey = await window.crypto.subtle.importKey(
-        'raw',
-        encoder.encode(roomCode.toUpperCase()),
-        { name: KEY_DERIVATION_ALGORITHM },
-        false,
-        ['deriveKey']
-    );
+    if (!roomCode || typeof roomCode !== 'string') {
+        console.warn('[E2EE] deriveKey called with invalid roomCode:', roomCode);
+        return null;
+    }
+    if (!window.crypto?.subtle) {
+        console.warn('[E2EE] Web Crypto API not available (insecure context?)');
+        return null;
+    }
+    try {
+        const encoder = new TextEncoder();
+        const baseKey = await window.crypto.subtle.importKey(
+            'raw',
+            encoder.encode(roomCode.toUpperCase()),
+            { name: KEY_DERIVATION_ALGORITHM },
+            false,
+            ['deriveKey']
+        );
 
-    return window.crypto.subtle.deriveKey(
-        {
-            name: KEY_DERIVATION_ALGORITHM,
-            salt: SALT,
-            iterations: ITERATIONS,
-            hash: HASH_ALGORITHM,
-        },
-        baseKey,
-        { name: ENCRYPTION_ALGORITHM, length: 256 },
-        false,
-        ['encrypt', 'decrypt']
-    );
+        return await window.crypto.subtle.deriveKey(
+            {
+                name: KEY_DERIVATION_ALGORITHM,
+                salt: SALT,
+                iterations: ITERATIONS,
+                hash: HASH_ALGORITHM,
+            },
+            baseKey,
+            { name: ENCRYPTION_ALGORITHM, length: 256 },
+            false,
+            ['encrypt', 'decrypt']
+        );
+    } catch (err) {
+        console.error('[E2EE] deriveKey failed:', err.message, '| roomCode:', roomCode);
+        return null;
+    }
 }
 
 /**

@@ -154,6 +154,7 @@ module.exports = (io, roomStore) => {
             }
 
             currentRoomCode = code;
+            socket.roomCode = code;
             const hashedCode = hashRoomCode(code);
             socket.join(hashedCode);
 
