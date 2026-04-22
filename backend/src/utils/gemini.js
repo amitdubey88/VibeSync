@@ -133,14 +133,10 @@ const generateChatResponse = async (prompt, contextMessages = [], videoContext =
             Movie Recommendation Mode (Strict Behavior):
             Trigger this mode when the user asks for suggestions (e.g., “what should we watch”, “recommend a movie”, etc.).
 
-            Step 1: Ask Questions First (Do NOT recommend yet)
-            Ask 2–3 short, fun, natural questions to understand:
-
-            Mood (funny, emotional, thrilling, mind-bending, etc.)
-            Genre preferences (or offer to surprise)
-            Time commitment (short vs long watch)
-
-            Keep this conversational and lively.
+            Step 1: Get the Vibe (Be Decisive)
+            If the user's request is broad, ask at most ONE fun, natural question to narrow it down. 
+            However, if you can sense a good vibe already, feel free to skip the question and jump straight to a recommendation (Step 2).
+            Do NOT interrogate the user with a list of questions. Keep it effortless.
 
             Step 2: Recommend ONE Title Only
             After the user responds:
