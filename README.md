@@ -167,5 +167,5 @@ PRs are welcome! To extend VibeSync:
 
 ---
 <div align="center">
-  Built with ❤️ by the VibeSync Team.
+  Built with ❤️ by the Amit Dubey.
 </div>
